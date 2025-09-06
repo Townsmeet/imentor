@@ -1,0 +1,414 @@
+<template>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Role-based Dashboard Redirect -->
+    <div v-if="currentUser && currentUser.role === 'mentor'">
+      <DashboardMentor />
+    </div>
+    
+    <div v-else-if="currentUser && currentUser.role === 'admin'">
+      <DashboardAdmin />
+    </div>
+    
+    <div v-else>
+      <!-- Mentee Dashboard -->
+      <!-- Welcome Header -->
+      <div class="mb-8">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+              Welcome back, {{ currentUser?.firstName }}!
+            </h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">
+              Ready to learn and grow?
+            </p>
+          </div>
+          
+          <UButton
+            to="/profile/edit"
+            icon="heroicons:pencil"
+            variant="outline"
+            class="hidden sm:flex"
+          >
+            Edit Profile
+          </UButton>
+        </div>
+      </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center">
+          <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+            <Icon name="heroicons:calendar-days" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div class="ml-4">
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ upcomingSessions }}</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Upcoming Sessions</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center">
+          <div class="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
+            <Icon name="heroicons:check-circle" class="w-6 h-6 text-green-600 dark:text-green-400" />
+          </div>
+          <div class="ml-4">
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ completedSessions }}</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Completed Sessions</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center">
+          <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
+            <Icon name="heroicons:chat-bubble-left-right" class="w-6 h-6 text-purple-600 dark:text-purple-400" />
+          </div>
+          <div class="ml-4">
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ unreadMessages }}</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Unread Messages</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Main Content -->
+      <div class="lg:col-span-2 space-y-8">
+        <!-- Upcoming Sessions -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+          <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+                Upcoming Sessions
+              </h2>
+              <UButton
+                to="/sessions"
+                variant="ghost"
+                size="sm"
+                icon="heroicons:arrow-right"
+              >
+                View All
+              </UButton>
+            </div>
+          </div>
+          
+          <div class="p-6">
+            <div v-if="mockUpcomingSessions.length === 0" class="text-center py-8">
+              <Icon name="heroicons:calendar-days" class="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p class="text-gray-500 dark:text-gray-400">No upcoming sessions</p>
+              <UButton
+                to="/mentors"
+                class="mt-4"
+                v-if="currentUser && currentUser.role === 'mentee'"
+              >
+                Book a Session
+              </UButton>
+            </div>
+            
+            <div v-else class="space-y-4">
+              <div
+                v-for="session in mockUpcomingSessions"
+                :key="session.id"
+                class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+              >
+                <div class="flex items-center space-x-4">
+                  <UAvatar
+                    :src="session.avatar"
+                    :alt="session.name"
+                    size="md"
+                  />
+                  <div>
+                    <p class="font-medium text-gray-900 dark:text-white">
+                      {{ session.title }}
+                    </p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                      with {{ session.name }}
+                    </p>
+                    <p class="text-sm text-blue-600 dark:text-blue-400">
+                      {{ formatDate(session.date) }} at {{ session.time }}
+                    </p>
+                  </div>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                  <UButton
+                    icon="heroicons:video-camera"
+                    size="sm"
+                    variant="outline"
+                  >
+                    Join
+                  </UButton>
+                  <UButton
+                    icon="heroicons:chat-bubble-left-right"
+                    size="sm"
+                    variant="ghost"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+          <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+              Recent Activity
+            </h2>
+          </div>
+          
+          <div class="p-6">
+            <div class="space-y-4">
+              <div
+                v-for="activity in mockRecentActivity"
+                :key="activity.id"
+                class="flex items-start space-x-3"
+              >
+                <div :class="[
+                  'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
+                  activity.type === 'session' ? 'bg-blue-100 dark:bg-blue-900/20' : 
+                  activity.type === 'message' ? 'bg-green-100 dark:bg-green-900/20' : 
+                  'bg-purple-100 dark:bg-purple-900/20'
+                ]">
+                  <Icon
+                    :name="activity.icon"
+                    :class="[
+                      'w-4 h-4',
+                      activity.type === 'session' ? 'text-blue-600 dark:text-blue-400' :
+                      activity.type === 'message' ? 'text-green-600 dark:text-green-400' :
+                      'text-purple-600 dark:text-purple-400'
+                    ]"
+                  />
+                </div>
+                <div class="flex-1">
+                  <p class="text-sm text-gray-900 dark:text-white">
+                    {{ activity.description }}
+                  </p>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {{ formatTimeAgo(activity.timestamp) }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="space-y-6">
+        <!-- Profile Card -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+          <div class="text-center">
+            <UAvatar
+              :src="currentUser?.avatar"
+              :alt="`${currentUser?.firstName} ${currentUser?.lastName}`"
+              size="xl"
+              class="mx-auto mb-4"
+            />
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+              {{ currentUser?.firstName }} {{ currentUser?.lastName }}
+            </h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 capitalize mb-4">
+              {{ currentUser?.role }}
+            </p>
+            
+            <div v-if="currentUser && currentUser.role === 'mentor'" class="mb-4">
+              <div class="flex items-center justify-center space-x-1 mb-2">
+                <Icon
+                  v-for="i in 5"
+                  :key="i"
+                  name="heroicons:star"
+                  :class="[
+                    'w-4 h-4',
+                    i <= mockMentorRating ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600'
+                  ]"
+                />
+              </div>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                {{ mockMentorRating }}/5 • {{ mockTotalSessions }} sessions
+              </p>
+            </div>
+            
+            <UButton
+              to="/profile/edit"
+              variant="outline"
+              block
+              icon="heroicons:pencil"
+            >
+              Edit Profile
+            </UButton>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Quick Actions
+          </h3>
+          
+          <div class="space-y-3">
+            <UButton
+              v-if="currentUser && currentUser.role === 'mentee'"
+              to="/mentors"
+              variant="outline"
+              block
+              icon="heroicons:magnifying-glass"
+            >
+              Find Mentors
+            </UButton>
+            
+            <UButton
+              to="/messages"
+              variant="outline"
+              block
+              icon="heroicons:chat-bubble-left-right"
+            >
+              Messages
+            </UButton>
+            
+            <UButton
+              to="/sessions"
+              variant="outline"
+              block
+              icon="heroicons:calendar-days"
+            >
+              View Sessions
+            </UButton>
+            
+            <UButton
+              v-if="currentUser && currentUser.role === 'mentor'"
+              to="/availability"
+              variant="outline"
+              block
+              icon="heroicons:clock"
+            >
+              Set Availability
+            </UButton>
+          </div>
+        </div>
+
+        <!-- Tips Card -->
+        <div class="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-6">
+          <div class="flex items-start space-x-3">
+            <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Icon name="heroicons:light-bulb" class="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <h4 class="font-medium text-gray-900 dark:text-white mb-2">
+                {{ (currentUser && currentUser.role === 'mentor') ? 'Mentor Tip' : 'Learning Tip' }}
+              </h4>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                {{ (currentUser && currentUser.role === 'mentor') 
+                  ? 'Set clear expectations at the start of each session to maximize impact.'
+                  : 'Come prepared with specific questions to make the most of your mentoring sessions.'
+                }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { User, UserRole } from '~/types'
+
+definePageMeta({
+  middleware: ['auth', 'onboarding']
+})
+
+const { user } = useAuth()
+
+// Type guard to ensure proper role typing
+const isRole = (role: string): role is UserRole => {
+  return ['mentee', 'mentor', 'admin'].includes(role)
+}
+
+const currentUser = computed(() => {
+  const u = user.value
+  if (!u) return null
+  
+  // Ensure role is properly typed
+  return {
+    ...u,
+    role: isRole(u.role) ? u.role : 'mentee' as UserRole
+  } as User
+})
+
+// Mock data - replace with actual API calls later
+const upcomingSessions = ref(2)
+const completedSessions = ref(8)
+const unreadMessages = ref(3)
+const mockMentorRating = ref(4.8)
+const mockTotalSessions = ref(127)
+
+const mockUpcomingSessions = ref([
+  {
+    id: '1',
+    title: 'Career Growth Strategy',
+    name: 'Sarah Chen',
+    avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150',
+    date: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
+    time: '2:00 PM'
+  },
+  {
+    id: '2',
+    title: 'Technical Interview Prep',
+    name: 'Marcus Johnson',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+    date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
+    time: '10:00 AM'
+  }
+])
+
+const mockRecentActivity = ref([
+  {
+    id: '1',
+    type: 'session',
+    icon: 'heroicons:video-camera',
+    description: 'Completed session with Sarah Chen',
+    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000) // 2 hours ago
+  },
+  {
+    id: '2',
+    type: 'message',
+    icon: 'heroicons:chat-bubble-left-right',
+    description: 'New message from Marcus Johnson',
+    timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000) // 4 hours ago
+  },
+  {
+    id: '3',
+    type: 'booking',
+    icon: 'heroicons:calendar-days',
+    description: 'Session booked with Elena Rodriguez',
+    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000) // 1 day ago
+  }
+])
+
+const formatDate = (date: Date) => {
+  return new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric'
+  }).format(date)
+}
+
+const formatTimeAgo = (date: Date) => {
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  const hours = Math.floor(diff / (1000 * 60 * 60))
+  const days = Math.floor(hours / 24)
+  
+  if (days > 0) {
+    return `${days} day${days > 1 ? 's' : ''} ago`
+  } else if (hours > 0) {
+    return `${hours} hour${hours > 1 ? 's' : ''} ago`
+  } else {
+    return 'Just now'
+  }
+}
+</script>
