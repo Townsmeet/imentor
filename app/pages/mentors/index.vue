@@ -50,7 +50,7 @@
           v-for="category in selectedCategories"
           :key="`category-${category}`"
           variant="soft"
-          color="blue"
+          color="secondary"
           class="cursor-pointer"
           @click="removeCategory(category)"
         >
@@ -62,7 +62,7 @@
           v-for="skill in selectedSkills"
           :key="`skill-${skill}`"
           variant="soft"
-          color="purple"
+          color="info"
           class="cursor-pointer"
           @click="removeSkill(skill)"
         >
@@ -188,7 +188,7 @@
                 v-if="mentor.skills.length > 3"
                 variant="soft"
                 size="xs"
-                color="gray"
+                color="neutral"
               >
                 +{{ mentor.skills.length - 3 }} more
               </UBadge>

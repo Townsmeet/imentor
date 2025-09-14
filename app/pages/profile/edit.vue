@@ -30,15 +30,15 @@
             <div class="space-y-4">
               <div class="grid grid-cols-2 gap-4">
                 <UFormField label="First Name" name="firstName" required>
-                  <UInput v-model="profileForm.firstName" />
+                  <UInput v-model="profileForm.firstName" class="w-full" />
                 </UFormField>
                 <UFormField label="Last Name" name="lastName" required>
-                  <UInput v-model="profileForm.lastName" />
+                  <UInput v-model="profileForm.lastName" class="w-full" />
                 </UFormField>
               </div>
 
               <UFormField label="Email" name="email" required>
-                <UInput v-model="profileForm.email" type="email" disabled />
+                <UInput v-model="profileForm.email" type="email" disabled class="w-full" />
               </UFormField>
 
               <UFormField label="Bio" name="bio">
@@ -46,6 +46,7 @@
                   v-model="profileForm.bio"
                   placeholder="Tell others about yourself..."
                   :rows="4"
+                  class="w-full"
                 />
               </UFormField>
             </div>
@@ -66,47 +67,53 @@
                   type="number"
                   min="0"
                   step="5"
+                  class="w-full"
                 />
               </UFormField>
 
               <UFormField label="Experience" name="experience">
                 <USelect
                   v-model="profileForm.experience"
-                  :options="experienceOptions"
+                  :items="experienceOptions"
+                  class="w-full"
                 />
               </UFormField>
 
               <UFormField label="Categories" name="categories">
                 <USelectMenu
                   v-model="profileForm.categories"
-                  :options="categoryOptions"
+                  :items="categoryOptions"
                   multiple
                   searchable
+                  class="w-full"
                 />
               </UFormField>
 
               <UFormField label="Skills" name="skills">
                 <USelectMenu
                   v-model="profileForm.skills"
-                  :options="skillOptions"
+                  :items="skillOptions"
                   multiple
                   searchable
+                  class="w-full"
                 />
               </UFormField>
 
               <UFormField label="Languages" name="languages">
                 <USelectMenu
                   v-model="profileForm.languages"
-                  :options="languageOptions"
+                  :items="languageOptions"
                   multiple
                   searchable
+                  class="w-full"
                 />
               </UFormField>
 
               <UFormField label="Timezone" name="timezone">
                 <USelect
                   v-model="profileForm.timezone"
-                  :options="timezoneOptions"
+                  :items="timezoneOptions"
+                  class="w-full"
                 />
               </UFormField>
             </div>
@@ -123,9 +130,10 @@
               <UFormField label="Interests" name="interests">
                 <USelectMenu
                   v-model="profileForm.interests"
-                  :options="categoryOptions"
+                  :items="categoryOptions"
                   multiple
                   searchable
+                  class="w-full"
                 />
               </UFormField>
 
@@ -134,13 +142,15 @@
                   v-model="profileForm.goalsText"
                   placeholder="What are your learning and career goals?"
                   :rows="3"
+                  class="w-full"
                 />
               </UFormField>
 
               <UFormField label="Experience Level" name="experience">
                 <USelect
                   v-model="profileForm.experience"
-                  :options="experienceOptions"
+                  :items="experienceOptions"
+                  class="w-full"
                 />
               </UFormField>
             </div>
@@ -420,7 +430,7 @@ const saveProfile = async () => {
     toast.add({
       title: 'Profile Updated',
       description: 'Your profile has been saved successfully.',
-      color: 'green'
+      color: 'success'
     })
     
     // Navigate back to dashboard
@@ -429,7 +439,7 @@ const saveProfile = async () => {
     toast.add({
       title: 'Error',
       description: 'Failed to save profile. Please try again.',
-      color: 'red'
+      color: 'error'
     })
   } finally {
     isSaving.value = false

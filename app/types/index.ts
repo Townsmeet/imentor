@@ -87,5 +87,50 @@ export interface BookingRequest {
   time: string
   duration: number
   title: string
+  description?: string
+  menteeId?: string
+  status?: 'pending' | 'confirmed' | 'cancelled'
+  price?: number
+  paymentIntentId?: string
+}
+
+export interface Booking {
+  id: string
+  mentorId: string
+  menteeId: string
+  title: string
   description: string
+  scheduledDate: Date
+  duration: number // minutes
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'rescheduled'
+  price: number
+  meetingLink?: string
+  notes?: string
+  createdAt: Date
+  updatedAt: Date
+  mentor?: MentorProfile
+  mentee?: MenteeProfile
+  paymentIntentId?: string
+  paymentStatus?: 'pending' | 'succeeded' | 'failed' | 'refunded'
+}
+
+export interface AvailabilitySlot {
+  id: string
+  mentorId: string
+  date: string
+  startTime: string
+  endTime: string
+  isBooked: boolean
+  isAvailable: boolean
+}
+
+export interface CalendarEvent {
+  id: string
+  title: string
+  start: Date
+  end: Date
+  type: 'booking' | 'availability' | 'blocked'
+  status?: string
+  mentorId?: string
+  menteeId?: string
 }

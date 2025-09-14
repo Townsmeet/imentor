@@ -547,7 +547,8 @@ const completeOnboardingFlow = async () => {
       color: 'success'
     })
     
-    await navigateTo('/dashboard')
+    const dest = user.value?.role === 'admin' ? '/admin' : '/dashboard'
+    await navigateTo(dest)
   } catch (error) {
     toast.add({
       title: 'Error',

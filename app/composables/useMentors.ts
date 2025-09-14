@@ -112,8 +112,17 @@ export const useMentors = () => {
     return filtered
   })
 
-  const getMentorById = (id: string) => {
+  const getMentorProfile = (id: string) => {
     return mentors.value.find(mentor => mentor.id === id)
+  }
+
+  const updateMentorProfile = async (id: string, updatedFields: Partial<MentorProfile>) => {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 500))
+    const index = mentors.value.findIndex(mentor => mentor.id === id)
+    if (index !== -1) {
+      mentors.value[index] = { ...mentors.value[index], ...updatedFields }
+    }
   }
 
   const getAllCategories = computed(() => {
@@ -140,7 +149,8 @@ export const useMentors = () => {
     selectedSkills,
     filteredMentors,
     fetchMentors,
-    getMentorById,
+    getMentorProfile,
+    updateMentorProfile,
     getAllCategories,
     getAllSkills
   }

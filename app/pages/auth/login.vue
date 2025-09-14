@@ -143,7 +143,8 @@ const handleLogin = async () => {
         color: 'success'
       })
       
-      await navigateTo('/dashboard')
+      const dest = result.user?.role === 'admin' ? '/admin' : '/dashboard'
+      await navigateTo(dest)
     } else {
       toast.add({
         title: 'Sign in failed',

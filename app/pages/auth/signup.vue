@@ -249,7 +249,8 @@ const handleSignup = async () => {
       if (result.isNewUser) {
         await navigateTo('/onboarding')
       } else {
-        await navigateTo('/dashboard')
+        const dest = result.user?.role === 'admin' ? '/admin' : '/dashboard'
+        await navigateTo(dest)
       }
     } else {
       toast.add({

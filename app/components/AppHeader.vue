@@ -29,6 +29,13 @@
             Find Mentors
           </NuxtLink>
           <NuxtLink 
+            to="/bookings" 
+            class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
+            active-class="text-blue-600 dark:text-blue-400"
+          >
+            My Bookings
+          </NuxtLink>
+          <NuxtLink 
             to="/sessions" 
             class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
             active-class="text-blue-600 dark:text-blue-400"
@@ -51,18 +58,21 @@
           <UButton
             icon="heroicons:bell"
             variant="ghost"
-            color="gray"
+            color="neutral"
             size="sm"
             class="relative"
           >
             <span v-if="notificationCount > 0" class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
           </UButton>
 
-          <!-- User Dropdown -->
-          <UDropdown :items="userMenuItems" :popper="{ placement: 'bottom-end' }">
+          <!-- User Menu (Dropdown) -->
+          <UDropdownMenu
+            :items="userMenuItems"
+            :popper="{ placement: 'bottom-end' }"
+          >
             <UButton
               variant="ghost"
-              color="gray"
+              color="neutral"
               class="flex items-center space-x-2"
             >
               <UAvatar
@@ -75,13 +85,13 @@
               </span>
               <Icon name="heroicons:chevron-down" class="w-4 h-4" />
             </UButton>
-          </UDropdown>
+          </UDropdownMenu>
 
           <!-- Mobile Menu Button -->
           <UButton
             icon="heroicons:bars-3"
             variant="ghost"
-            color="gray"
+            color="neutral"
             size="sm"
             class="md:hidden"
             @click="isMobileMenuOpen = !isMobileMenuOpen"
@@ -109,6 +119,14 @@
             Find Mentors
           </NuxtLink>
           <NuxtLink 
+            to="/bookings" 
+            class="px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors rounded-md"
+            active-class="text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
+            @click="isMobileMenuOpen = false"
+          >
+            My Bookings
+          </NuxtLink>
+          <NuxtLink 
             to="/sessions" 
             class="px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors rounded-md"
             active-class="text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
@@ -131,6 +149,10 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from 'vue'
+import { navigateTo } from '#app'
+import { UDropdownMenu } from '#components'
+
 const { user, logout } = useAuth()
 const isMobileMenuOpen = ref(false)
 
@@ -138,22 +160,23 @@ const isMobileMenuOpen = ref(false)
 const unreadCount = ref(2)
 const notificationCount = ref(3)
 
+// Define user menu items
 const userMenuItems = [
-  [{
+  {
     label: 'Profile',
     icon: 'heroicons:user',
-    click: () => navigateTo('/profile')
-  }],
-  [{
+    action: () => navigateTo('/profile'),
+  },
+  {
     label: 'Settings',
     icon: 'heroicons:cog-6-tooth',
-    click: () => navigateTo('/settings')
-  }],
-  [{
+    action: () => navigateTo('/settings'),
+  },
+  {
     label: 'Sign out',
     icon: 'heroicons:arrow-right-on-rectangle',
-    click: logout
-  }]
+    action: () => logout(),
+  },
 ]
 
 // Close mobile menu when route changes

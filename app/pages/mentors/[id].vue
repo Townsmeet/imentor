@@ -216,68 +216,67 @@
       </div>
     </div>
 
-    <!-- Booking Modal -->
-    <UModal v-model="showBookingModal">
-      <div class="p-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Book a Session with {{ mentor.firstName }}
-        </h3>
-        
-        <div class="space-y-4">
-          <UFormField label="Session Title" required>
-            <UInput
-              v-model="bookingForm.title"
-              placeholder="e.g., Career Growth Discussion"
-            />
-          </UFormField>
-          
-          <UFormField label="Description">
-            <UTextarea
-              v-model="bookingForm.description"
-              placeholder="What would you like to discuss?"
-              :rows="3"
-            />
-          </UFormField>
-          
-          <UFormField label="Preferred Date" required>
-            <UInput
-              v-model="bookingForm.date"
-              type="date"
-              :min="new Date().toISOString().split('T')[0]"
-            />
-          </UFormField>
-          
-          <UFormField label="Preferred Time" required>
-            <USelect
-              v-model="bookingForm.time"
-              :options="availableTimeSlots"
-              placeholder="Select a time"
-            />
-          </UFormField>
-          
-          <UFormField label="Duration" required>
-            <USelect
-              v-model="bookingForm.duration"
-              :options="durationOptions"
-            />
-          </UFormField>
-        </div>
-        
-        <div class="flex justify-end space-x-3 mt-6">
+    <!-- Enhanced Booking Modal -->
+    <UModal
+      v-model:open="showBookingModal"
+      :title="`Book a Session with ${mentor.firstName}`"
+      :description="`$${mentor.hourlyRate}/hour • ${mentor.experience} experience`"
+    >
+      <template #body>
+        <BookingModal
+          v-if="mentor"
+          ref="bookingModalRef"
+          :mentor="mentor"
+          @booking-confirmed="handleBookingConfirmed"
+          @close="showBookingModal = false"
+        />
+      </template>
+
+      <template #footer="{ close }">
+        <div
+          v-if="bookingModalApi"
+          :class="[
+            'flex w-full',
+            bookingModalApi.currentStep > 1 ? 'justify-between' : 'justify-end',
+          ]"
+        >
           <UButton
-            variant="ghost"
-            @click="showBookingModal = false"
+            v-if="bookingModalApi.currentStep > 1"
+            @click="bookingModalApi.previousStep()"
+            variant="outline"
+            icon="heroicons:arrow-left"
           >
-            Cancel
+            Back
           </UButton>
-          <UButton
-            @click="submitBooking"
-            :loading="isBooking"
-          >
-            Book Session
-          </UButton>
+          <div class="flex space-x-3">
+            <UButton
+              label="Cancel"
+              color="neutral"
+              variant="ghost"
+              @click="close"
+            />
+            
+            <UButton
+              v-if="bookingModalApi.currentStep < 4"
+              @click="bookingModalApi.nextStep()"
+              :disabled="!bookingModalApi.canProceed"
+              icon="heroicons:arrow-right"
+              trailing
+            >
+              {{ bookingModalApi.currentStep === 3 ? 'Proceed to Payment' : 'Continue' }}
+            </UButton>
+            
+            <UButton
+              v-else
+              @click="bookingModalApi?.processPayment()"
+              :loading="bookingModalApi.isBooking || bookingModalApi?.isProcessingPayment"
+              icon="heroicons:credit-card"
+            >
+              Complete Payment
+            </UButton>
+          </div>
         </div>
-      </div>
+      </template>
     </UModal>
   </div>
 
@@ -297,19 +296,49 @@
 </template>
 
 <script setup lang="ts">
+import type { MentorProfile } from '~/types'
+
+interface BookingModalExposedLocal {
+  currentStep: number;
+  previousStep: () => void;
+  nextStep: () => void;
+  canProceed: boolean;
+  confirmBooking: () => Promise<void>;
+  isBooking: boolean;
+  processPayment: () => void;
+  isProcessingPayment: boolean;
+}
+
+interface Props {
+  mentor: MentorProfile
+}
+
+defineProps<Props>()
+
 definePageMeta({
   middleware: 'auth'
 })
 
 const route = useRoute()
 const toast = useToast()
-const { getMentorById } = useMentors()
+const { getMentorProfile, fetchMentors, mentors } = useMentors()
 
 const mentorId = route.params.id as string
-const mentor = computed(() => getMentorById(mentorId))
+const mentor = computed(() => getMentorProfile(mentorId))
+
+// Fetch mentors on mount if not already loaded
+onMounted(async () => {
+  if (mentors.value.length === 0) {
+    await fetchMentors()
+  }
+})
 
 const showBookingModal = ref(false)
 const isBooking = ref(false)
+
+const bookingModalRef = ref<BookingModalExposedLocal | null>(null)
+
+const bookingModalApi = computed(() => bookingModalRef.value)
 
 const bookingForm = reactive({
   title: '',
@@ -361,50 +390,9 @@ const sendMessage = () => {
   navigateTo(`/messages?mentor=${mentor.value?.id}`)
 }
 
-const submitBooking = async () => {
-  if (!bookingForm.title || !bookingForm.date || !bookingForm.time) {
-    toast.add({
-      title: 'Missing Information',
-      description: 'Please fill in all required fields.',
-      color: 'error'
-    })
-    return
-  }
-
-  isBooking.value = true
-  
-  try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    toast.add({
-      title: 'Session Booked!',
-      description: `Your session with ${mentor.value?.firstName} has been requested.`,
-      color: 'success'
-    })
-    
-    showBookingModal.value = false
-    
-    // Reset form
-    Object.assign(bookingForm, {
-      title: '',
-      description: '',
-      date: '',
-      time: '',
-      duration: 60
-    })
-    
-    // Navigate to sessions page
-    navigateTo('/sessions')
-  } catch (error) {
-    toast.add({
-      title: 'Booking Failed',
-      description: 'Unable to book session. Please try again.',
-      color: 'error'
-    })
-  } finally {
-    isBooking.value = false
-  }
+const handleBookingConfirmed = (booking: any) => {
+  // Navigate to bookings page to show the new booking
+  navigateTo('/bookings')
 }
 
 const formatDate = (date: Date) => {

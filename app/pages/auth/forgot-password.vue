@@ -31,6 +31,7 @@
             icon="heroicons:envelope"
             size="lg"
             :disabled="isLoading"
+            class="w-full"
           />
         </UFormField>
 
@@ -117,13 +118,13 @@ const handleForgotPassword = async () => {
     toast.add({
       title: 'Reset link sent',
       description: 'Check your email for password reset instructions.',
-      color: 'green'
+      color: 'success'
     })
   } catch (error) {
     toast.add({
       title: 'Error',
       description: 'Failed to send reset link. Please try again.',
-      color: 'red'
+      color: 'error'
     })
   } finally {
     isLoading.value = false
