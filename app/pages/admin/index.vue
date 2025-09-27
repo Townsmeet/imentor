@@ -55,11 +55,15 @@
         <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
           Revenue Overview
         </h3>
-        <div class="h-64 flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-          <div class="text-center">
-            <Icon name="heroicons:chart-bar" class="w-12 h-12 text-gray-400 mx-auto mb-2" />
-            <p class="text-gray-500 dark:text-gray-400">Revenue chart placeholder</p>
-          </div>
+        <div class="chart-wrapper">
+          <LineChart
+            :data="revenueData"
+            :categories="revenueCategories"
+            :height="300"
+            :xFormatter="xFormatter"
+            xLabel="Month"
+            yLabel="Revenue"
+          />
         </div>
       </div>
 
@@ -347,4 +351,26 @@ useSeoMeta({
   title: 'Admin Dashboard - iMentor',
   description: 'Admin dashboard for managing the iMentor platform'
 })
+
+// Revenue chart (dummy data)
+const revenueData = [
+  { month: 'Jan', revenue: 1200, bookings: 42 },
+  { month: 'Feb', revenue: 1450, bookings: 48 },
+  { month: 'Mar', revenue: 1780, bookings: 57 },
+  { month: 'Apr', revenue: 1620, bookings: 51 },
+  { month: 'May', revenue: 1910, bookings: 63 }
+]
+
+const revenueCategories = {
+  revenue: {
+    name: 'Revenue',
+    color: '#3b82f6' // Tailwind blue-500
+  },
+  bookings: {
+    name: 'Bookings',
+    color: '#10b981' // Tailwind emerald-500
+  }
+}
+
+const xFormatter = (i: number) => revenueData[i]?.month ?? ''
 </script>

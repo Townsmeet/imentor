@@ -117,13 +117,13 @@
                 Chat
               </UButton>
               
-              <UDropdown :items="getSessionActions(session)">
+              <UDropdownMenu :items="getSessionActions(session)">
                 <UButton
                   icon="heroicons:ellipsis-vertical"
                   variant="ghost"
                   size="sm"
                 />
-              </UDropdown>
+              </UDropdownMenu>
             </div>
           </div>
         </div>
@@ -217,77 +217,94 @@
     </div>
 
     <!-- Review Modal -->
-    <UModal v-model="showReviewModal">
-      <div class="p-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Review Session
-        </h3>
-        
-        <div v-if="selectedSession" class="space-y-4">
-          <div class="text-center">
-            <UAvatar
-              :src="selectedSession.avatar"
-              :alt="selectedSession.participantName"
-              size="lg"
-              class="mx-auto mb-2"
-            />
-            <p class="font-medium text-gray-900 dark:text-white">
-              {{ selectedSession.participantName }}
-            </p>
-            <p class="text-sm text-gray-600 dark:text-gray-400">
-              {{ selectedSession.title }}
-            </p>
-          </div>
-
-          <UFormField label="Rating" required>
-            <div class="flex justify-center space-x-2">
-              <button
-                v-for="i in 5"
-                :key="i"
-                @click="reviewForm.rating = i"
-                class="p-1"
-              >
-                <Icon
-                  name="heroicons:star"
-                  :class="[
-                    'w-8 h-8 transition-colors',
-                    i <= reviewForm.rating ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600 hover:text-yellow-300'
-                  ]"
-                />
-              </button>
+    <UModal v-model:open="showReviewModal" :overlay="true" :prevent-body-scroll="true">
+      <template #content>
+        <div class="p-6">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Review Session
+          </h3>
+          
+          <div v-if="selectedSession" class="space-y-4">
+            <div class="text-center">
+              <UAvatar
+                :src="selectedSession.avatar"
+                :alt="selectedSession.participantName"
+                size="lg"
+                class="mx-auto mb-2"
+              />
+              <p class="font-medium text-gray-900 dark:text-white">
+                {{ selectedSession.participantName }}
+              </p>
+              <p class="text-sm text-gray-600 dark:text-gray-400">
+                {{ selectedSession.title }}
+              </p>
             </div>
-          </UFormField>
 
-          <UFormField label="Review">
-            <UTextarea
-              v-model="reviewForm.comment"
-              placeholder="Share your experience with this session..."
-              rows="4"
-            />
-          </UFormField>
+            <UFormField label="Rating" required>
+              <div class="flex justify-center space-x-2">
+                <button
+                  v-for="i in 5"
+                  :key="i"
+                  @click="reviewForm.rating = i"
+                  class="p-1"
+                >
+                  <Icon
+                    name="heroicons:star"
+                    :class="[
+                      'w-8 h-8 transition-colors',
+                      i <= reviewForm.rating ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600 hover:text-yellow-300'
+                    ]"
+                  />
+                </button>
+              </div>
+            </UFormField>
+
+            <UFormField label="Review">
+              <UTextarea
+                v-model="reviewForm.comment"
+                placeholder="Share your experience with this session..."
+                :rows="4"
+              />
+            </UFormField>
+          </div>
+          
+          <div class="flex justify-end space-x-3 mt-6">
+            <UButton
+              variant="ghost"
+              @click="showReviewModal = false"
+            >
+              Cancel
+            </UButton>
+            <UButton
+              @click="submitReview"
+              :loading="isSubmittingReview"
+              :disabled="reviewForm.rating === 0"
+            >
+              Submit Review
+            </UButton>
+          </div>
         </div>
-        
-        <div class="flex justify-end space-x-3 mt-6">
-          <UButton
-            variant="ghost"
-            @click="showReviewModal = false"
-          >
-            Cancel
-          </UButton>
-          <UButton
-            @click="submitReview"
-            :loading="isSubmittingReview"
-            :disabled="reviewForm.rating === 0"
-          >
-            Submit Review
-          </UButton>
-        </div>
-      </div>
+      </template>
     </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
+interface Session {
+  id: string
+  title: string
+  description: string
+  participantId: string
+  participantName: string
+  avatar: string
+  scheduledAt: Date
+  duration: number
+  status: string
+  meetingLink?: string
+  notes?: string
+  reviewed?: boolean
+}
+
 definePageMeta({
   middleware: 'auth'
 })
@@ -298,7 +315,7 @@ const toast = useToast()
 const activeTab = ref(0)
 const showReviewModal = ref(false)
 const isSubmittingReview = ref(false)
-const selectedSession = ref(null)
+const selectedSession = ref<Session | null>(null)
 
 const tabs = [
   { label: 'Upcoming', icon: 'heroicons:calendar-days' },
@@ -311,7 +328,7 @@ const reviewForm = reactive({
 })
 
 // Mock data - replace with actual API calls
-const upcomingSessions = ref([
+const upcomingSessions = ref<Session[]>([
   {
     id: '1',
     title: 'Career Growth Strategy',
@@ -326,7 +343,7 @@ const upcomingSessions = ref([
   }
 ])
 
-const pastSessions = ref([
+const pastSessions = ref<Session[]>([
   {
     id: '2',
     title: 'Technical Interview Preparation',
@@ -361,11 +378,11 @@ const formatTime = (date: Date) => {
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'confirmed': return 'green'
-    case 'pending': return 'yellow'
-    case 'completed': return 'blue'
-    case 'cancelled': return 'red'
-    default: return 'gray'
+    case 'confirmed': return 'success'
+    case 'pending': return 'warning'
+    case 'completed': return 'primary'
+    case 'cancelled': return 'error'
+    default: return 'neutral'
   }
 }
 
@@ -375,14 +392,14 @@ const isSessionSoon = (scheduledAt: Date) => {
   return timeDiff <= 30 * 60 * 1000 && timeDiff > 0 // Within 30 minutes
 }
 
-const joinSession = (session: any) => {
+const joinSession = (session: Session) => {
   if (session.meetingLink) {
     window.open(session.meetingLink, '_blank')
   } else {
     toast.add({
       title: 'Meeting link not available',
       description: 'The meeting link will be provided closer to the session time.',
-      color: 'yellow'
+      color: 'warning'
     })
   }
 }
@@ -391,7 +408,7 @@ const openChat = (participantId: string) => {
   navigateTo(`/messages?user=${participantId}`)
 }
 
-const getSessionActions = (session: any) => {
+const getSessionActions = (session: Session) => {
   const actions = []
   
   if (session.status === 'pending' || session.status === 'confirmed') {
@@ -411,15 +428,15 @@ const getSessionActions = (session: any) => {
   return actions
 }
 
-const rescheduleSession = (session: any) => {
+const rescheduleSession = (session: Session) => {
   toast.add({
     title: 'Reschedule Session',
     description: 'Reschedule functionality will be available soon.',
-    color: 'blue'
+    color: 'primary'
   })
 }
 
-const cancelSession = async (session: any) => {
+const cancelSession = async (session: Session) => {
   try {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000))
@@ -430,18 +447,18 @@ const cancelSession = async (session: any) => {
     toast.add({
       title: 'Session Cancelled',
       description: 'The session has been cancelled successfully.',
-      color: 'green'
+      color: 'success'
     })
   } catch (error) {
     toast.add({
       title: 'Error',
       description: 'Failed to cancel session. Please try again.',
-      color: 'red'
+      color: 'error'
     })
   }
 }
 
-const openReviewModal = (session: any) => {
+const openReviewModal = (session: Session) => {
   selectedSession.value = session
   reviewForm.rating = 0
   reviewForm.comment = ''
@@ -463,7 +480,7 @@ const submitReview = async () => {
     toast.add({
       title: 'Review Submitted',
       description: 'Thank you for your feedback!',
-      color: 'green'
+      color: 'success'
     })
     
     showReviewModal.value = false
@@ -471,7 +488,7 @@ const submitReview = async () => {
     toast.add({
       title: 'Error',
       description: 'Failed to submit review. Please try again.',
-      color: 'red'
+      color: 'error'
     })
   } finally {
     isSubmittingReview.value = false

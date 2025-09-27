@@ -52,18 +52,19 @@
           </h3>
           <USelect
             v-model="revenueTimeframe"
-            :options="timeframeOptions"
+            :items="timeframeOptions"
             size="sm"
           />
         </div>
-        <div class="h-80 flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-          <div class="text-center">
-            <Icon name="heroicons:chart-bar" class="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p class="text-gray-500 dark:text-gray-400 text-lg">Revenue Chart</p>
-            <p class="text-gray-400 dark:text-gray-500 text-sm mt-2">
-              Integration with Chart.js or similar library
-            </p>
-          </div>
+        <div class="chart-wrapper">
+          <LineChart
+            :data="revenueTrendData"
+            :categories="revenueTrendCategories"
+            :height="320"
+            :xFormatter="revenueXFormatter"
+            xLabel="Month"
+            yLabel="Revenue"
+          />
         </div>
       </div>
 
@@ -75,18 +76,19 @@
           </h3>
           <USelect
             v-model="userGrowthTimeframe"
-            :options="timeframeOptions"
+            :items="timeframeOptions"
             size="sm"
           />
         </div>
-        <div class="h-80 flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
-          <div class="text-center">
-            <Icon name="heroicons:chart-line" class="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p class="text-gray-500 dark:text-gray-400 text-lg">User Growth Chart</p>
-            <p class="text-gray-400 dark:text-gray-500 text-sm mt-2">
-              Mentors vs Mentees over time
-            </p>
-          </div>
+        <div class="chart-wrapper">
+          <LineChart
+            :data="userGrowthData"
+            :categories="userGrowthCategories"
+            :height="320"
+            :xFormatter="userGrowthXFormatter"
+            xLabel="Month"
+            yLabel="Users"
+          />
         </div>
       </div>
     </div>
@@ -410,4 +412,38 @@ useSeoMeta({
   title: 'Analytics - Admin Dashboard',
   description: 'Platform analytics and insights'
 })
+
+// Charts: Revenue Trends (dummy data)
+const revenueTrendData = [
+  { month: 'Jan', revenue: 1200, bookings: 40 },
+  { month: 'Feb', revenue: 1450, bookings: 48 },
+  { month: 'Mar', revenue: 1780, bookings: 57 },
+  { month: 'Apr', revenue: 1620, bookings: 51 },
+  { month: 'May', revenue: 1910, bookings: 63 },
+  { month: 'Jun', revenue: 2050, bookings: 67 }
+]
+
+const revenueTrendCategories = {
+  revenue: { name: 'Revenue', color: '#3b82f6' }, // blue-500
+  bookings: { name: 'Bookings', color: '#10b981' } // emerald-500
+}
+
+const revenueXFormatter = (i: number) => revenueTrendData[i]?.month ?? ''
+
+// Charts: User Growth (dummy data)
+const userGrowthData = [
+  { month: 'Jan', mentors: 420, mentees: 980 },
+  { month: 'Feb', mentors: 450, mentees: 1050 },
+  { month: 'Mar', mentors: 470, mentees: 1120 },
+  { month: 'Apr', mentors: 500, mentees: 1180 },
+  { month: 'May', mentors: 540, mentees: 1260 },
+  { month: 'Jun', mentors: 565, mentees: 1330 }
+]
+
+const userGrowthCategories = {
+  mentors: { name: 'Mentors', color: '#8b5cf6' }, // violet-500
+  mentees: { name: 'Mentees', color: '#f59e0b' }  // amber-500
+}
+
+const userGrowthXFormatter = (i: number) => userGrowthData[i]?.month ?? ''
 </script>

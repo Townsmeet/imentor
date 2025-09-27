@@ -42,13 +42,13 @@
         <div class="flex items-center space-x-4">
           <USelect
             v-model="selectedStatus"
-            :options="statusOptions"
+            :items="statusOptions"
             placeholder="All Status"
           />
           
           <USelect
             v-model="selectedTimeframe"
-            :options="timeframeOptions"
+            :items="timeframeOptions"
             placeholder="All Time"
           />
           
@@ -160,12 +160,12 @@
                 {{ formatDate(payment.createdAt) }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <UDropdown :items="getPaymentActions(payment)">
+                <UDropdownMenu :items="getPaymentActions(payment)">
                   <UButton
                     variant="ghost"
                     icon="heroicons:ellipsis-horizontal"
                   />
-                </UDropdown>
+                </UDropdownMenu>
               </td>
             </tr>
           </tbody>
@@ -351,8 +351,8 @@ interface Payment {
 
 // State
 const searchQuery = ref('')
-const selectedStatus = ref('')
-const selectedTimeframe = ref('')
+const selectedStatus = ref(null)
+const selectedTimeframe = ref(null)
 const currentPage = ref(1)
 const pageSize = 15
 const showDetailsModal = ref(false)
@@ -490,7 +490,7 @@ const payments = ref<Payment[]>([
 
 // Options
 const statusOptions = [
-  { label: 'All Status', value: '' },
+  { label: 'All Status', value: null },
   { label: 'Pending', value: 'pending' },
   { label: 'Processing', value: 'processing' },
   { label: 'Completed', value: 'completed' },
@@ -499,7 +499,7 @@ const statusOptions = [
 ]
 
 const timeframeOptions = [
-  { label: 'All Time', value: '' },
+  { label: 'All Time', value: null },
   { label: 'Last 7 days', value: '7d' },
   { label: 'Last 30 days', value: '30d' },
   { label: 'Last 90 days', value: '90d' },
@@ -520,11 +520,11 @@ const filteredPayments = computed(() => {
     )
   }
 
-  if (selectedStatus.value) {
+  if (selectedStatus.value && selectedStatus.value !== null) {
     filtered = filtered.filter(payment => payment.status === selectedStatus.value)
   }
 
-  if (selectedTimeframe.value) {
+  if (selectedTimeframe.value && selectedTimeframe.value !== null) {
     const now = new Date()
     const timeframe = selectedTimeframe.value
     let cutoffDate = new Date()

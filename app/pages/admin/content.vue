@@ -84,12 +84,12 @@
                 </UBadge>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <UDropdown :items="getCategoryActions(category)">
+                <UDropdownMenu :items="getCategoryActions(category)">
                   <UButton
                     variant="ghost"
                     icon="heroicons:ellipsis-horizontal"
                   />
-                </UDropdown>
+                </UDropdownMenu>
               </td>
             </tr>
           </tbody>
@@ -135,115 +135,35 @@
                 {{ skill.mentorCount }} mentors
               </p>
             </div>
-            <UDropdown :items="getSkillActions(skill)">
+            <UDropdownMenu :items="getSkillActions(skill)">
               <UButton
                 variant="ghost"
                 icon="heroicons:ellipsis-horizontal"
                 size="sm"
               />
-            </UDropdown>
+            </UDropdownMenu>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Settings Tab -->
-    <div v-if="activeTab === 'settings'">
-      <div class="mb-6">
-        <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Platform Settings</h2>
-        <p class="text-gray-600 dark:text-gray-400">Configure platform-wide settings</p>
-      </div>
-
-      <div class="space-y-6">
-        <!-- General Settings -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">General Settings</h3>
-          <div class="space-y-4">
-            <UFormField label="Platform Name">
-              <UInput v-model="settings.platformName" />
-            </UFormField>
-            
-            <UFormField label="Support Email">
-              <UInput v-model="settings.supportEmail" type="email" />
-            </UFormField>
-            
-            <UFormField label="Platform Commission (%)">
-              <UInput v-model="settings.commission" type="number" min="0" max="100" />
-            </UFormField>
-          </div>
-        </div>
-
-        <!-- Session Settings -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Session Settings</h3>
-          <div class="space-y-4">
-            <UFormField label="Minimum Session Duration (minutes)">
-              <UInput v-model="settings.minSessionDuration" type="number" min="15" />
-            </UFormField>
-            
-            <UFormField label="Maximum Session Duration (hours)">
-              <UInput v-model="settings.maxSessionDuration" type="number" min="1" />
-            </UFormField>
-            
-            <UFormField label="Cancellation Window (hours)">
-              <UInput v-model="settings.cancellationWindow" type="number" min="1" />
-            </UFormField>
-          </div>
-        </div>
-
-        <!-- Payment Settings -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Payment Settings</h3>
-          <div class="space-y-4">
-            <UFormField label="Stripe Publishable Key">
-              <UInput v-model="settings.stripePublishableKey" type="password" />
-            </UFormField>
-            
-            <UFormField label="Payout Schedule">
-              <USelect
-                v-model="settings.payoutSchedule"
-                :options="payoutScheduleOptions"
-              />
-            </UFormField>
-            
-            <UFormField label="Minimum Payout Amount">
-              <UInput v-model="settings.minPayoutAmount" type="number" min="0" />
-            </UFormField>
-          </div>
-        </div>
-
-        <!-- Save Button -->
-        <div class="flex justify-end">
-          <UButton
-            @click="saveSettings"
-            :loading="isSaving"
-          >
-            Save Settings
-          </UButton>
-        </div>
-      </div>
-    </div>
 
     <!-- Category Modal -->
     <UModal v-model:open="showCategoryModal" title="Add Category">
       <template #body>
         <form @submit.prevent="saveCategory" class="space-y-4">
           <UFormField label="Category Name" required>
-            <UInput v-model="newCategory.name" placeholder="e.g. Software Development" />
+            <UInput v-model="newCategory.name" placeholder="e.g. Software Development" class="w-full" />
           </UFormField>
           
           <UFormField label="Description" required>
-            <UTextarea v-model="newCategory.description" placeholder="Brief description of this category" />
-          </UFormField>
-          
-          <UFormField label="Icon">
-            <UInput v-model="newCategory.icon" placeholder="heroicons:code-bracket" />
+            <UTextarea v-model="newCategory.description" placeholder="Brief description of this category" class="w-full" />
           </UFormField>
         </form>
       </template>
       
       <template #footer="{ close }">
-        <div class="flex justify-end space-x-3">
+        <div class="w-full flex justify-end gap-3">
           <UButton variant="ghost" @click="close">Cancel</UButton>
           <UButton @click="saveCategory" :loading="isSavingCategory">Save Category</UButton>
         </div>
@@ -255,21 +175,22 @@
       <template #body>
         <form @submit.prevent="saveSkill" class="space-y-4">
           <UFormField label="Skill Name" required>
-            <UInput v-model="newSkill.name" placeholder="e.g. JavaScript" />
+            <UInput v-model="newSkill.name" placeholder="e.g. JavaScript" class="w-full" />
           </UFormField>
           
           <UFormField label="Category">
             <USelect
               v-model="newSkill.categoryId"
-              :options="categoryOptions"
+              :items="categoryOptions"
               placeholder="Select a category"
+              class="w-full"
             />
           </UFormField>
         </form>
       </template>
       
       <template #footer="{ close }">
-        <div class="flex justify-end space-x-3">
+        <div class="w-full flex justify-end gap-3">
           <UButton variant="ghost" @click="close">Cancel</UButton>
           <UButton @click="saveSkill" :loading="isSavingSkill">Save Skill</UButton>
         </div>
@@ -289,7 +210,6 @@ const activeTab = ref('categories')
 const showCategoryModal = ref(false)
 const showSkillModal = ref(false)
 const skillSearchQuery = ref('')
-const isSaving = ref(false)
 const isSavingCategory = ref(false)
 const isSavingSkill = ref(false)
 
@@ -301,26 +221,15 @@ const newCategory = reactive({
 
 const newSkill = reactive({
   name: '',
-  categoryId: ''
+  categoryId: '1'
 })
 
-const settings = reactive({
-  platformName: 'iMentor',
-  supportEmail: 'support@imentor.com',
-  commission: 10,
-  minSessionDuration: 30,
-  maxSessionDuration: 4,
-  cancellationWindow: 24,
-  stripePublishableKey: '',
-  payoutSchedule: 'weekly',
-  minPayoutAmount: 50
-})
+// Settings removed
 
 // Tabs
 const tabs = [
   { id: 'categories', name: 'Categories' },
-  { id: 'skills', name: 'Skills' },
-  { id: 'settings', name: 'Settings' }
+  { id: 'skills', name: 'Skills' }
 ]
 
 // Mock data
@@ -382,12 +291,7 @@ const skills = ref([
   { id: '12', name: 'Data Analysis', categoryId: '5', mentorCount: 11 }
 ])
 
-// Options
-const payoutScheduleOptions = [
-  { label: 'Daily', value: 'daily' },
-  { label: 'Weekly', value: 'weekly' },
-  { label: 'Monthly', value: 'monthly' }
-]
+// Options: removed settings-related options
 
 // Computed
 const filteredSkills = computed(() => {
@@ -400,7 +304,7 @@ const filteredSkills = computed(() => {
 })
 
 const categoryOptions = computed(() => [
-  { label: 'Select a category', value: '' },
+  { label: 'Select a category', value: null },
   ...categories.value.map(cat => ({
     label: cat.name,
     value: cat.id
@@ -517,20 +421,11 @@ const deleteSkill = (skillId: string) => {
   }
 }
 
-const saveSettings = async () => {
-  isSaving.value = true
-  try {
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    // Save settings to backend
-    console.log('Settings saved:', settings)
-  } finally {
-    isSaving.value = false
-  }
-}
+// Settings save handler removed
 
 // SEO
 useSeoMeta({
   title: 'Content Management - Admin Dashboard',
-  description: 'Manage categories, skills, and platform settings'
+  description: 'Manage categories and skills'
 })
 </script>

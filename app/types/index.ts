@@ -1,6 +1,16 @@
 export type UserRole = 'mentor' | 'mentee' | 'admin'
 export type SessionStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled'
 
+export interface AdminUser extends User {
+  status: 'active' | 'pending' | 'suspended'
+  lastActive: Date
+  stats?: {
+    sessions?: number
+    rating?: number
+    revenue?: number
+  }
+}
+
 export interface User {
   id: string
   email: string
@@ -40,6 +50,27 @@ export interface TimeSlot {
   startTime: string // HH:MM format
   endTime: string // HH:MM format
   isAvailable: boolean
+}
+
+export interface AdminSession {
+  id: string
+  title: string
+  mentor: {
+    name: string
+    avatar: string
+  }
+  mentee: {
+    name: string
+    avatar: string
+  }
+  date: Date
+  time: string
+  duration: number // hours
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
+  amount: number
+  description?: string
+  paymentId?: string
+  createdAt: Date
 }
 
 export interface Session {

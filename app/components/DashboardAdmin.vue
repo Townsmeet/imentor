@@ -163,18 +163,18 @@
                 
                 <div class="flex items-center space-x-2">
                   <UBadge
-                    :color="user.status === 'active' ? 'green' : 'gray'"
+                    :color="user.status === 'active' ? 'success' : 'neutral'"
                     variant="soft"
                   >
                     {{ user.status }}
                   </UBadge>
-                  <UDropdown :items="getUserActions(user)">
+                  <UDropdownMenu :items="getUserActions(user)">
                     <UButton
                       icon="heroicons:ellipsis-vertical"
                       variant="ghost"
                       size="sm"
                     />
-                  </UDropdown>
+                  </UDropdownMenu>
                 </div>
               </div>
             </div>
@@ -193,7 +193,7 @@
           <div class="space-y-4">
             <div class="flex items-center justify-between">
               <span class="text-sm text-gray-600 dark:text-gray-400">System Status</span>
-              <UBadge color="green" variant="soft">Operational</UBadge>
+              <UBadge color="success" variant="soft">Operational</UBadge>
             </div>
             
             <div class="flex items-center justify-between">
@@ -203,7 +203,7 @@
             
             <div class="flex items-center justify-between">
               <span class="text-sm text-gray-600 dark:text-gray-400">Database</span>
-              <UBadge color="green" variant="soft">Healthy</UBadge>
+              <UBadge color="success" variant="soft">Healthy</UBadge>
             </div>
             
             <div class="flex items-center justify-between">
@@ -289,7 +289,7 @@
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
               Pending Approvals
             </h3>
-            <UBadge color="orange" variant="soft">{{ pendingApprovals }}</UBadge>
+            <UBadge color="warning" variant="soft">{{ pendingApprovals }}</UBadge>
           </div>
           
           <div class="space-y-3">

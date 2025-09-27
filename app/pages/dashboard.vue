@@ -23,14 +23,15 @@
             </p>
           </div>
           
-          <UButton
-            to="/profile/edit"
-            icon="heroicons:pencil"
-            variant="outline"
-            class="hidden sm:flex"
-          >
-            Edit Profile
-          </UButton>
+          <div class="hidden sm:flex items-center">
+            <UButton
+              to="/profile/edit"
+              icon="heroicons:pencil"
+              variant="outline"
+            >
+              Edit Profile
+            </UButton>
+          </div>
         </div>
       </div>
 
@@ -311,6 +312,39 @@
       </div>
     </div>
     </div>
+
+    <!-- Notifications Modal -->
+    <UModal v-model:open="showNotifications" title="Notifications">
+      <template #body>
+        <div class="space-y-4">
+          <div
+            v-for="notification in notifications"
+            :key="notification.id"
+            class="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+          >
+            <Icon
+              :name="notification.icon"
+              :class="[
+                'w-5 h-5 mt-0.5',
+                notification.type === 'warning' ? 'text-yellow-500' : 
+                notification.type === 'error' ? 'text-red-500' : 'text-blue-500'
+              ]"
+            />
+            <div class="flex-1">
+              <p class="text-sm font-medium text-gray-900 dark:text-white">
+                {{ notification.title }}
+              </p>
+              <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                {{ notification.message }}
+              </p>
+              <p class="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                {{ formatTimeAgo(notification.timestamp) }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
 
@@ -340,6 +374,46 @@ const currentUser = computed(() => {
 })
 
 // Mock data - replace with actual API calls later
+type NotificationType = 'info' | 'warning' | 'error'
+interface NotificationItem {
+  id: string
+  type: NotificationType
+  icon: string
+  title: string
+  message: string
+  timestamp: Date
+}
+
+// Shared notifications state with header bell
+const showNotifications = useState<boolean>('notifications-open', () => false)
+const notificationCount = ref(3)
+const notifications = ref<NotificationItem[]>([
+  {
+    id: '1',
+    type: 'info',
+    icon: 'heroicons:information-circle',
+    title: 'Welcome to your dashboard',
+    message: 'Check out the latest updates and sessions',
+    timestamp: new Date(Date.now() - 60 * 60 * 1000)
+  },
+  {
+    id: '2',
+    type: 'warning',
+    icon: 'heroicons:exclamation-triangle',
+    title: 'Payment method expiring soon',
+    message: 'Update your payment method to avoid interruptions',
+    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000)
+  },
+  {
+    id: '3',
+    type: 'error',
+    icon: 'heroicons:x-circle',
+    title: 'Failed to process booking',
+    message: 'There was an error processing your recent booking',
+    timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000)
+  }
+])
+
 const upcomingSessions = ref(2)
 const completedSessions = ref(8)
 const unreadMessages = ref(3)

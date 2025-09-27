@@ -22,7 +22,7 @@
               v-model="searchQuery"
               placeholder="Search conversations..."
               icon="heroicons:magnifying-glass"
-              size="sm"
+              class="w-full"
             />
           </div>
 
@@ -117,18 +117,7 @@
                 </div>
                 
                 <div class="flex items-center space-x-2">
-                  <UButton
-                    icon="heroicons:video-camera"
-                    variant="ghost"
-                    size="sm"
-                    @click="startVideoCall"
-                  />
-                  <UButton
-                    icon="heroicons:phone"
-                    variant="ghost"
-                    size="sm"
-                    @click="startAudioCall"
-                  />
+                  <!-- Video and audio call buttons removed -->
                 </div>
               </div>
             </div>
@@ -199,52 +188,83 @@
     </div>
 
     <!-- New Message Modal -->
-    <UModal v-model="showNewMessageModal">
-      <div class="p-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          New Message
-        </h3>
-        
-        <div class="space-y-4">
-          <UFormField label="Recipient" required>
-            <USelectMenu
-              v-model="newMessageForm.recipient"
-              :options="availableContacts"
-              placeholder="Select a contact"
-              searchable
-            />
-          </UFormField>
+    <UModal v-model:open="showNewMessageModal" :overlay="true" :prevent-body-scroll="true">
+      <template #content>
+        <div class="p-6">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            New Message
+          </h3>
           
-          <UFormField label="Message" required>
-            <UTextarea
-              v-model="newMessageForm.content"
-              placeholder="Type your message..."
-              :rows="4"
-            />
-          </UFormField>
+          <div class="space-y-4">
+            <UFormField label="Recipient" required>
+              <USelectMenu
+                v-model="newMessageForm.recipient"
+                :options="availableContacts"
+                placeholder="Select a contact"
+                searchable
+                class="w-full"
+              />
+            </UFormField>
+            
+            <UFormField label="Message" required>
+              <UTextarea
+                v-model="newMessageForm.content"
+                placeholder="Type your message..."
+                :rows="4"
+                class="w-full"
+              />
+            </UFormField>
+          </div>
+          
+          <div class="flex justify-end space-x-3 mt-6">
+            <UButton
+              variant="ghost"
+              @click="showNewMessageModal = false"
+            >
+              Cancel
+            </UButton>
+            <UButton
+              @click="createNewConversation"
+              :loading="isCreatingConversation"
+              :disabled="!newMessageForm.recipient || !newMessageForm.content.trim()"
+            >
+              Send Message
+            </UButton>
+          </div>
         </div>
-        
-        <div class="flex justify-end space-x-3 mt-6">
-          <UButton
-            variant="ghost"
-            @click="showNewMessageModal = false"
-          >
-            Cancel
-          </UButton>
-          <UButton
-            @click="createNewConversation"
-            :loading="isCreatingConversation"
-            :disabled="!newMessageForm.recipient || !newMessageForm.content.trim()"
-          >
-            Send Message
-          </UButton>
-        </div>
-      </div>
+      </template>
     </UModal>
   </div>
 </template>
 
 <script setup lang="ts">
+interface Conversation {
+  id: string
+  otherParticipant: {
+    id: string
+    name: string
+    avatar: string
+    role: string
+  }
+  lastMessage: {
+    id: string
+    content: string
+    timestamp: Date
+    senderId: string
+  }
+  unreadCount: number
+  updatedAt: Date
+}
+
+interface Message {
+  id: string
+  conversationId: string
+  senderId?: string
+  content: string
+  timestamp: Date
+  isRead: boolean
+}
+
 definePageMeta({
   middleware: 'auth'
 })
@@ -254,22 +274,22 @@ const route = useRoute()
 const toast = useToast()
 
 const searchQuery = ref('')
-const selectedConversation = ref(null)
+const selectedConversation = ref<Conversation | null>(null)
 const newMessage = ref('')
 const isSending = ref(false)
 const isTyping = ref(false)
 const showNewMessageModal = ref(false)
 const isCreatingConversation = ref(false)
 
-const messagesContainer = ref(null)
+const messagesContainer = ref<HTMLElement | null>(null)
 
 const newMessageForm = reactive({
-  recipient: null,
+  recipient: null as string | null,
   content: ''
 })
 
 // Mock data - replace with actual API calls
-const conversations = ref([
+const conversations = ref<Conversation[]>([
   {
     id: '1',
     otherParticipant: {
@@ -306,7 +326,7 @@ const conversations = ref([
   }
 ])
 
-const messages = ref([
+const messages = ref<Message[]>([
   {
     id: '1',
     conversationId: '1',
@@ -359,11 +379,11 @@ const selectedConversationMessages = computed(() => {
   if (!selectedConversation.value) return []
   
   return messages.value
-    .filter(msg => msg.conversationId === selectedConversation.value.id)
+    .filter(msg => msg.conversationId === selectedConversation.value!.id)
     .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
 })
 
-const selectConversation = (conversation) => {
+const selectConversation = (conversation: Conversation) => {
   selectedConversation.value = conversation
   
   // Mark messages as read
@@ -385,8 +405,8 @@ const sendMessage = async () => {
   try {
     const message = {
       id: Date.now().toString(),
-      conversationId: selectedConversation.value.id,
-      senderId: user.value?.id,
+      conversationId: selectedConversation.value!.id,
+      senderId: user.value?.id || '',
       content: newMessage.value.trim(),
       timestamp: new Date(),
       isRead: false
@@ -396,8 +416,8 @@ const sendMessage = async () => {
     messages.value.push(message)
     
     // Update conversation's last message
-    selectedConversation.value.lastMessage = message
-    selectedConversation.value.updatedAt = new Date()
+    selectedConversation.value!.lastMessage = message
+    selectedConversation.value!.updatedAt = new Date()
     
     // Clear input
     newMessage.value = ''
@@ -420,16 +440,16 @@ const sendMessage = async () => {
         
         const response = {
           id: (Date.now() + 1).toString(),
-          conversationId: selectedConversation.value.id,
-          senderId: selectedConversation.value.otherParticipant.id,
+          conversationId: selectedConversation.value!.id,
+          senderId: selectedConversation.value!.otherParticipant.id,
           content: 'Thanks for your message! I\'ll get back to you soon.',
           timestamp: new Date(),
           isRead: false
         }
         
         messages.value.push(response)
-        selectedConversation.value.lastMessage = response
-        selectedConversation.value.unreadCount = 1
+        selectedConversation.value!.lastMessage = response
+        selectedConversation.value!.unreadCount = 1
         
         nextTick(() => {
           if (messagesContainer.value) {
@@ -443,31 +463,29 @@ const sendMessage = async () => {
     toast.add({
       title: 'Error',
       description: 'Failed to send message. Please try again.',
-      color: 'red'
+      color: 'error'
     })
   } finally {
     isSending.value = false
   }
 }
 
-const handleTyping = () => {
-  // Simulate typing indicator logic
-}
-
-const startVideoCall = () => {
-  toast.add({
-    title: 'Video Call',
-    description: 'Video calling feature will be available soon.',
-    color: 'blue'
-  })
-}
-
-const startAudioCall = () => {
-  toast.add({
-    title: 'Audio Call',
-    description: 'Audio calling feature will be available soon.',
-    color: 'blue'
-  })
+const handleTyping = async () => {
+  isTyping.value = true
+  
+  try {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+  } catch (error) {
+    toast.add({
+      title: 'Error',
+      description: 'Failed to send message. Please try again.',
+      color: 'error'
+    })
+  } finally {
+    isTyping.value = false
+  }
 }
 
 const createNewConversation = async () => {
@@ -481,8 +499,8 @@ const createNewConversation = async () => {
     const newConv = {
       id: Date.now().toString(),
       otherParticipant: {
-        id: newMessageForm.recipient,
-        name: availableContacts.find(c => c.value === newMessageForm.recipient)?.label,
+        id: newMessageForm.recipient || '',
+        name: availableContacts.find(c => c.value === newMessageForm.recipient)?.label || '',
         avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
         role: 'mentor'
       },
@@ -490,7 +508,7 @@ const createNewConversation = async () => {
         id: Date.now().toString(),
         content: newMessageForm.content,
         timestamp: new Date(),
-        senderId: user.value?.id
+        senderId: user.value?.id || ''
       },
       unreadCount: 0,
       updatedAt: new Date()
@@ -512,7 +530,7 @@ const createNewConversation = async () => {
     toast.add({
       title: 'Message Sent',
       description: 'Your message has been sent successfully.',
-      color: 'green'
+      color: 'success'
     })
     
     showNewMessageModal.value = false
@@ -523,14 +541,14 @@ const createNewConversation = async () => {
     toast.add({
       title: 'Error',
       description: 'Failed to send message. Please try again.',
-      color: 'red'
+      color: 'error'
     })
   } finally {
     isCreatingConversation.value = false
   }
 }
 
-const formatMessageTime = (timestamp) => {
+const formatMessageTime = (timestamp: Date) => {
   if (!timestamp) return ''
   
   const now = new Date()
@@ -554,15 +572,16 @@ onMounted(() => {
   
   if (mentorId || userId) {
     const targetId = mentorId || userId
+    const targetIdStr = (Array.isArray(targetId) ? targetId[0] : targetId) as string
     const existingConv = conversations.value.find(
-      conv => conv.otherParticipant.id === targetId
+      conv => conv.otherParticipant.id === targetIdStr
     )
     
     if (existingConv) {
       selectConversation(existingConv)
     } else {
       // Open new message modal with pre-selected recipient
-      newMessageForm.recipient = targetId
+      newMessageForm.recipient = targetIdStr
       showNewMessageModal.value = true
     }
   }

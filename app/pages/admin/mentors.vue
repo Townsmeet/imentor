@@ -200,14 +200,14 @@
                 {{ formatDate(mentor.joinedAt) }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <UDropdown :items="getMentorActions(mentor)">
+                <UDropdownMenu :items="getMentorActions(mentor)">
                   <UButton
                     variant="ghost"
                     color="neutral"
                     icon="heroicons:ellipsis-horizontal"
                     size="sm"
                   />
-                </UDropdown>
+                </UDropdownMenu>
               </td>
             </tr>
           </tbody>
@@ -433,9 +433,9 @@ interface Mentor {
 }
 
 const searchQuery = ref('')
-const statusFilter = ref('')
-const categoryFilter = ref('')
-const ratingFilter = ref('')
+const statusFilter = ref(null )
+const categoryFilter = ref(null)
+const ratingFilter = ref(null)
 const currentPage = ref(1)
 const pageSize = 10
 const showMentorModal = ref(false)
@@ -443,14 +443,14 @@ const selectedMentor = ref<Mentor | null>(null)
 
 // Filter options
 const statusOptions = [
-  { label: 'All Statuses', value: '' },
+  { label: 'All Statuses', value: null },
   { label: 'Verified', value: 'verified' },
   { label: 'Pending Review', value: 'pending' },
   { label: 'Suspended', value: 'suspended' }
 ]
 
 const categoryOptions = [
-  { label: 'All Categories', value: '' },
+  { label: 'All Categories', value: null },
   { label: 'Software Development', value: 'Software Development' },
   { label: 'Product Management', value: 'Product Management' },
   { label: 'Design', value: 'Design' },
@@ -459,7 +459,7 @@ const categoryOptions = [
 ]
 
 const ratingOptions = [
-  { label: 'All Ratings', value: '' },
+  { label: 'All Ratings', value: null },
   { label: '4.5+ Stars', value: '4.5' },
   { label: '4.0+ Stars', value: '4.0' },
   { label: '3.5+ Stars', value: '3.5' },
@@ -581,15 +581,15 @@ const filteredMentors = computed(() => {
     )
   }
 
-  if (statusFilter.value) {
+  if (statusFilter.value && statusFilter.value !== null) {
     filtered = filtered.filter(mentor => mentor.status === statusFilter.value)
   }
 
-  if (categoryFilter.value) {
+  if (categoryFilter.value && categoryFilter.value !== null) {
     filtered = filtered.filter(mentor => mentor.category === categoryFilter.value)
   }
 
-  if (ratingFilter.value) {
+  if (ratingFilter.value && ratingFilter.value !== null) {
     const rating = parseFloat(ratingFilter.value)
     if (ratingFilter.value === '3.5-below') {
       filtered = filtered.filter(mentor => mentor.rating < 3.5)

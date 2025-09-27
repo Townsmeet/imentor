@@ -14,13 +14,13 @@
         <div class="flex items-center space-x-4">
           <USelect
             v-model="selectedStatus"
-            :options="statusOptions"
+            :items="statusOptions"
             placeholder="All Status"
           />
           
           <USelect
             v-model="selectedMentor"
-            :options="mentorOptions"
+            :items="mentorOptions"
             placeholder="All Mentors"
           />
           
@@ -48,7 +48,7 @@
           <UFormField label="Duration">
             <USelect
               v-model="selectedDuration"
-              :options="durationOptions"
+              :items="durationOptions"
               placeholder="Any duration"
             />
           </UFormField>
@@ -167,12 +167,12 @@
                 ${{ session.amount }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <UDropdown :items="getSessionActions(session)">
+                <UDropdownMenu :items="getSessionActions(session)">
                   <UButton
                     variant="ghost"
                     icon="heroicons:ellipsis-horizontal"
                   />
-                </UDropdown>
+                </UDropdownMenu>
               </td>
             </tr>
           </tbody>
@@ -307,6 +307,8 @@
 </template>
 
 <script setup lang="ts">
+import type { AdminSession } from '~/types'
+
 definePageMeta({
   middleware: 'admin',
   layout: false
@@ -314,19 +316,19 @@ definePageMeta({
 
 // State
 const searchQuery = ref('')
-const selectedStatus = ref('')
-const selectedMentor = ref('')
-const selectedDuration = ref('')
+const selectedStatus = ref(null)
+const selectedMentor = ref(null)
+const selectedDuration = ref(null)
 const dateRange = ref('')
 const priceRange = ref('')
 const showFilters = ref(false)
 const currentPage = ref(1)
 const pageSize = 15
 const showDetailsModal = ref(false)
-const selectedSession = ref(null)
+const selectedSession = ref<AdminSession | null>(null)
 
 // Mock data
-const sessions = ref([
+const sessions = ref<AdminSession[]>([
   {
     id: 'SES-001',
     title: 'Career Growth Discussion',
@@ -341,12 +343,12 @@ const sessions = ref([
     date: new Date('2024-01-25'),
     time: '2:00 PM',
     duration: 1,
-    status: 'confirmed',
+    status: 'confirmed' as const,
     amount: 75,
     description: 'Discussing career advancement strategies and goal setting',
     paymentId: 'PAY-12345',
     createdAt: new Date('2024-01-20')
-  },
+  } as AdminSession,
   {
     id: 'SES-002',
     title: 'Technical Interview Prep',
@@ -361,12 +363,12 @@ const sessions = ref([
     date: new Date('2024-01-26'),
     time: '10:00 AM',
     duration: 1.5,
-    status: 'pending',
+    status: 'pending' as const,
     amount: 135,
     description: 'Mock technical interviews and coding practice',
     paymentId: 'PAY-12346',
     createdAt: new Date('2024-01-21')
-  },
+  } as AdminSession,
   {
     id: 'SES-003',
     title: 'UX Design Review',
@@ -381,12 +383,12 @@ const sessions = ref([
     date: new Date('2024-01-24'),
     time: '3:30 PM',
     duration: 1,
-    status: 'completed',
+    status: 'completed' as const,
     amount: 65,
     description: 'Portfolio review and design feedback session',
     paymentId: 'PAY-12347',
     createdAt: new Date('2024-01-19')
-  },
+  } as AdminSession,
   {
     id: 'SES-004',
     title: 'Startup Strategy Session',
@@ -401,17 +403,17 @@ const sessions = ref([
     date: new Date('2024-01-27'),
     time: '1:00 PM',
     duration: 2,
-    status: 'cancelled',
+    status: 'cancelled' as const,
     amount: 150,
     description: 'Business model validation and go-to-market strategy',
     paymentId: 'PAY-12348',
     createdAt: new Date('2024-01-22')
-  }
+  } as AdminSession
 ])
 
 // Options
 const statusOptions = [
-  { label: 'All Status', value: '' },
+  { label: 'All Status', value: null },
   { label: 'Pending', value: 'pending' },
   { label: 'Confirmed', value: 'confirmed' },
   { label: 'Completed', value: 'completed' },
@@ -419,13 +421,13 @@ const statusOptions = [
 ]
 
 const mentorOptions = computed(() => [
-  { label: 'All Mentors', value: '' },
+  { label: 'All Mentors', value: null },
   ...Array.from(new Set(sessions.value.map(s => s.mentor.name)))
     .map(name => ({ label: name, value: name }))
 ])
 
 const durationOptions = [
-  { label: 'Any duration', value: '' },
+  { label: 'Any duration', value: null },
   { label: '30 minutes', value: '0.5' },
   { label: '1 hour', value: '1' },
   { label: '1.5 hours', value: '1.5' },
@@ -446,11 +448,11 @@ const filteredSessions = computed(() => {
     )
   }
 
-  if (selectedStatus.value) {
+  if (selectedStatus.value && selectedStatus.value !== null) {
     filtered = filtered.filter(session => session.status === selectedStatus.value)
   }
 
-  if (selectedMentor.value) {
+  if (selectedMentor.value && selectedMentor.value !== null) {
     filtered = filtered.filter(session => session.mentor.name === selectedMentor.value)
   }
 
@@ -476,15 +478,15 @@ const formatDate = (date: Date) => {
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'confirmed': return 'green'
-    case 'pending': return 'yellow'
-    case 'completed': return 'blue'
-    case 'cancelled': return 'red'
-    default: return 'gray'
+    case 'confirmed': return 'success'
+    case 'pending': return 'warning'
+    case 'completed': return 'primary'
+    case 'cancelled': return 'error'
+    default: return 'neutral'
   }
 }
 
-const getSessionActions = (session: any) => [
+const getSessionActions = (session: AdminSession) => [
   [{
     label: 'View Details',
     icon: 'heroicons:eye',
@@ -512,14 +514,19 @@ const getSessionActions = (session: any) => [
 const updateSessionStatus = (sessionId: string, newStatus: string) => {
   const session = sessions.value.find(s => s.id === sessionId)
   if (session) {
-    session.status = newStatus
+    session.status = newStatus as AdminSession['status']
     showDetailsModal.value = false
   }
 }
 
 const exportSessions = () => {
+  if (filteredSessions.value.length === 0) {
+    alert('No sessions to export')
+    return
+  }
+
   // Create CSV data
-  const csvData = filteredSessions.value.map(session => ({
+  const csvData = filteredSessions.value.map((session: AdminSession) => ({
     ID: session.id,
     Title: session.title,
     Mentor: session.mentor.name,
@@ -532,8 +539,8 @@ const exportSessions = () => {
   }))
 
   // Convert to CSV string
-  const headers = Object.keys(csvData[0]).join(',')
-  const rows = csvData.map(row => Object.values(row).join(',')).join('\n')
+  const headers = Object.keys(csvData[0]!).join(',')
+  const rows = csvData.map(row => Object.values(row!).join(',')).join('\n')
   const csv = `${headers}\n${rows}`
 
   // Download

@@ -22,6 +22,7 @@
             Dashboard
           </NuxtLink>
           <NuxtLink 
+            v-if="user?.role === 'mentee'"
             to="/mentors" 
             class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
             active-class="text-blue-600 dark:text-blue-400"
@@ -61,6 +62,7 @@
             color="neutral"
             size="sm"
             class="relative"
+            @click="notificationsOpen = true"
           >
             <span v-if="notificationCount > 0" class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
           </UButton>
@@ -111,6 +113,7 @@
             Dashboard
           </NuxtLink>
           <NuxtLink 
+            v-if="user?.role === 'mentee'"
             to="/mentors" 
             class="px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors rounded-md"
             active-class="text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
@@ -155,6 +158,9 @@ import { UDropdownMenu } from '#components'
 
 const { user, logout } = useAuth()
 const isMobileMenuOpen = ref(false)
+
+// Shared notifications modal state across pages
+const notificationsOpen = useState<boolean>('notifications-open', () => false)
 
 // Mock data - replace with actual data later
 const unreadCount = ref(2)

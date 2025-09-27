@@ -1,3 +1,4 @@
+import { ref, reactive, computed, readonly, toRef } from 'vue'
 import type { AuthState, User, UserRole } from '~/types'
 
 export const useAuth = () => {
@@ -15,11 +16,11 @@ export const useAuth = () => {
       // Simulate API call - replace with actual API integration later
       await new Promise(resolve => setTimeout(resolve, 1000))
       
-      // Mock user data - replace with actual API response
+      // Mock user data - replace with actual API integration later
       // Determine role based on email for testing
       let role: UserRole = 'mentee'
-      if (email.includes('mentor')) role = 'mentor'
-      if (email.includes('admin')) role = 'admin'
+      if (email.includes('mentor') || email.includes('teacher') || email.includes('coach')) role = 'mentor'
+      if (email.includes('admin') || email.includes('administrator') || email.includes('root') || email.includes('super')) role = 'admin'
       
       const mockUser: User = {
         id: '1',
@@ -141,6 +142,27 @@ export const useAuth = () => {
     }
   }
 
+  const createAdminUser = () => {
+    const adminUser: User = {
+      id: 'admin-1',
+      email: 'admin@imentor.com',
+      firstName: 'Admin',
+      lastName: 'User',
+      role: 'admin',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    
+    authState.value.user = adminUser
+    authState.value.isAuthenticated = true
+    authState.value.hasCompletedOnboarding = true
+    
+    if (process.client) {
+      localStorage.setItem('auth-user', JSON.stringify(adminUser))
+      localStorage.setItem('has-completed-onboarding', 'true')
+    }
+  }
+
   return {
     user: readonly(toRef(authState.value, 'user')),
     isAuthenticated: readonly(toRef(authState.value, 'isAuthenticated')),
@@ -151,6 +173,7 @@ export const useAuth = () => {
     logout,
     initializeAuth,
     requireAuth,
-    completeOnboarding
+    completeOnboarding,
+    createAdminUser
   }
 }

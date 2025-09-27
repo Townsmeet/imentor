@@ -14,13 +14,13 @@
         <div class="flex items-center space-x-4">
           <USelect
             v-model="selectedRole"
-            :options="roleOptions"
+            :items="roleOptions"
             placeholder="All Roles"
           />
           
           <USelect
             v-model="selectedStatus"
-            :options="statusOptions"
+            :items="statusOptions"
             placeholder="All Status"
           />
           
@@ -87,7 +87,7 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <UBadge
-                  :color="user.role === 'mentor' ? 'blue' : user.role === 'mentee' ? 'green' : 'purple'"
+                  :color="user.role === 'mentor' ? 'primary' : user.role === 'mentee' ? 'success' : 'warning'"
                   variant="soft"
                 >
                   {{ user.role }}
@@ -95,7 +95,7 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <UBadge
-                  :color="user.status === 'active' ? 'green' : user.status === 'pending' ? 'yellow' : 'red'"
+                  :color="user.status === 'active' ? 'success' : user.status === 'pending' ? 'warning' : 'error'"
                   variant="soft"
                 >
                   {{ user.status }}
@@ -108,12 +108,12 @@
                 {{ formatDate(user.lastActive) }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <UDropdown :items="getUserActions(user)">
+                <UDropdownMenu :items="getUserActions(user)">
                   <UButton
                     variant="ghost"
                     icon="heroicons:ellipsis-horizontal"
                   />
-                </UDropdown>
+                </UDropdownMenu>
               </td>
             </tr>
           </tbody>
@@ -167,7 +167,7 @@
           <UFormField label="Role" required>
             <USelect
               v-model="newUser.role"
-              :options="[
+              :items="[
                 { label: 'Mentee', value: 'mentee' },
                 { label: 'Mentor', value: 'mentor' },
                 { label: 'Admin', value: 'admin' }
@@ -176,7 +176,7 @@
           </UFormField>
           
           <UFormField label="Password" required>
-            <UInput v-model="newUser.password" type="password" placeholder="••••••••" />
+            <UInput v-model="newUserPassword" type="password" placeholder="••••••••" />
           </UFormField>
         </form>
       </template>
@@ -184,7 +184,7 @@
       <template #footer="{ close }">
         <div class="flex justify-end space-x-3">
           <UButton variant="ghost" @click="close">Cancel</UButton>
-          <UButton @click="createUser" :loading="isCreating">Create User</UButton>
+          <UButton @click="createUser" :loading="isCreatingValue">Create User</UButton>
         </div>
       </template>
     </UModal>
@@ -205,10 +205,10 @@
               </h3>
               <p class="text-gray-600 dark:text-gray-400">{{ selectedUser.email }}</p>
               <div class="flex items-center space-x-2 mt-2">
-                <UBadge :color="selectedUser.role === 'mentor' ? 'blue' : 'green'" variant="soft">
+                <UBadge :color="selectedUser.role === 'mentor' ? 'primary' : 'success'" variant="soft">
                   {{ selectedUser.role }}
                 </UBadge>
-                <UBadge :color="selectedUser.status === 'active' ? 'green' : 'yellow'" variant="soft">
+                <UBadge :color="selectedUser.status === 'active' ? 'success' : selectedUser.status === 'pending' ? 'warning' : 'error'" variant="soft">
                   {{ selectedUser.status }}
                 </UBadge>
               </div>
@@ -252,7 +252,7 @@
 </template>
 
 <script setup lang="ts">
-import type { User } from '~/types'
+import type { AdminUser, UserRole } from '~/types'
 
 definePageMeta({
   middleware: 'admin',
@@ -261,25 +261,28 @@ definePageMeta({
 
 // State
 const searchQuery = ref('')
-const selectedRole = ref('')
-const selectedStatus = ref('')
+const selectedRole = ref(null)
+const selectedStatus = ref(null)
 const currentPage = ref(1)
 const pageSize = 10
 const showCreateModal = ref(false)
 const showDetailsModal = ref(false)
-const selectedUser = ref<User | null>(null)
-const isCreating = ref(false)
+const selectedUser = ref<AdminUser | null>(null)
+const newUserPassword = ref('')
+const isCreating = ref(false) // Loading state for user creation
 
-const newUser = reactive({
+// For template binding, create a computed that returns the value
+const isCreatingValue = computed(() => isCreating.value)
+
+const newUser = reactive<{ firstName: string; lastName: string; email: string; role: UserRole }>({
   firstName: '',
   lastName: '',
   email: '',
-  role: 'mentee',
-  password: ''
+  role: 'mentee'
 })
 
 // Mock data
-const users = ref<(User & { status: string; lastActive: Date; stats?: any })[]>([
+const users = ref<AdminUser[]>([
   {
     id: '1',
     email: 'sarah.chen@example.com',
@@ -335,14 +338,14 @@ const users = ref<(User & { status: string; lastActive: Date; stats?: any })[]>(
 
 // Options
 const roleOptions = [
-  { label: 'All Roles', value: '' },
+  { label: 'All Roles', value: null },
   { label: 'Mentee', value: 'mentee' },
   { label: 'Mentor', value: 'mentor' },
   { label: 'Admin', value: 'admin' }
 ]
 
 const statusOptions = [
-  { label: 'All Status', value: '' },
+  { label: 'All Status', value: null },
   { label: 'Active', value: 'active' },
   { label: 'Pending', value: 'pending' },
   { label: 'Suspended', value: 'suspended' }
@@ -361,11 +364,11 @@ const filteredUsers = computed(() => {
     )
   }
 
-  if (selectedRole.value) {
+  if (selectedRole.value && selectedRole.value !== null) {
     filtered = filtered.filter(user => user.role === selectedRole.value)
   }
 
-  if (selectedStatus.value) {
+  if (selectedStatus.value && selectedStatus.value !== null) {
     filtered = filtered.filter(user => user.status === selectedStatus.value)
   }
 
@@ -389,7 +392,7 @@ const formatDate = (date: Date) => {
   }).format(date)
 }
 
-const getUserActions = (user: any) => [
+const getUserActions = (user: AdminUser) => [
   [{
     label: 'View Details',
     icon: 'heroicons:eye',
@@ -416,9 +419,12 @@ const createUser = async () => {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000))
     
-    const user = {
+    const user: AdminUser = {
       id: String(users.value.length + 1),
-      ...newUser,
+      firstName: newUser.firstName,
+      lastName: newUser.lastName,
+      email: newUser.email,
+      role: newUser.role, // Explicitly typed as UserRole
       avatar: `https://images.unsplash.com/photo-${Math.random().toString().slice(2, 15)}?w=150`,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -433,9 +439,9 @@ const createUser = async () => {
       firstName: '',
       lastName: '',
       email: '',
-      role: 'mentee',
-      password: ''
+      role: 'mentee'
     })
+    newUserPassword.value = ''
     
     showCreateModal.value = false
   } finally {
@@ -443,7 +449,7 @@ const createUser = async () => {
   }
 }
 
-const toggleUserStatus = (user: any) => {
+const toggleUserStatus = (user: AdminUser) => {
   user.status = user.status === 'active' ? 'suspended' : 'active'
 }
 

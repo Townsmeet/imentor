@@ -70,7 +70,7 @@
               />
               
               <!-- User Menu -->
-              <UDropdown :items="userMenuItems">
+              <UDropdownMenu :items="userMenuItems">
                 <UButton
                   variant="ghost"
                   icon="heroicons:user-circle"
@@ -78,7 +78,7 @@
                 >
                   {{ user?.firstName }}
                 </UButton>
-              </UDropdown>
+              </UDropdownMenu>
             </div>
           </div>
         </div>
@@ -136,7 +136,6 @@ const navigation = [
   { name: 'Payments', href: '/admin/payments', icon: 'heroicons:credit-card' },
   { name: 'Analytics', href: '/admin/analytics', icon: 'heroicons:chart-bar' },
   { name: 'Content', href: '/admin/content', icon: 'heroicons:document-text' },
-  { name: 'Settings', href: '/admin/settings', icon: 'heroicons:cog-6-tooth' },
 ]
 
 const showNotifications = ref(false)
@@ -170,16 +169,6 @@ const notifications = ref([
 ])
 
 const userMenuItems = [
-  [{
-    label: 'Profile',
-    icon: 'heroicons:user',
-    click: () => navigateTo('/admin/profile')
-  }],
-  [{
-    label: 'Settings',
-    icon: 'heroicons:cog-6-tooth',
-    click: () => navigateTo('/admin/settings')
-  }],
   [{
     label: 'Sign out',
     icon: 'heroicons:arrow-right-on-rectangle',
