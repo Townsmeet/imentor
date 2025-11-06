@@ -1,9 +1,9 @@
 import { drizzle } from 'drizzle-orm/postgres-js'
 import postgres from 'postgres'
+import * as schema from '../db/schema'
 
-async function main() {
-    const client = postgres(process.env.NUXT_SUPABASE_DATABASE_URL!)
-    const db = drizzle({ client });
-}
+// Create the database connection
+const client = postgres(process.env.DATABASE_URL!)
 
-main();
+// Create the Drizzle instance with schema
+export const db = drizzle(client, { schema })
