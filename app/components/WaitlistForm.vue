@@ -4,6 +4,7 @@ import { ref } from "vue";
 const toast = useToast();
 
 const email = ref("");
+const name = ref("");
 const isLoading = ref(false);
 
 const handleSubmit = async () => {
@@ -13,7 +14,10 @@ const handleSubmit = async () => {
   try {
     const { error } = await useFetch("/api/waitlist", {
       method: "POST",
-      body: { email: email.value },
+      body: { 
+        email: email.value,
+        name: name.value 
+      },
     });
 
     if (error.value) {
@@ -25,6 +29,7 @@ const handleSubmit = async () => {
       color: "success",
     });
     email.value = "";
+    name.value = "";
   } catch (error: any) {
     toast.add({
       title: "Error joining waitlist",
@@ -42,27 +47,40 @@ const handleSubmit = async () => {
   <div class="w-full max-w-lg">
     <form
       @submit.prevent="handleSubmit"
-      class="flex flex-col sm:flex-row gap-2 w-full"
+      class="flex flex-col gap-2 md:gap-4 w-full"
     >
-      <UInput
-        v-model="email"
-        type="email"
-        placeholder="Enter your email"
-        :disabled="isLoading"
-        class="flex-1"
-        size="xl"
-        required
-      />
+      <div class="flex flex-col sm:flex-row gap-2 w-full">
+        <UInput
+          v-model="name"
+          type="text"
+          placeholder="Your name"
+          :disabled="isLoading"
+          class="flex-1"
+          size="xl"
+          required
+        />
+      </div>
+      <div class="flex flex-col sm:flex-row gap-2 w-full">
+        <UInput
+          v-model="email"
+          type="email"
+          placeholder="Your email"
+          :disabled="isLoading"
+          class="flex-1"
+          size="xl"
+          required
+        />
 
-      <UButton
-        type="submit"
-        :loading="isLoading"
-        color="primary"
-        size="xl"
-        class="whitespace-nowrap justify-center"
-      >
-        Join Waitlist
-      </UButton>
+        <UButton
+          type="submit"
+          :loading="isLoading"
+          color="primary"
+          size="xl"
+          class="whitespace-nowrap justify-center w-full sm:w-auto"
+        >
+          Join Waitlist
+        </UButton>
+      </div>
     </form>
   </div>
 </template>

@@ -1,6 +1,8 @@
 import { db } from '../utils/drizzle';
 import { waitlist } from '../db/schema';
 import { eq } from 'drizzle-orm';
+import { createWaitlistConfirmationEmail } from '../email-templates';
+import { sendEmail } from '../utils/email';
 
 export default defineEventHandler(async (event) => {
   try {
@@ -39,6 +41,20 @@ export default defineEventHandler(async (event) => {
         name,
       })
       .returning();
+
+    try {
+      // Send welcome email
+      const { subject, htmlContent, textContent } = createWaitlistConfirmationEmail(name || '');
+      await sendEmail({
+        to: email,
+        subject,
+        htmlContent,
+        textContent,
+      });
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+      // Don't fail the request if email sending fails
+    }
 
     return {
       success: true,

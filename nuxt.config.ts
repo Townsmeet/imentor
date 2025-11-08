@@ -12,5 +12,9 @@ export default defineNuxtConfig({
     '@nuxt/test-utils',
     '@nuxt/ui',
     'nuxt-charts'
-  ]
+  ],
+  
+  runtimeConfig: {
+    brevoApiKey: process.env.NUXT_BREVO_API_KEY,
+  },
 })
