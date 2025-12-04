@@ -28,10 +28,10 @@
               <Icon name="heroicons:hand-raised" class="w-10 h-10 text-white" />
             </div>
             <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Welcome to iMentorsPro, {{ user?.firstName }}!
+              Welcome to iMentorsPro, {{ parsedName.firstName || 'there' }}!
             </h2>
             <p class="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Let's set up your profile so you can get the most out of your {{ user?.role === 'mentor' ? 'mentoring' : 'learning' }} journey.
+              Let's set up your profile so you can get the most out of your {{ userRole === 'mentor' ? 'mentoring' : 'learning' }} journey.
             </p>
           </div>
 
@@ -40,22 +40,22 @@
               <div class="flex items-center space-x-4">
                 <div :class="[
                   'w-12 h-12 rounded-xl flex items-center justify-center',
-                  user?.role === 'mentor' ? 'bg-purple-100 dark:bg-purple-900/20' : 'bg-blue-100 dark:bg-blue-900/20'
+                  userRole === 'mentor' ? 'bg-purple-100 dark:bg-purple-900/20' : 'bg-blue-100 dark:bg-blue-900/20'
                 ]">
                   <Icon 
-                    :name="user?.role === 'mentor' ? 'heroicons:academic-cap' : 'heroicons:user'"
+                    :name="userRole === 'mentor' ? 'heroicons:academic-cap' : 'heroicons:user'"
                     :class="[
                       'w-6 h-6',
-                      user?.role === 'mentor' ? 'text-purple-600 dark:text-purple-400' : 'text-blue-600 dark:text-blue-400'
+                      userRole === 'mentor' ? 'text-purple-600 dark:text-purple-400' : 'text-blue-600 dark:text-blue-400'
                     ]"
                   />
                 </div>
                 <div>
                   <p class="font-semibold text-gray-900 dark:text-white capitalize">
-                    {{ user?.role }}
+                    {{ userRole }}
                   </p>
                   <p class="text-sm text-gray-600 dark:text-gray-400">
-                    {{ user?.role === 'mentor' ? 'Share your expertise and guide others' : 'Learn from experienced professionals' }}
+                    {{ userRole === 'mentor' ? 'Share your expertise and guide others' : 'Learn from experienced professionals' }}
                   </p>
                 </div>
               </div>
@@ -97,7 +97,7 @@
             <UFormField label="Bio" name="bio" required>
               <UTextarea
                 v-model="profileForm.bio"
-                :placeholder="user?.role === 'mentor' 
+                :placeholder="userRole === 'mentor' 
                   ? 'Describe your experience and what you can help with...' 
                   : 'Tell us about your background and what you want to learn...'"
                 :rows="4"
@@ -121,7 +121,7 @@
         <!-- Step 3: Role-specific Setup -->
         <div v-else-if="currentStep === 3" class="p-8">
           <!-- Mentor Setup -->
-          <div v-if="user?.role === 'mentor'">
+          <div v-if="userRole === 'mentor'">
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
               Your Expertise
             </h2>
@@ -322,7 +322,7 @@
           </h2>
           
           <p class="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-            {{ user?.role === 'mentor' 
+            {{ userRole === 'mentor' 
               ? 'Your mentor profile is complete. Start connecting with mentees and share your expertise!'
               : 'Your profile is ready! You can now browse mentors and book your first session.'
             }}
@@ -333,10 +333,10 @@
               Next Steps:
             </h3>
             <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-2">
-              <li v-if="user?.role === 'mentor'">• Set your availability schedule</li>
-              <li v-if="user?.role === 'mentor'">• Review your profile and make it shine</li>
-              <li v-if="user?.role === 'mentee'">• Browse available mentors</li>
-              <li v-if="user?.role === 'mentee'">• Book your first mentoring session</li>
+              <li v-if="userRole === 'mentor'">• Set your availability schedule</li>
+              <li v-if="userRole === 'mentor'">• Review your profile and make it shine</li>
+              <li v-if="userRole === 'mentee'">• Browse available mentors</li>
+              <li v-if="userRole === 'mentee'">• Book your first mentoring session</li>
               <li>• Complete your profile with a photo</li>
             </ul>
           </div>
@@ -387,17 +387,27 @@ definePageMeta({
   layout: false
 })
 
-const { user, completeOnboarding: markOnboardingComplete } = useAuth()
+const { user, refreshSession, userRole, logout } = useAuth()
 const toast = useToast()
 
 const currentStep = ref(1)
 const totalSteps = 5
 const isCompleting = ref(false)
 
+// Parse user name into first/last
+const parsedName = computed(() => {
+  const name = user.value?.name || ''
+  const parts = name.split(' ')
+  return {
+    firstName: parts[0] || '',
+    lastName: parts.slice(1).join(' ') || ''
+  }
+})
+
 // Form data
 const profileForm = reactive({
-  firstName: user.value?.firstName || '',
-  lastName: user.value?.lastName || '',
+  firstName: parsedName.value.firstName,
+  lastName: parsedName.value.lastName,
   bio: '',
   location: ''
 })
@@ -475,7 +485,7 @@ const canProceed = computed(() => {
     case 2:
       return profileForm.firstName && profileForm.lastName && profileForm.bio
     case 3:
-      if (user.value?.role === 'mentor') {
+      if (userRole.value === 'mentor') {
         return mentorForm.experience && mentorForm.hourlyRate && 
                mentorForm.skills.length > 0 && mentorForm.categories.length > 0
       } else {
@@ -534,12 +544,51 @@ const completeOnboardingFlow = async () => {
   isCompleting.value = true
   
   try {
-    // Here you would save all the onboarding data to your backend
-    // For now, we'll simulate the API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    // Save onboarding data to backend
+    await $fetch('/api/onboarding/complete', {
+      method: 'POST',
+      body: {
+        profile: {
+          firstName: profileForm.firstName,
+          lastName: profileForm.lastName,
+          bio: profileForm.bio,
+          location: profileForm.location,
+        },
+        roleData: userRole.value === 'mentor' 
+          ? {
+              experience: mentorForm.experience,
+              hourlyRate: mentorForm.hourlyRate,
+              skills: mentorForm.skills,
+              categories: mentorForm.categories,
+            }
+          : {
+              experience: menteeForm.experience,
+              interests: menteeForm.interests,
+              goals: menteeForm.goals,
+            },
+        preferences: {
+          timezone: preferencesForm.timezone,
+          languages: preferencesForm.languages,
+          emailNotifications: preferencesForm.emailNotifications,
+          weeklyDigest: preferencesForm.weeklyDigest,
+          marketingEmails: preferencesForm.marketingEmails,
+        },
+      },
+    })
     
-    // Mark onboarding as completed
-    markOnboardingComplete()
+    // Refresh session to get updated user data
+    await refreshSession()
+    
+    // Directly update the user state to ensure middleware doesn't redirect back
+    // This is a fallback in case refreshSession doesn't return fresh data
+    if (user.value) {
+      user.value = {
+        ...user.value,
+        hasCompletedOnboarding: true,
+        onboardingStep: 'complete',
+        onboardingCompletedAt: new Date()
+      }
+    }
     
     toast.add({
       title: 'Profile Complete!',
@@ -547,12 +596,22 @@ const completeOnboardingFlow = async () => {
       color: 'success'
     })
     
-    const dest = user.value?.role === 'admin' ? '/admin' : '/dashboard'
+    const dest = userRole.value === 'admin' ? '/admin' : '/dashboard'
     await navigateTo(dest)
-  } catch (error) {
+  } catch (error: any) {
+    if (error.statusCode === 401) {
+      toast.add({
+        title: 'Session Expired',
+        description: 'Please log in again to continue.',
+        color: 'error'
+      })
+      await logout()
+      return
+    }
+
     toast.add({
       title: 'Error',
-      description: 'Failed to complete onboarding. Please try again.',
+      description: error.data?.message || 'Failed to complete onboarding. Please try again.',
       color: 'error'
     })
   } finally {
@@ -562,9 +621,10 @@ const completeOnboardingFlow = async () => {
 
 // Initialize form with user data
 onMounted(() => {
-  if (user.value) {
-    profileForm.firstName = user.value.firstName
-    profileForm.lastName = user.value.lastName
+  if (user.value?.name) {
+    const parts = user.value.name.split(' ')
+    profileForm.firstName = parts[0] || ''
+    profileForm.lastName = parts.slice(1).join(' ') || ''
   }
 })
 </script>

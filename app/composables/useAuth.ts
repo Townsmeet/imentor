@@ -1,61 +1,94 @@
-import { ref, reactive, computed, readonly, toRef } from 'vue'
-import type { AuthState, User, UserRole } from '~/types'
+import { authClient } from '~/utils/auth-client'
+import type { UserRole } from '~/types'
+
+// Extended user type with Better Auth fields
+interface AuthUser {
+  id: string
+  name: string
+  email: string
+  emailVerified: boolean
+  image?: string | null
+  role: UserRole
+  hasCompletedOnboarding: boolean
+  onboardingStep: string
+  onboardingCompletedAt?: Date | null
+  createdAt: Date
+  updatedAt: Date
+}
 
 export const useAuth = () => {
-  const authState = useState<AuthState>('auth', (): AuthState => ({
-    user: null as User | null,
-    isAuthenticated: false,
-    isLoading: false,
-    hasCompletedOnboarding: false
-  }))
+  // Use cookie for persistent user data
+  const user = useCookie<AuthUser | null>('auth_user', {
+    default: () => null,
+    maxAge: 60 * 60 * 24 * 30, // 30 days
+  })
 
-  const login = async (email: string, password: string) => {
-    authState.value.isLoading = true
-    
+  const isAuthenticated = computed(() => !!user.value)
+  const isLoading = useState<boolean>('auth_loading', () => false)
+  const initialized = useState<boolean>('auth_initialized', () => false)
+
+  // Computed helpers
+  const hasCompletedOnboarding = computed(() => user.value?.hasCompletedOnboarding ?? false)
+  const currentOnboardingStep = computed(() => user.value?.onboardingStep ?? 'verification')
+  const userRole = computed(() => user.value?.role ?? 'mentee')
+
+  // Initialize auth state
+  const init = async (forceRefresh = false) => {
+    if (initialized.value && !forceRefresh) return
+
+    if (user.value && !forceRefresh) {
+      initialized.value = true
+      return
+    }
+
     try {
-      // Simulate API call - replace with actual API integration later
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Mock user data - replace with actual API integration later
-      // Determine role based on email for testing
-      let role: UserRole = 'mentee'
-      if (email.includes('mentor') || email.includes('teacher') || email.includes('coach')) role = 'mentor'
-      if (email.includes('admin') || email.includes('administrator') || email.includes('root') || email.includes('super')) role = 'admin'
-      
-      const mockUser: User = {
-        id: '1',
-        email,
-        firstName: 'John',
-        lastName: 'Doe',
-        role,
-        createdAt: new Date(),
-        updatedAt: new Date()
+      isLoading.value = true
+      const { data, error } = await authClient.getSession()
+
+      if (error) {
+        user.value = null
+      } else {
+        user.value = data?.user as AuthUser | null
       }
-      
-      authState.value.user = mockUser
-      authState.value.isAuthenticated = true
-      // Keep onboarding state from storage if any, otherwise default false for mock
-      let storedOnboarding = false
-      if (process.client) {
-        const stored = localStorage.getItem('has-completed-onboarding')
-        storedOnboarding = stored === 'true'
-      }
-      authState.value.hasCompletedOnboarding = storedOnboarding
-      
-      // Store in localStorage for persistence
-      if (process.client) {
-        localStorage.setItem('auth-user', JSON.stringify(mockUser))
-        localStorage.setItem('has-completed-onboarding', String(authState.value.hasCompletedOnboarding))
-      }
-      
-      return { success: true, user: mockUser }
-    } catch (error) {
-      return { success: false, error: 'Invalid credentials' }
+    } catch {
+      user.value = null
     } finally {
-      authState.value.isLoading = false
+      isLoading.value = false
+      initialized.value = true
     }
   }
 
+  // Login with email/password
+  const login = async (email: string, password: string) => {
+    isLoading.value = true
+
+    try {
+      const { error: signInError } = await authClient.signIn.email({
+        email,
+        password,
+      })
+
+      if (signInError) {
+        return { success: false, error: signInError.message }
+      }
+
+      // Get full session data
+      const { data: sessionData, error: sessionError } = await authClient.getSession()
+
+      if (sessionError) {
+        return { success: false, error: sessionError.message }
+      }
+
+      user.value = sessionData?.user as AuthUser | null
+      return { success: true, user: user.value }
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Login failed' }
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  // Signup with email/password
   const signup = async (userData: {
     email: string
     password: string
@@ -63,117 +96,140 @@ export const useAuth = () => {
     firstName?: string
     lastName?: string
   }) => {
-    authState.value.isLoading = true
-    
+    isLoading.value = true
+
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      const newUser: User = {
-        id: Date.now().toString(),
+      const name = [userData.firstName, userData.lastName].filter(Boolean).join(' ') || userData.email.split('@')[0]
+
+      const { error } = await authClient.signUp.email({
         email: userData.email,
-        firstName: userData.firstName ?? (userData.email.split('@')[0] || 'New'),
-        lastName: userData.lastName ?? 'User',
+        password: userData.password,
+        name,
         role: userData.role,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        callbackURL: '/auth/verify-callback',
+      })
+
+      if (error) {
+        return { success: false, error: error.message }
       }
-      
-      authState.value.user = newUser
-      authState.value.isAuthenticated = true
-      authState.value.hasCompletedOnboarding = false
-      
-      if (process.client) {
-        localStorage.setItem('auth-user', JSON.stringify(newUser))
-        localStorage.setItem('has-completed-onboarding', 'false')
+
+      // User needs to verify email before logging in
+      return {
+        success: true,
+        requiresVerification: true,
+        email: userData.email
       }
-      
-      return { success: true, user: newUser, isNewUser: true }
-    } catch (error) {
-      return { success: false, error: 'Registration failed' }
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Registration failed' }
     } finally {
-      authState.value.isLoading = false
+      isLoading.value = false
     }
   }
 
-  const logout = () => {
-    authState.value.user = null
-    authState.value.isAuthenticated = false
-    authState.value.hasCompletedOnboarding = false
-    
-    if (process.client) {
-      localStorage.removeItem('auth-user')
-      localStorage.removeItem('has-completed-onboarding')
+
+  // Logout
+  const logout = async () => {
+    try {
+      await authClient.signOut()
+    } catch {
+      // Clear user state regardless
     }
-    
-    navigateTo('/auth/login')
+    user.value = null
+    return navigateTo('/auth/login')
   }
 
-  const initializeAuth = () => {
-    if (process.client) {
-      const storedUser = localStorage.getItem('auth-user')
-      if (storedUser) {
-        try {
-          const user = JSON.parse(storedUser) as User
-          authState.value.user = user
-          authState.value.isAuthenticated = true
-          const hasOnboarded = localStorage.getItem('has-completed-onboarding')
-          authState.value.hasCompletedOnboarding = hasOnboarded === 'true'
-        } catch (error) {
-          localStorage.removeItem('auth-user')
-          localStorage.removeItem('has-completed-onboarding')
-        }
+  // Request password reset
+  const requestPasswordReset = async (email: string) => {
+    isLoading.value = true
+
+    try {
+      const { error } = await authClient.forgetPassword({
+        email,
+        redirectTo: '/auth/reset-password',
+      })
+
+      if (error) {
+        return { success: false, error: error.message }
       }
+
+      return { success: true }
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Failed to send reset email' }
+    } finally {
+      isLoading.value = false
     }
   }
 
-  const requireAuth = () => {
-    if (!authState.value.isAuthenticated) {
-      navigateTo('/auth/login')
-      return false
+  // Reset password with token
+  const resetPassword = async (token: string, newPassword: string) => {
+    isLoading.value = true
+
+    try {
+      const { error } = await authClient.resetPassword({
+        token,
+        newPassword,
+      })
+
+      if (error) {
+        return { success: false, error: error.message }
+      }
+
+      return { success: true }
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Failed to reset password' }
+    } finally {
+      isLoading.value = false
     }
-    return true
   }
 
-  const completeOnboarding = () => {
-    authState.value.hasCompletedOnboarding = true
-    if (process.client) {
-      localStorage.setItem('has-completed-onboarding', 'true')
+  // Send verification email
+  const sendVerificationEmail = async (email: string) => {
+    isLoading.value = true
+
+    try {
+      const { error } = await authClient.sendVerificationEmail({
+        email,
+        callbackURL: '/auth/verify-callback',
+      })
+
+      if (error) {
+        return { success: false, error: error.message }
+      }
+
+      return { success: true }
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Failed to send verification email' }
+    } finally {
+      isLoading.value = false
     }
   }
 
-  const createAdminUser = () => {
-    const adminUser: User = {
-      id: 'admin-1',
-      email: 'admin@imentor.com',
-      firstName: 'Admin',
-      lastName: 'User',
-      role: 'admin',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
-    
-    authState.value.user = adminUser
-    authState.value.isAuthenticated = true
-    authState.value.hasCompletedOnboarding = true
-    
-    if (process.client) {
-      localStorage.setItem('auth-user', JSON.stringify(adminUser))
-      localStorage.setItem('has-completed-onboarding', 'true')
+  // Refresh session (useful after onboarding completion)
+  const refreshSession = async () => {
+    try {
+      const { data, error } = await authClient.getSession()
+      if (!error && data?.user) {
+        user.value = data.user as AuthUser
+      }
+    } catch {
+      // Ignore errors
     }
   }
 
   return {
-    user: readonly(toRef(authState.value, 'user')),
-    isAuthenticated: readonly(toRef(authState.value, 'isAuthenticated')),
-    isLoading: readonly(toRef(authState.value, 'isLoading')),
-    hasCompletedOnboarding: readonly(toRef(authState.value, 'hasCompletedOnboarding')),
+    user,
+    isAuthenticated,
+    isLoading,
+    hasCompletedOnboarding,
+    currentOnboardingStep,
+    userRole,
+    init,
     login,
     signup,
     logout,
-    initializeAuth,
-    requireAuth,
-    completeOnboarding,
-    createAdminUser
+    requestPasswordReset,
+    resetPassword,
+    sendVerificationEmail,
+    refreshSession,
   }
 }

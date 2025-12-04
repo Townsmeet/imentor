@@ -43,7 +43,7 @@
           size="lg"
           :disabled="isLoading"
           class="w-full"
-          >
+        >
           <template #trailing>
             <UButton
               :icon="showPassword ? 'heroicons:eye-slash' : 'heroicons:eye'"
@@ -57,12 +57,7 @@
         </UInput>
       </UFormField>
 
-      <div class="flex items-center justify-between">
-        <UCheckbox
-          v-model="loginForm.rememberMe"
-          label="Remember me"
-          :disabled="isLoading"
-        />
+      <div class="flex items-center justify-end">
         <NuxtLink
           to="/auth/forgot-password"
           class="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
@@ -94,15 +89,6 @@
         </NuxtLink>
       </p>
     </div>
-
-    <!-- Demo Credentials -->
-    <div class="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-      <p class="text-sm text-blue-800 dark:text-blue-200 font-medium mb-2">Demo Credentials:</p>
-      <div class="text-xs text-blue-700 dark:text-blue-300 space-y-1">
-        <p><strong>Email:</strong> demo@example.com</p>
-        <p><strong>Password:</strong> password123</p>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -113,7 +99,7 @@ definePageMeta({
   layout: 'auth'
 })
 
-const { login } = useAuth()
+const { login, user, hasCompletedOnboarding } = useAuth()
 const toast = useToast()
 
 const isLoading = ref(false)
@@ -126,8 +112,7 @@ const loginSchema = z.object({
 
 const loginForm = reactive({
   email: '',
-  password: '',
-  rememberMe: false
+  password: ''
 })
 
 const handleLogin = async () => {
@@ -143,14 +128,30 @@ const handleLogin = async () => {
         color: 'success'
       })
       
-      const dest = result.user?.role === 'admin' ? '/admin' : '/dashboard'
-      await navigateTo(dest)
+      // Redirect based on onboarding status and role
+      if (!hasCompletedOnboarding.value) {
+        await navigateTo('/onboarding')
+      } else if (user.value?.role === 'admin') {
+        await navigateTo('/admin')
+      } else {
+        await navigateTo('/dashboard')
+      }
     } else {
-      toast.add({
-        title: 'Sign in failed',
-        description: result.error || 'Invalid credentials. Please try again.',
-        color: 'error'
-      })
+      // Check for email verification error
+      if (result.error?.toLowerCase().includes('verify') || result.error?.toLowerCase().includes('verification')) {
+        toast.add({
+          title: 'Email not verified',
+          description: 'Please verify your email before signing in.',
+          color: 'warning'
+        })
+        await navigateTo(`/auth/verify-email?email=${encodeURIComponent(loginForm.email)}`)
+      } else {
+        toast.add({
+          title: 'Sign in failed',
+          description: result.error || 'Invalid credentials. Please try again.',
+          color: 'error'
+        })
+      }
     }
   } catch (error) {
     toast.add({
@@ -162,10 +163,4 @@ const handleLogin = async () => {
     isLoading.value = false
   }
 }
-
-// Auto-fill demo credentials for easier testing
-onMounted(() => {
-  loginForm.email = 'demo@example.com'
-  loginForm.password = 'password123'
-})
 </script>

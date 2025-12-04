@@ -17,8 +17,8 @@ const isAuthPage = computed(() => {
 // Initialize auth on mount
 onMounted(() => {
   if (process.client) {
-    const { initializeAuth } = useAuth()
-    initializeAuth()
+    const { init } = useAuth()
+    init()
   }
 })
 </script>

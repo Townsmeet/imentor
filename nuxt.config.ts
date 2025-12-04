@@ -16,5 +16,9 @@ export default defineNuxtConfig({
   
   runtimeConfig: {
     brevoApiKey: process.env.NUXT_BREVO_API_KEY,
+    betterAuthSecret: process.env.NUXT_BETTER_AUTH_SECRET,
+    public: {
+      betterAuthUrl: process.env.NUXT_BETTER_AUTH_URL || 'http://localhost:3000',
+    },
   },
 })

@@ -1,8 +1,8 @@
-export default defineNuxtRouteMiddleware((to) => {
-  const { user, isAuthenticated, hasCompletedOnboarding, initializeAuth } = useAuth()
+export default defineNuxtRouteMiddleware(async (to) => {
+  const { user, isAuthenticated, hasCompletedOnboarding, init } = useAuth()
 
-  if (process.client) {
-    initializeAuth()
+  if (import.meta.client) {
+    await init()
   }
 
   // Only apply to authenticated users
@@ -15,6 +15,7 @@ export default defineNuxtRouteMiddleware((to) => {
     return
   }
 
+  // Redirect to onboarding if not completed
   if (!hasCompletedOnboarding.value) {
     return navigateTo('/onboarding')
   }

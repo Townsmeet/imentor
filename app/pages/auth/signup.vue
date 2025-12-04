@@ -23,6 +23,7 @@
       </p>
       <div class="grid grid-cols-2 gap-4">
         <button
+          type="button"
           @click="signupForm.role = 'mentee'"
           :class="[
             'p-4 rounded-xl border-2 transition-all duration-200',
@@ -37,6 +38,7 @@
         </button>
         
         <button
+          type="button"
           @click="signupForm.role = 'mentor'"
           :class="[
             'p-4 rounded-xl border-2 transition-all duration-200',
@@ -49,22 +51,6 @@
           <p class="font-medium text-gray-900 dark:text-white">Become a Mentor</p>
           <p class="text-xs text-gray-500 dark:text-gray-400">Share your expertise</p>
         </button>
-        
-        <!-- Admin option (hidden by default, can be enabled for testing) -->
-        <button
-          v-if="showAdminOption"
-          @click="signupForm.role = 'admin'"
-          :class="[
-            'p-4 rounded-xl border-2 transition-all duration-200',
-            signupForm.role === 'admin'
-              ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
-              : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-          ]"
-        >
-          <Icon name="heroicons:shield-check" class="w-6 h-6 mx-auto mb-2 text-red-600" />
-          <p class="font-medium text-gray-900 dark:text-white">Admin Access</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400">Platform management</p>
-        </button>
       </div>
     </div>
 
@@ -74,7 +60,6 @@
       @submit="handleSignup"
       class="space-y-6"
     >
-
       <UFormField label="Email" name="email" required>
         <UInput
           v-model="signupForm.email"
@@ -149,19 +134,6 @@
             <a href="#" class="text-blue-600 hover:text-blue-500 dark:text-blue-400">Privacy Policy</a>
           </label>
         </div>
-
-        <div class="flex items-start space-x-3">
-          <input
-            id="subscribeToUpdates"
-            v-model="signupForm.subscribeToUpdates"
-            type="checkbox"
-            :disabled="isLoading"
-            class="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-          />
-          <label for="subscribeToUpdates" class="text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
-            Send me updates about new features and mentorship opportunities
-          </label>
-        </div>
       </div>
 
       <UButton
@@ -205,15 +177,13 @@ const route = useRoute()
 const isLoading = ref(false)
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
-const showAdminOption = ref(false) // Enable for testing: set to true
 
 const signupSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   confirmPassword: z.string(),
-  role: z.enum(['mentor', 'mentee', 'admin']),
-  agreeToTerms: z.boolean().refine(val => val === true, 'You must agree to the terms'),
-  subscribeToUpdates: z.boolean().optional()
+  role: z.enum(['mentor', 'mentee']),
+  agreeToTerms: z.boolean().refine(val => val === true, 'You must agree to the terms')
 }).refine(data => data.password === data.confirmPassword, {
   message: 'Passwords do not match',
   path: ['confirmPassword']
@@ -224,8 +194,7 @@ const signupForm = reactive({
   password: '',
   confirmPassword: '',
   role: (route.query.role as UserRole) || 'mentee',
-  agreeToTerms: false,
-  subscribeToUpdates: true
+  agreeToTerms: false
 })
 
 const handleSignup = async () => {
@@ -240,18 +209,13 @@ const handleSignup = async () => {
     
     if (result.success) {
       toast.add({
-        title: 'Welcome to iMentorsPro!',
-        description: 'Your account has been created successfully.',
+        title: 'Account created!',
+        description: 'Please check your email to verify your account.',
         color: 'success'
       })
       
-      // Redirect new users to onboarding
-      if (result.isNewUser) {
-        await navigateTo('/onboarding')
-      } else {
-        const dest = result.user?.role === 'admin' ? '/admin' : '/dashboard'
-        await navigateTo(dest)
-      }
+      // Redirect to verification pending page
+      await navigateTo(`/auth/verify-email?email=${encodeURIComponent(signupForm.email)}`)
     } else {
       toast.add({
         title: 'Registration failed',

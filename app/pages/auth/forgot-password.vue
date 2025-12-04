@@ -86,13 +86,13 @@
 </template>
 
 <script setup lang="ts">
-import { UForm, UFormField, UInput, UButton } from '#components'
 import { z } from 'zod'
 
 definePageMeta({
   layout: 'auth'
 })
 
+const { requestPasswordReset } = useAuth()
 const toast = useToast()
 
 const isLoading = ref(false)
@@ -110,16 +110,22 @@ const handleForgotPassword = async () => {
   isLoading.value = true
   
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    const result = await requestPasswordReset(forgotPasswordForm.email)
     
-    emailSent.value = true
-    
-    toast.add({
-      title: 'Reset link sent',
-      description: 'Check your email for password reset instructions.',
-      color: 'success'
-    })
+    if (result.success) {
+      emailSent.value = true
+      toast.add({
+        title: 'Reset link sent',
+        description: 'Check your email for password reset instructions.',
+        color: 'success'
+      })
+    } else {
+      toast.add({
+        title: 'Error',
+        description: result.error || 'Failed to send reset link. Please try again.',
+        color: 'error'
+      })
+    }
   } catch (error) {
     toast.add({
       title: 'Error',
