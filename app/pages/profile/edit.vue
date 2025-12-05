@@ -11,7 +11,49 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Loading Skeleton -->
+      <template v-if="isLoading">
+        <div class="lg:col-span-2 space-y-6">
+          <UCard>
+            <template #header>
+              <USkeleton class="h-6 w-40" />
+            </template>
+            <div class="space-y-4">
+              <div class="grid grid-cols-2 gap-4">
+                <USkeleton class="h-10 w-full" />
+                <USkeleton class="h-10 w-full" />
+              </div>
+              <USkeleton class="h-10 w-full" />
+              <USkeleton class="h-24 w-full" />
+            </div>
+          </UCard>
+          <UCard>
+            <template #header>
+              <USkeleton class="h-6 w-48" />
+            </template>
+            <div class="space-y-4">
+              <USkeleton class="h-10 w-full" />
+              <USkeleton class="h-10 w-full" />
+              <USkeleton class="h-10 w-full" />
+            </div>
+          </UCard>
+        </div>
+        <div class="space-y-6">
+          <UCard>
+            <template #header>
+              <USkeleton class="h-6 w-32" />
+            </template>
+            <div class="flex flex-col items-center">
+              <USkeleton class="h-16 w-16 rounded-full mb-4" />
+              <USkeleton class="h-5 w-32 mb-2" />
+              <USkeleton class="h-4 w-20" />
+            </div>
+          </UCard>
+        </div>
+      </template>
+
       <!-- Profile Form -->
+      <template v-else>
       <div class="lg:col-span-2">
         <UForm
           :schema="profileSchema"
@@ -265,6 +307,7 @@
           </div>
         </UCard>
       </div>
+      </template>
     </div>
   </div>
 </template>
@@ -276,9 +319,10 @@ definePageMeta({
   middleware: 'auth'
 })
 
-const { user } = useAuth()
+const { user, refreshSession } = useAuth()
 const toast = useToast()
 
+const isLoading = ref(true)
 const isSaving = ref(false)
 
 const profileSchema = z.object({
@@ -297,18 +341,55 @@ const profileSchema = z.object({
 })
 
 const profileForm = reactive({
-  firstName: user.value?.firstName || '',
-  lastName: user.value?.lastName || '',
-  email: user.value?.email || '',
+  firstName: '',
+  lastName: '',
+  email: '',
   bio: '',
-  hourlyRate: 75,
-  experience: '5-10 years',
-  categories: [],
-  skills: [],
-  languages: ['English'],
-  timezone: 'PST',
-  interests: [],
+  hourlyRate: 0,
+  experience: '',
+  categories: [] as string[],
+  skills: [] as string[],
+  languages: [] as string[],
+  timezone: '',
+  interests: [] as string[],
   goalsText: ''
+})
+
+// Fetch profile data on mount
+onMounted(async () => {
+  try {
+    const data = await $fetch('/api/profile')
+    
+    // Populate form with fetched data
+    profileForm.firstName = data.user.firstName || ''
+    profileForm.lastName = data.user.lastName || ''
+    profileForm.email = data.user.email || ''
+    profileForm.bio = data.profile.bio || ''
+    profileForm.experience = data.profile.experience || ''
+    profileForm.languages = data.profile.languages || []
+    profileForm.timezone = data.profile.timezone || ''
+    
+    // Role-specific fields
+    if (user.value?.role === 'mentor') {
+      profileForm.hourlyRate = data.profile.hourlyRate || 0
+      profileForm.skills = data.profile.skills || []
+      profileForm.categories = data.profile.categories || []
+    } else {
+      profileForm.interests = data.profile.interests || []
+      // Convert goals array to text if needed
+      const goals = data.profile.goals || []
+      profileForm.goalsText = Array.isArray(goals) ? goals.join('\n') : goals
+    }
+  } catch (error) {
+    console.error('Failed to fetch profile:', error)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to load profile data.',
+      color: 'error'
+    })
+  } finally {
+    isLoading.value = false
+  }
 })
 
 const experienceOptions = [
@@ -424,8 +505,35 @@ const saveProfile = async () => {
   isSaving.value = true
   
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    // Prepare data based on role
+    const updateData: Record<string, any> = {
+      firstName: profileForm.firstName,
+      lastName: profileForm.lastName,
+      bio: profileForm.bio,
+      experience: profileForm.experience,
+      languages: profileForm.languages,
+      timezone: profileForm.timezone,
+    }
+
+    if (user.value?.role === 'mentor') {
+      updateData.hourlyRate = profileForm.hourlyRate
+      updateData.skills = profileForm.skills
+      updateData.categories = profileForm.categories
+    } else {
+      updateData.interests = profileForm.interests
+      // Convert goals text to array
+      updateData.goals = profileForm.goalsText 
+        ? profileForm.goalsText.split('\n').filter(g => g.trim())
+        : []
+    }
+
+    await $fetch('/api/profile', {
+      method: 'PUT',
+      body: updateData
+    })
+    
+    // Refresh the session to update user data
+    await refreshSession()
     
     toast.add({
       title: 'Profile Updated',
@@ -435,10 +543,10 @@ const saveProfile = async () => {
     
     // Navigate back to dashboard
     navigateTo('/dashboard')
-  } catch (error) {
+  } catch (error: any) {
     toast.add({
       title: 'Error',
-      description: 'Failed to save profile. Please try again.',
+      description: error.data?.message || 'Failed to save profile. Please try again.',
       color: 'error'
     })
   } finally {
