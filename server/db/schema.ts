@@ -123,3 +123,19 @@ export const waitlist = pgTable('waitlist', {
   name: text('name'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })
+
+
+// ==================== Availability Tables ====================
+
+export const availabilitySlot = pgTable('availability_slot', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  mentorId: text('mentor_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  dayOfWeek: integer('day_of_week').notNull(), // 0-6 (Sunday-Saturday)
+  startTime: text('start_time').notNull(), // HH:MM format
+  endTime: text('end_time').notNull(), // HH:MM format
+  isAvailable: boolean('is_available').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})

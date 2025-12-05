@@ -1,90 +1,185 @@
 import type { MentorProfile } from '~/types'
 
+interface MentorListResponse {
+  mentors: ApiMentor[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+}
+
+interface ApiMentor {
+  id: string
+  name: string
+  image: string | null
+  bio: string | null
+  experience: string | null
+  hourlyRate: number | null
+  skills: string[]
+  categories: string[]
+  languages: string[]
+  timezone: string | null
+  rating: number
+  totalSessions: number
+  isAvailable: boolean
+}
+
+interface MentorDetailResponse {
+  id: string
+  firstName: string
+  lastName: string
+  name: string
+  avatar: string | null
+  bio: string | null
+  location: string | null
+  experience: string | null
+  hourlyRate: number | null
+  skills: string[]
+  categories: string[]
+  languages: string[]
+  timezone: string | null
+  rating: number
+  totalSessions: number
+  isAvailable: boolean
+  createdAt: string
+}
+
+interface FiltersResponse {
+  categories: string[]
+  skills: string[]
+  priceRange: {
+    min: number
+    max: number
+  }
+}
+
 export const useMentors = () => {
   const mentors = ref<MentorProfile[]>([])
   const isLoading = ref(false)
+  const error = ref<string | null>(null)
+  
+  // Filters
   const searchQuery = ref('')
   const selectedCategories = ref<string[]>([])
   const selectedSkills = ref<string[]>([])
+  const priceRange = ref<{ min?: number; max?: number }>({})
+  
+  // Pagination
+  const currentPage = ref(1)
+  const totalPages = ref(1)
+  const totalMentors = ref(0)
+  
+  // Available filter options (from API)
+  const availableCategories = ref<string[]>([])
+  const availableSkills = ref<string[]>([])
+  const availablePriceRange = ref<{ min: number; max: number }>({ min: 0, max: 500 })
 
-  // Mock data - replace with API calls later
-  const mockMentors: MentorProfile[] = [
-    {
-      id: '1',
-      email: 'sarah.chen@example.com',
-      firstName: 'Sarah',
-      lastName: 'Chen',
+  // Transform API mentor to MentorProfile type
+  const transformMentor = (m: ApiMentor): MentorProfile => {
+    const nameParts = m.name.split(' ')
+    return {
+      id: m.id,
+      email: '', // Not exposed in API
+      firstName: nameParts[0] || '',
+      lastName: nameParts.slice(1).join(' ') || '',
       role: 'mentor',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150',
-      bio: 'Senior Software Engineer with 8+ years of experience in full-stack development. Passionate about mentoring junior developers and helping them grow their careers.',
-      skills: ['JavaScript', 'React', 'Node.js', 'Python', 'AWS'],
-      categories: ['Software Development', 'Career Growth', 'Technical Leadership'],
-      hourlyRate: 75,
-      experience: '8+ years',
+      avatar: m.image || undefined,
+      bio: m.bio || '',
+      skills: m.skills,
+      categories: m.categories,
+      hourlyRate: m.hourlyRate || 0,
+      experience: m.experience || '',
       availability: [],
-      rating: 4.9,
-      totalSessions: 127,
-      languages: ['English', 'Mandarin'],
-      timezone: 'PST',
+      rating: m.rating,
+      totalSessions: m.totalSessions,
+      languages: m.languages,
+      timezone: m.timezone || '',
       createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: '2',
-      email: 'marcus.johnson@example.com',
-      firstName: 'Marcus',
-      lastName: 'Johnson',
-      role: 'mentor',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-      bio: 'Product Manager at a Fortune 500 company. I help aspiring PMs understand the role and develop essential skills for product management success.',
-      skills: ['Product Strategy', 'User Research', 'Data Analysis', 'Agile', 'Stakeholder Management'],
-      categories: ['Product Management', 'Strategy', 'Leadership'],
-      hourlyRate: 90,
-      experience: '10+ years',
-      availability: [],
-      rating: 4.8,
-      totalSessions: 89,
-      languages: ['English', 'Spanish'],
-      timezone: 'EST',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: '3',
-      email: 'elena.rodriguez@example.com',
-      firstName: 'Elena',
-      lastName: 'Rodriguez',
-      role: 'mentor',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150',
-      bio: 'UX Designer with expertise in design systems and user research. I love helping designers create impactful user experiences.',
-      skills: ['UI/UX Design', 'Figma', 'User Research', 'Design Systems', 'Prototyping'],
-      categories: ['Design', 'User Experience', 'Creative'],
-      hourlyRate: 65,
-      experience: '6+ years',
-      availability: [],
-      rating: 4.9,
-      totalSessions: 156,
-      languages: ['English', 'Spanish', 'Portuguese'],
-      timezone: 'PST',
-      createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     }
-  ]
+  }
 
-  const fetchMentors = async () => {
+  const fetchMentors = async (page = 1) => {
     isLoading.value = true
+    error.value = null
+    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800))
-      mentors.value = mockMentors
-    } catch (error) {
-      console.error('Error fetching mentors:', error)
+      const params = new URLSearchParams()
+      
+      if (searchQuery.value) params.set('search', searchQuery.value)
+      if (selectedCategories.value.length) params.set('categories', selectedCategories.value.join(','))
+      if (selectedSkills.value.length) params.set('skills', selectedSkills.value.join(','))
+      if (priceRange.value.min !== undefined) params.set('minPrice', priceRange.value.min.toString())
+      if (priceRange.value.max !== undefined) params.set('maxPrice', priceRange.value.max.toString())
+      params.set('page', page.toString())
+      params.set('limit', '20')
+
+      const response = await $fetch<MentorListResponse>(`/api/mentors?${params.toString()}`)
+      
+      mentors.value = response.mentors.map(transformMentor)
+      currentPage.value = response.pagination.page
+      totalPages.value = response.pagination.totalPages
+      totalMentors.value = response.pagination.total
+    } catch (e: any) {
+      error.value = e.data?.message || 'Failed to fetch mentors'
+      console.error('[useMentors] Error:', e)
     } finally {
       isLoading.value = false
     }
   }
 
+  const fetchFilters = async () => {
+    try {
+      const response = await $fetch<FiltersResponse>('/api/mentors/filters')
+      availableCategories.value = response.categories
+      availableSkills.value = response.skills
+      availablePriceRange.value = response.priceRange
+    } catch (e) {
+      console.error('[useMentors] Error fetching filters:', e)
+    }
+  }
+
+  const getMentorById = async (id: string): Promise<MentorProfile | null> => {
+    try {
+      const response = await $fetch<MentorDetailResponse>(`/api/mentors/${id}`)
+      
+      return {
+        id: response.id,
+        email: '',
+        firstName: response.firstName,
+        lastName: response.lastName,
+        role: 'mentor',
+        avatar: response.avatar || undefined,
+        bio: response.bio || '',
+        skills: response.skills,
+        categories: response.categories,
+        hourlyRate: response.hourlyRate || 0,
+        experience: response.experience || '',
+        availability: [],
+        rating: response.rating,
+        totalSessions: response.totalSessions,
+        languages: response.languages,
+        timezone: response.timezone || '',
+        createdAt: new Date(response.createdAt),
+        updatedAt: new Date(response.createdAt),
+      }
+    } catch (e) {
+      console.error('[useMentors] Error fetching mentor:', e)
+      return null
+    }
+  }
+
+  // For backward compatibility with existing code
+  const getMentorProfile = (id: string) => {
+    return mentors.value.find(m => m.id === id)
+  }
+
+  // Client-side filtering for instant feedback
   const filteredMentors = computed(() => {
+    // When using API, mentors are already filtered server-side
+    // This is kept for instant client-side filtering while typing
     let filtered = mentors.value
 
     if (searchQuery.value) {
@@ -97,35 +192,14 @@ export const useMentors = () => {
       )
     }
 
-    if (selectedCategories.value.length > 0) {
-      filtered = filtered.filter(mentor =>
-        mentor.categories.some(category => selectedCategories.value.includes(category))
-      )
-    }
-
-    if (selectedSkills.value.length > 0) {
-      filtered = filtered.filter(mentor =>
-        mentor.skills.some(skill => selectedSkills.value.includes(skill))
-      )
-    }
-
     return filtered
   })
 
-  const getMentorProfile = (id: string) => {
-    return mentors.value.find(mentor => mentor.id === id)
-  }
-
-  const updateMentorProfile = async (id: string, updatedFields: Partial<MentorProfile>) => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500))
-    const index = mentors.value.findIndex(mentor => mentor.id === id)
-    if (index !== -1) {
-      mentors.value[index] = { ...mentors.value[index], ...updatedFields }
-    }
-  }
-
+  // Computed for filter options (use API data or fallback to mentor data)
   const getAllCategories = computed(() => {
+    if (availableCategories.value.length > 0) {
+      return availableCategories.value
+    }
     const categories = new Set<string>()
     mentors.value.forEach(mentor => {
       mentor.categories.forEach(category => categories.add(category))
@@ -134,6 +208,9 @@ export const useMentors = () => {
   })
 
   const getAllSkills = computed(() => {
+    if (availableSkills.value.length > 0) {
+      return availableSkills.value
+    }
     const skills = new Set<string>()
     mentors.value.forEach(mentor => {
       mentor.skills.forEach(skill => skills.add(skill))
@@ -141,17 +218,33 @@ export const useMentors = () => {
     return Array.from(skills).sort()
   })
 
+  // Watch for filter changes and refetch (with debounce)
+  let filterTimeout: ReturnType<typeof setTimeout> | null = null
+  
+  watch([selectedCategories, selectedSkills, priceRange], () => {
+    if (filterTimeout) clearTimeout(filterTimeout)
+    filterTimeout = setTimeout(() => {
+      fetchMentors(1)
+    }, 300)
+  }, { deep: true })
+
   return {
     mentors: readonly(mentors),
     isLoading: readonly(isLoading),
+    error: readonly(error),
     searchQuery,
     selectedCategories,
     selectedSkills,
+    priceRange,
+    currentPage: readonly(currentPage),
+    totalPages: readonly(totalPages),
+    totalMentors: readonly(totalMentors),
     filteredMentors,
     fetchMentors,
+    fetchFilters,
+    getMentorById,
     getMentorProfile,
-    updateMentorProfile,
     getAllCategories,
-    getAllSkills
+    getAllSkills,
   }
 }

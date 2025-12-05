@@ -226,13 +226,14 @@ definePageMeta({
 })
 
 const {
-  mentors,
   isLoading,
   searchQuery,
   selectedCategories,
   selectedSkills,
   filteredMentors,
+  totalMentors,
   fetchMentors,
+  fetchFilters,
   getAllCategories,
   getAllSkills
 } = useMentors()
@@ -289,9 +290,19 @@ const clearAllFilters = () => {
   selectedSkills.value = []
 }
 
-// Fetch mentors on mount
-onMounted(() => {
-  fetchMentors()
+// Debounced search
+let searchTimeout: ReturnType<typeof setTimeout> | null = null
+
+watch(searchQuery, () => {
+  if (searchTimeout) clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    fetchMentors()
+  }, 300)
+})
+
+// Fetch mentors and filters on mount
+onMounted(async () => {
+  await Promise.all([fetchMentors(), fetchFilters()])
 })
 
 // SEO

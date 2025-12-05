@@ -15,6 +15,13 @@
       "when": 1764787052995,
       "tag": "0001_loving_eternity",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1764952700560,
+      "tag": "0002_graceful_next_avengers",
+      "breakpoints": true
     }
   ]
 }

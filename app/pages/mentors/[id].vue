@@ -1,5 +1,23 @@
 <template>
-  <div v-if="mentor" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <!-- Loading State -->
+  <div v-if="isLoadingMentor" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="animate-pulse">
+      <div class="h-8 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-6"></div>
+      <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8">
+        <div class="flex flex-col lg:flex-row lg:space-x-8">
+          <div class="w-32 h-32 bg-gray-200 dark:bg-gray-700 rounded-full mx-auto lg:mx-0 mb-6 lg:mb-0"></div>
+          <div class="flex-1 space-y-4">
+            <div class="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div v-else-if="mentor" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Back Button -->
     <UButton
       @click="$router.back()"
@@ -139,6 +157,7 @@
           Availability This Week
         </h2>
         <UButton
+          v-if="mentorSlots.length > 0"
           variant="ghost"
           size="sm"
           @click="showBookingModal = true"
@@ -147,7 +166,16 @@
         </UButton>
       </div>
       
-      <div class="grid grid-cols-7 gap-2">
+      <!-- Empty State -->
+      <div v-if="mentorSlots.length === 0" class="text-center py-8">
+        <Icon name="heroicons:calendar" class="w-12 h-12 text-gray-400 mx-auto mb-3" />
+        <p class="text-gray-500 dark:text-gray-400">
+          This mentor hasn't set their availability yet.
+        </p>
+      </div>
+
+      <!-- Availability Grid -->
+      <div v-else class="grid grid-cols-7 gap-2">
         <div
           v-for="(day, index) in weekDays"
           :key="day"
@@ -309,28 +337,28 @@ interface BookingModalExposedLocal {
   isProcessingPayment: boolean;
 }
 
-interface Props {
-  mentor: MentorProfile
-}
-
-defineProps<Props>()
-
 definePageMeta({
   middleware: 'auth'
 })
 
 const route = useRoute()
 const toast = useToast()
-const { getMentorProfile, fetchMentors, mentors } = useMentors()
+const { getMentorById } = useMentors()
+const { slots: mentorSlots, fetchAvailability } = useAvailability()
 
 const mentorId = route.params.id as string
-const mentor = computed(() => getMentorProfile(mentorId))
+const mentor = ref<MentorProfile | null>(null)
+const isLoadingMentor = ref(true)
 
-// Fetch mentors on mount if not already loaded
+// Fetch mentor and their availability on mount
 onMounted(async () => {
-  if (mentors.value.length === 0) {
-    await fetchMentors()
-  }
+  isLoadingMentor.value = true
+  const [mentorData] = await Promise.all([
+    getMentorById(mentorId),
+    fetchAvailability(mentorId)
+  ])
+  mentor.value = mentorData
+  isLoadingMentor.value = false
 })
 
 const showBookingModal = ref(false)
@@ -381,9 +409,16 @@ const mockReviews = [
 ]
 
 const getAvailableSlots = (dayIndex: number) => {
-  // Mock availability - in real app, this would come from the mentor's actual availability
-  const slots = ['9:00 AM', '2:00 PM', '4:00 PM']
-  return dayIndex < 5 ? slots.slice(0, Math.floor(Math.random() * 3) + 1) : []
+  // Get actual availability from the mentor's slots
+  const daySlots = mentorSlots.value.filter(slot => slot.dayOfWeek === dayIndex && slot.isAvailable)
+  
+  return daySlots.map(slot => {
+    const [hours, minutes] = slot.startTime.split(':')
+    const hour = parseInt(hours || '0')
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    const displayHour = hour % 12 || 12
+    return `${displayHour}:${minutes} ${ampm}`
+  })
 }
 
 const sendMessage = () => {

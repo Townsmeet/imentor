@@ -200,50 +200,46 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
 import { z } from 'zod'
-import type { TimeSlot, MentorProfile } from '~/types'
+import type { TimeSlot } from '~/types'
 import AvailabilityCalendar from '~/components/AvailabilityCalendar.vue'
 import QuickAvailabilitySetup from '~/components/QuickAvailabilitySetup.vue'
 
 const { user } = useAuth()
-const { getMentorProfile, updateMentorProfile } = useMentors()
+const { 
+  slots,
+  isLoading: availabilityLoading,
+  error: availabilityError,
+  groupedByDay,
+  totalHours,
+  activeDays: composableActiveDays,
+  fetchAvailability,
+  addSlot: apiAddSlot,
+  removeSlot: apiRemoveSlot,
+  bulkSetSlots,
+  clearAllSlots,
+} = useAvailability()
 
 const isLoading = ref(true)
 const isAddingSlot = ref(false)
 const isCopying = ref(false)
-const mentorProfile = ref<MentorProfile | null>(null)
 const showBulkMode = ref(false)
 const showQuickSetup = ref(false)
 const showQuickAdd = ref(false)
 
 const isMentor = computed(() => user.value?.role === 'mentor')
 
-const mentorAvailability = computed<TimeSlot[]>(() => mentorProfile.value?.availability || [])
+// Use slots from composable
+const mentorAvailability = computed<TimeSlot[]>(() => [...slots.value])
 
-const groupedAvailability = computed(() => {
-  return mentorAvailability.value.reduce((acc, slot) => {
-    const day = slot.dayOfWeek.toString()
-    if (!acc[day]) {
-      acc[day] = []
-    }
-    acc[day].push(slot)
-    return acc
-  }, {} as Record<string, TimeSlot[]>)
-})
+// Use grouped data from composable
+const groupedAvailability = computed(() => groupedByDay.value)
 
-const totalAvailableHours = computed(() => {
-  return mentorAvailability.value.reduce((total, slot) => {
-    const start = new Date(`2000-01-01T${slot.startTime}:00`)
-    const end = new Date(`2000-01-01T${slot.endTime}:00`)
-    const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60)
-    return total + hours
-  }, 0).toFixed(1)
-})
+// Use totalHours from composable
+const totalAvailableHours = computed(() => totalHours.value.toFixed(1))
 
-const activeDays = computed(() => {
-  return new Set(mentorAvailability.value.map(slot => slot.dayOfWeek)).size
-})
+// Use activeDays from composable
+const activeDays = computed(() => composableActiveDays.value)
 
 const dayOptions = [
   { label: 'Sunday', value: 0 },
@@ -283,32 +279,25 @@ const formatTime = (time: string) => {
 }
 
 const fetchMentorData = async () => {
-  if (user.value?.id) {
-    isLoading.value = true
-    const mentor = await getMentorProfile(user.value.id)
-    mentorProfile.value = (mentor || null) as MentorProfile | null
-    isLoading.value = false
-  }
+  isLoading.value = true
+  await fetchAvailability()
+  isLoading.value = false
 }
 
 const addSlot = async () => {
   isAddingSlot.value = true
   try {
-    if (!mentorProfile.value) return
-
-    const newId = `slot-${Date.now()}`
-    const slotToAdd: TimeSlot = {
-      id: newId,
+    const result = await apiAddSlot({
       ...newSlot.value,
       isAvailable: true,
-    }
-
-    const updatedAvailability = [...mentorProfile.value.availability, slotToAdd]
-    await updateMentorProfile(mentorProfile.value.id, { availability: updatedAvailability })
-    mentorProfile.value.availability = updatedAvailability
+    })
     
-    newSlot.value = { dayOfWeek: 0, startTime: '09:00', endTime: '17:00' }
-    showQuickAdd.value = false
+    if (result.success) {
+      newSlot.value = { dayOfWeek: 0, startTime: '09:00', endTime: '17:00' }
+      showQuickAdd.value = false
+    } else {
+      console.error('Error adding slot:', result.error)
+    }
   } catch (error) {
     console.error('Error adding slot:', error)
   } finally {
@@ -318,11 +307,10 @@ const addSlot = async () => {
 
 const removeSlot = async (slotId: string) => {
   try {
-    if (!mentorProfile.value) return
-
-    const updatedAvailability = mentorProfile.value.availability.filter(slot => slot.id !== slotId)
-    await updateMentorProfile(mentorProfile.value.id, { availability: updatedAvailability })
-    mentorProfile.value.availability = updatedAvailability
+    const result = await apiRemoveSlot(slotId)
+    if (!result.success) {
+      console.error('Error removing slot:', result.error)
+    }
   } catch (error) {
     console.error('Error removing slot:', error)
   }
@@ -330,9 +318,17 @@ const removeSlot = async (slotId: string) => {
 
 const updateAvailability = async (availability: TimeSlot[]) => {
   try {
-    if (!mentorProfile.value) return
-    await updateMentorProfile(mentorProfile.value.id, { availability })
-    mentorProfile.value.availability = availability
+    // Use bulkSetSlots with replaceAll=true to update all slots
+    const slotsToSet = availability.map(slot => ({
+      dayOfWeek: slot.dayOfWeek,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      isAvailable: slot.isAvailable,
+    }))
+    const result = await bulkSetSlots(slotsToSet, true)
+    if (!result.success) {
+      console.error('Error updating availability:', result.error)
+    }
   } catch (error) {
     console.error('Error updating availability:', error)
   }
@@ -343,8 +339,8 @@ const handleDateSelect = (date: Date) => {
   console.log('Selected date:', date)
 }
 
-const handleQuickSetup = (availability: TimeSlot[]) => {
-  updateAvailability(availability)
+const handleQuickSetup = async (availability: TimeSlot[]) => {
+  await updateAvailability(availability)
   showQuickSetup.value = false
 }
 
@@ -363,16 +359,21 @@ const copyPreviousWeek = async () => {
 
 const clearAllAvailability = async () => {
   try {
-    if (!mentorProfile.value) return
-    await updateMentorProfile(mentorProfile.value.id, { availability: [] })
-    mentorProfile.value.availability = []
+    const result = await clearAllSlots()
+    if (!result.success) {
+      console.error('Error clearing availability:', result.error)
+    }
   } catch (error) {
     console.error('Error clearing availability:', error)
   }
 }
 
 onMounted(() => {
-  fetchMentorData()
+  if (isMentor.value) {
+    fetchMentorData()
+  } else {
+    isLoading.value = false
+  }
 })
 </script>
 
