@@ -139,3 +139,48 @@ export const availabilitySlot = pgTable('availability_slot', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
+
+
+// ==================== Booking Tables ====================
+
+export const bookingStatusEnum = pgEnum('booking_status', [
+  'pending',      // Payment pending
+  'confirmed',    // Payment successful, session scheduled
+  'completed',    // Session completed
+  'cancelled'     // Cancelled before confirmation (no refund after confirmation)
+])
+
+export const paymentStatusEnum = pgEnum('payment_status', [
+  'pending',
+  'succeeded',
+  'failed',
+  'refunded'
+])
+
+export const booking = pgTable('booking', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  mentorId: text('mentor_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  menteeId: text('mentee_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  description: text('description'),
+  scheduledDate: timestamp('scheduled_date').notNull(),
+  duration: integer('duration').notNull(), // minutes
+  status: bookingStatusEnum('status').notNull().default('pending'),
+  price: decimal('price', { precision: 10, scale: 2 }).notNull(),
+  meetingLink: text('meeting_link'), // Auto-generated on confirmation
+  notes: text('notes'),
+  // Payment tracking
+  stripePaymentIntentId: text('stripe_payment_intent_id'),
+  paymentStatus: paymentStatusEnum('payment_status').default('pending'),
+  // Timestamps
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  confirmedAt: timestamp('confirmed_at'),
+  completedAt: timestamp('completed_at'),
+  cancelledAt: timestamp('cancelled_at'),
+})
+

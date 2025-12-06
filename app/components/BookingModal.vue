@@ -375,10 +375,32 @@ const validateCurrentStep = () => {
   return true
 }
 
-const handlePaymentSuccess = (payment: any) => {
+const handlePaymentSuccess = async (payment: any) => {
   paymentIntent.value = payment
   paymentCompleted.value = true
-  confirmBooking()
+  
+  // Confirm the booking after payment success
+  if (pendingBookingId.value) {
+    try {
+      const { confirmBooking: confirmBookingApi } = useBookings()
+      const result = await confirmBookingApi(pendingBookingId.value, payment.id)
+      confirmedBooking.value = result as any
+      
+      toast.add({
+        title: 'Session Booked & Paid!',
+        description: `Your session with ${props.mentor.firstName} has been confirmed. Meeting link: ${result.meetingLink}`,
+        color: 'success'
+      })
+      
+      emit('booking-confirmed', result)
+    } catch (error) {
+      toast.add({
+        title: 'Confirmation Failed',
+        description: 'Payment succeeded but confirmation failed. Please contact support.',
+        color: 'error'
+      })
+    }
+  }
 }
 
 const handlePaymentError = (error: string) => {
@@ -389,7 +411,10 @@ const handlePaymentError = (error: string) => {
   })
 }
 
-const confirmBooking = async () => {
+// Store pending booking ID for confirmation after payment
+const pendingBookingId = ref<string | null>(null)
+
+const initiateBooking = async () => {
   if (!calendarSelection.value.date || !calendarSelection.value.timeSlot) return
   
   const bookingRequest: BookingRequest = {
@@ -399,28 +424,28 @@ const confirmBooking = async () => {
     duration: calendarSelection.value.duration,
     title: bookingForm.title,
     description: bookingForm.description || '',
-    price: totalPrice.value,
-    paymentIntentId: paymentIntent.value?.id
   }
   
   try {
-    const booking = await createBooking(bookingRequest)
-    confirmedBooking.value = booking
+    const result = await createBooking(bookingRequest)
+    pendingBookingId.value = result.booking.id
     
-    toast.add({
-      title: 'Session Booked & Paid!',
-      description: `Your session with ${props.mentor.firstName} has been confirmed and payment processed.`,
-      color: 'success'
-    })
-    
-    emit('booking-confirmed', booking)
-  } catch (error) {
+    // Payment info is now available for StripePayment component
+    // The payment will be processed in the next step
+    return result
+  } catch (error: any) {
     toast.add({
       title: 'Booking Failed',
-      description: 'Payment succeeded but booking failed. Please contact support.',
+      description: error.data?.message || 'Failed to create booking. Please try again.',
       color: 'error'
     })
+    throw error
   }
+}
+
+// Legacy function for backwards compatibility
+const confirmBooking = async () => {
+  await initiateBooking()
 }
 
 const closeModal = () => {
@@ -442,6 +467,7 @@ const closeModal = () => {
     paymentIntent.value = null
     paymentCompleted.value = false
     confirmedBooking.value = null
+    pendingBookingId.value = null
   }, 300)
 }
 
@@ -451,6 +477,7 @@ defineExpose({
   nextStep,
   canProceed,
   confirmBooking,
+  initiateBooking,
   isBooking,
   // Expose payment controls for parent footer actions
   processPayment,

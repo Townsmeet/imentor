@@ -216,7 +216,6 @@ const {
   getUpcomingBookings,
   getPastBookings,
   getPendingBookings,
-  rescheduleBooking,
   cancelBooking,
   isLoading
 } = useBookings()
@@ -266,7 +265,8 @@ const tabs = computed(() => [
 
 const upcomingBookings = computed(() => {
   return getUpcomingBookings.value.map(booking => {
-    const mentor = getMentorProfile(booking.mentorId)
+    // Use mentor data from booking if available, otherwise try to get from mentors list
+    const mentor = booking.mentor || getMentorProfile(booking.mentorId)
     return {
       ...booking,
       mentor
@@ -277,34 +277,48 @@ const upcomingBookings = computed(() => {
 const pendingBookings = computed(() => {
   return getPendingBookings.value.map(booking => ({
     ...booking,
-    mentor: getMentorProfile(booking.mentorId)
+    mentor: booking.mentor || getMentorProfile(booking.mentorId)
   }))
 })
 
 const pastBookings = computed(() => {
   return getPastBookings.value.map(booking => ({
     ...booking,
-    mentor: getMentorProfile(booking.mentorId)
+    mentor: booking.mentor || getMentorProfile(booking.mentorId)
   }))
 })
 
 const handleReschedule = (booking: Booking) => {
-  selectedBooking.value = { ...booking, mentor: getMentorProfile(booking.mentorId) }
-  showRescheduleModal.value = true
+  // Note: Rescheduling is not supported after confirmation
+  toast.add({
+    title: 'Rescheduling Not Available',
+    description: 'Confirmed bookings cannot be rescheduled. Please cancel and create a new booking.',
+    color: 'warning'
+  })
 }
 
 const handleCancel = async (booking: Booking) => {
+  // Check if booking is confirmed - cannot cancel confirmed bookings
+  if (booking.status === 'confirmed') {
+    toast.add({
+      title: 'Cannot Cancel',
+      description: 'Confirmed bookings cannot be cancelled. No refunds are available after confirmation.',
+      color: 'error'
+    })
+    return
+  }
+  
   try {
     await cancelBooking(booking.id)
     toast.add({
       title: 'Session Cancelled',
-      description: 'Your session has been cancelled successfully.',
+      description: 'Your pending session has been cancelled.',
       color: 'success'
     })
-  } catch (error) {
+  } catch (error: any) {
     toast.add({
       title: 'Cancellation Failed',
-      description: 'Unable to cancel session. Please try again.',
+      description: error.data?.message || 'Unable to cancel session. Please try again.',
       color: 'error'
     })
   }
