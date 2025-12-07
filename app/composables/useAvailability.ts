@@ -82,13 +82,13 @@ export const useAvailability = () => {
           replaceAll,
         },
       })
-      
+
       if (replaceAll) {
         slots.value = response.slots.map(transformSlot)
       } else {
         slots.value.push(...response.slots.map(transformSlot))
       }
-      
+
       return { success: true }
     } catch (e: any) {
       error.value = e.data?.message || 'Failed to set availability'
@@ -135,6 +135,69 @@ export const useAvailability = () => {
     return new Set(slots.value.map(s => s.dayOfWeek)).size
   })
 
+  const getAvailableSlots = (mentorId: string, dateStr: string): AvailabilitySlot[] => {
+    const date = new Date(dateStr)
+    // Adjust for timezone if necessary, but assuming dateStr is YYYY-MM-DD
+    // and we want the day of week in local time (or whatever the system uses)
+    // The dateStr coming from BookingCalendar is ISO string split at T, so it's YYYY-MM-DD.
+    // new Date('YYYY-MM-DD') creates a date in UTC usually, but let's be careful.
+    // Actually new Date('2023-01-01') is UTC.
+    // But getDay() returns local day of week unless we use getUTCDay().
+    // Let's assume the system works in local time for simplicity or that dateStr is correct.
+
+    // Better approach: create date from parts to avoid timezone issues with YYYY-MM-DD string
+    // Better approach: create date from parts to avoid timezone issues with YYYY-MM-DD string
+    const [year, month, day] = dateStr.split('-').map(Number)
+    // Create date at noon to avoid midnight timezone shifts
+    const d = new Date(year, month - 1, day, 12, 0, 0)
+    const dayOfWeek = d.getDay()
+
+    // Find recurring slots for this day
+    const daySlots = slots.value.filter(s => s.dayOfWeek === dayOfWeek && s.isAvailable)
+
+    const availableSlots: AvailabilitySlot[] = []
+
+    daySlots.forEach(slot => {
+      // Generate 30-min intervals
+      const [startH, startM] = slot.startTime.split(':').map(Number)
+      const [endH, endM] = slot.endTime.split(':').map(Number)
+
+      let currentH = startH
+      let currentM = startM
+
+      // Convert to minutes for easier comparison
+      const endMinutes = endH * 60 + endM
+
+      while (true) {
+        const currentTotalMinutes = currentH * 60 + currentM
+        const nextTotalMinutes = currentTotalMinutes + 30
+
+        if (nextTotalMinutes > endMinutes) break
+
+        const timeStr = `${currentH.toString().padStart(2, '0')}:${currentM.toString().padStart(2, '0')}`
+
+        let nextH = Math.floor(nextTotalMinutes / 60)
+        let nextM = nextTotalMinutes % 60
+        const endTimeStr = `${nextH.toString().padStart(2, '0')}:${nextM.toString().padStart(2, '0')}`
+
+        availableSlots.push({
+          id: `${slot.id}-${timeStr}`,
+          mentorId,
+          date: dateStr,
+          startTime: timeStr,
+          endTime: endTimeStr,
+          isBooked: false,
+          isAvailable: true
+        })
+
+        currentH = nextH
+        currentM = nextM
+      }
+    })
+
+    return availableSlots.sort((a, b) => a.startTime.localeCompare(b.startTime))
+  }
+
   return {
     slots: readonly(slots),
     isLoading: readonly(isLoading),
@@ -147,5 +210,7 @@ export const useAvailability = () => {
     removeSlot,
     bulkSetSlots,
     clearAllSlots,
+    getAvailableSlots,
   }
 }
+

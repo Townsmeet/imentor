@@ -81,10 +81,10 @@ export async function createGoogleMeetLink(params: {
                     dateTime: endTime.toISOString(),
                     timeZone: 'UTC',
                 },
-                attendees: [
-                    ...(params.mentorEmail ? [{ email: params.mentorEmail }] : []),
-                    ...(params.menteeEmail ? [{ email: params.menteeEmail }] : []),
-                ],
+                // attendees: [
+                //     ...(params.mentorEmail ? [{ email: params.mentorEmail }] : []),
+                //     ...(params.menteeEmail ? [{ email: params.menteeEmail }] : []),
+                // ],
                 conferenceData: {
                     createRequest: {
                         requestId: `imentor-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
@@ -118,7 +118,8 @@ export async function createGoogleMeetLink(params: {
             title: params.title,
         }
     } catch (error: any) {
-        console.error('[Google Meet] Failed to create meeting:', error.message)
+        console.error('[Google Meet] Failed to create meeting:', error)
+        console.error('[Google Meet] Error details:', error.response?.data)
         return null
     }
 }

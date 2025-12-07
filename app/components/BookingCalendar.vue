@@ -71,7 +71,7 @@
         Available Times for {{ formatSelectedDate }}
       </h4>
       
-      <div v-if="isLoadingSlots" class="flex justify-center py-8">
+      <div v-if="isLoading" class="flex justify-center py-8">
         <Icon name="heroicons:arrow-path" class="w-6 h-6 animate-spin text-gray-400" />
       </div>
       
@@ -160,13 +160,12 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-const { fetchAvailability, getAvailableSlots, isLoading } = useBookings()
+const { fetchAvailability, getAvailableSlots, isLoading } = useAvailability()
 
 const currentDate = ref(new Date())
 const selectedDate = ref<Date | null>(null)
 const selectedTimeSlot = ref<AvailabilitySlot | null>(null)
 const selectedDuration = ref(60)
-const isLoadingSlots = ref(false)
 
 const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -220,13 +219,23 @@ const calendarDays = computed(() => {
     const isPast = date < today
     const isSelected = selectedDate.value && date.getTime() === selectedDate.value.getTime()
     
+    // Check actual availability
+    let hasAvailability = false
+    if (isCurrentMonth && !isPast) {
+      const dayOfWeek = date.getDay()
+      const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+      // Check if there are any slots for this day of week
+      const daySlots = getAvailableSlots(props.mentor.id, dateString)
+      hasAvailability = daySlots.length > 0
+    }
+    
     days.push({
       key: `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`,
       date: isCurrentMonth ? date : null,
       isToday,
       isSelected,
       isSelectable: isCurrentMonth && !isPast,
-      hasAvailability: isCurrentMonth && !isPast && Math.random() > 0.6 // Mock availability
+      hasAvailability
     })
   }
   
@@ -235,7 +244,8 @@ const calendarDays = computed(() => {
 
 const availableTimeSlots = computed(() => {
   if (!selectedDate.value) return []
-  const dateString = String(selectedDate.value.toISOString().split('T')[0])
+  const date = selectedDate.value
+  const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
   return getAvailableSlots(props.mentor.id, dateString)
 })
 
@@ -247,19 +257,9 @@ const nextMonth = () => {
   currentDate.value = new Date(currentDate.value.getFullYear(), currentDate.value.getMonth() + 1, 1)
 }
 
-const selectDate = async (date: Date) => {
+const selectDate = (date: Date) => {
   selectedDate.value = date
   selectedTimeSlot.value = null
-  
-  // Fetch availability for the selected date
-  isLoadingSlots.value = true
-  const startDate = new Date(date)
-  const endDate = new Date(date)
-  endDate.setDate(endDate.getDate() + 1)
-  
-  await fetchAvailability(props.mentor.id, startDate, endDate)
-  isLoadingSlots.value = false
-  
   emitUpdate()
 }
 
@@ -289,11 +289,9 @@ watch(selectedDuration, () => {
   emitUpdate()
 })
 
-// Initialize with current month's availability
+// Initialize with mentor's availability
 onMounted(async () => {
-  const startDate = new Date(currentDate.value.getFullYear(), currentDate.value.getMonth(), 1)
-  const endDate = new Date(currentDate.value.getFullYear(), currentDate.value.getMonth() + 1, 0)
-  await fetchAvailability(props.mentor.id, startDate, endDate)
+  await fetchAvailability(props.mentor.id)
 })
 </script>
 

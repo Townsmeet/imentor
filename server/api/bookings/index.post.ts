@@ -67,16 +67,30 @@ export default defineEventHandler(async (event) => {
 
         // Check mentor availability for this time slot
         const dayOfWeek = scheduledDate.getDay()
-        const availableSlot = await db.query.availabilitySlot.findFirst({
+
+        const daySlots = await db.query.availabilitySlot.findMany({
             where: and(
                 eq(availabilitySlot.mentorId, body.mentorId),
                 eq(availabilitySlot.dayOfWeek, dayOfWeek),
-                eq(availabilitySlot.startTime, body.time),
                 eq(availabilitySlot.isAvailable, true)
             )
         })
 
-        if (!availableSlot) {
+        const isSlotAvailable = daySlots.some(slot => {
+            const slotStart = parseInt(slot.startTime.replace(':', ''))
+            const slotEnd = parseInt(slot.endTime.replace(':', ''))
+            const requestTime = parseInt(body.time.replace(':', ''))
+
+            // Calculate end time of the booking
+            const [reqHours, reqMinutes] = body.time.split(':').map(Number)
+            const bookingEndTimeDate = new Date()
+            bookingEndTimeDate.setHours(reqHours, reqMinutes + body.duration)
+            const bookingEnd = parseInt(`${String(bookingEndTimeDate.getHours()).padStart(2, '0')}${String(bookingEndTimeDate.getMinutes()).padStart(2, '0')}`)
+
+            return requestTime >= slotStart && bookingEnd <= slotEnd
+        })
+
+        if (!isSlotAvailable) {
             throw createError({
                 statusCode: 400,
                 message: 'This time slot is not available'

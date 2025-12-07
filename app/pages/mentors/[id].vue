@@ -288,6 +288,7 @@
               v-if="bookingModalApi.currentStep < 4"
               @click="bookingModalApi.nextStep()"
               :disabled="!bookingModalApi.canProceed"
+              :loading="bookingModalApi.isBooking"
               icon="heroicons:arrow-right"
               trailing
             >

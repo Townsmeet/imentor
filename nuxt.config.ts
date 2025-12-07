@@ -13,12 +13,13 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     'nuxt-charts'
   ],
-  
+
   runtimeConfig: {
     brevoApiKey: process.env.NUXT_BREVO_API_KEY,
     betterAuthSecret: process.env.NUXT_BETTER_AUTH_SECRET,
     public: {
       betterAuthUrl: process.env.NUXT_BETTER_AUTH_URL || 'http://localhost:3000',
+      stripePublishableKey: process.env.NUXT_STRIPE_PUBLISHABLE_KEY,
     },
   },
 })

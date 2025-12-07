@@ -28,54 +28,17 @@
         </div>
       </div>
 
-      <!-- Payment Methods -->
-      <div class="space-y-4">
-        <div class="flex items-center space-x-3">
-          <input
-            id="card"
-            v-model="paymentMethod"
-            type="radio"
-            value="card"
-            class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
-          />
-          <label for="card" class="flex items-center space-x-2 text-sm font-medium text-gray-900 dark:text-white">
-            <Icon name="heroicons:credit-card" class="w-5 h-5" />
-            <span>Credit or Debit Card</span>
-          </label>
-        </div>
-        
-        <div class="flex items-center space-x-3">
-          <input
-            id="paypal"
-            v-model="paymentMethod"
-            type="radio"
-            value="paypal"
-            class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
-          />
-          <label for="paypal" class="flex items-center space-x-2 text-sm font-medium text-gray-900 dark:text-white">
-            <Icon name="simple-icons:paypal" class="w-5 h-5 text-blue-600" />
-            <span>PayPal</span>
-          </label>
-        </div>
-        
-        <div class="flex items-center space-x-3">
-          <input
-            id="apple-pay"
-            v-model="paymentMethod"
-            type="radio"
-            value="apple-pay"
-            class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
-          />
-          <label for="apple-pay" class="flex items-center space-x-2 text-sm font-medium text-gray-900 dark:text-white">
-            <Icon name="simple-icons:applepay" class="w-5 h-5" />
-            <span>Apple Pay</span>
-          </label>
+      <!-- Payment Method -->
+      <div class="mb-6">
+        <div class="flex items-center space-x-2 text-sm font-medium text-gray-900 dark:text-white mb-4">
+          <Icon name="heroicons:credit-card" class="w-5 h-5" />
+          <span>Credit or Debit Card</span>
         </div>
       </div>
     </div>
 
     <!-- Card Payment Form -->
-    <div v-if="paymentMethod === 'card'" class="space-y-4">
+    <div class="space-y-4">
       <div class="grid grid-cols-1 gap-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -207,40 +170,8 @@
       </div>
     </div>
 
-    <!-- PayPal Payment -->
-    <div v-else-if="paymentMethod === 'paypal'" class="text-center py-8">
-      <Icon name="simple-icons:paypal" class="w-16 h-16 text-blue-600 mx-auto mb-4" />
-      <p class="text-gray-600 dark:text-gray-400 mb-4">
-        You will be redirected to PayPal to complete your payment
-      </p>
-      <UButton
-        color="info"
-        size="lg"
-        @click="handlePayPalPayment"
-        :loading="isProcessingPayment"
-      >
-        Continue with PayPal
-      </UButton>
-    </div>
-
-    <!-- Apple Pay Payment -->
-    <div v-else-if="paymentMethod === 'apple-pay'" class="text-center py-8">
-      <Icon name="simple-icons:applepay" class="w-16 h-16 mx-auto mb-4" />
-      <p class="text-gray-600 dark:text-gray-400 mb-4">
-        Use Touch ID or Face ID to pay with Apple Pay
-      </p>
-      <UButton
-        color="neutral"
-        size="lg"
-        @click="handleApplePayPayment"
-        :loading="isProcessingPayment"
-      >
-        Pay with Apple Pay
-      </UButton>
-    </div>
-
     <!-- Save Payment Method -->
-    <div v-if="paymentMethod === 'card'" class="flex items-center space-x-2">
+    <div class="flex items-center space-x-2">
       <input
         id="save-payment"
         v-model="savePaymentMethod"
@@ -294,12 +225,13 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 // Stripe configuration
-const stripePublishableKey = 'pk_test_...' // This should come from environment variables
+// Stripe configuration
+const config = useRuntimeConfig()
+const stripePublishableKey = config.public.stripePublishableKey as string
 let stripe: Stripe | null = null
 let elements: StripeElements | null = null
 
 // Component state
-const paymentMethod = ref('card')
 const cardholderName = ref('')
 const savePaymentMethod = ref(false)
 const isProcessingPayment = ref(false)
@@ -381,34 +313,32 @@ onMounted(async () => {
 const validateForm = () => {
   const errors: Record<string, string> = {}
 
-  if (paymentMethod.value === 'card') {
-    if (!cardholderName.value.trim()) {
-      errors.cardholderName = 'Cardholder name is required'
-    }
+  if (!cardholderName.value.trim()) {
+    errors.cardholderName = 'Cardholder name is required'
+  }
 
-    if (!billingAddress.firstName.trim()) {
-      errors.firstName = 'First name is required'
-    }
+  if (!billingAddress.firstName.trim()) {
+    errors.firstName = 'First name is required'
+  }
 
-    if (!billingAddress.lastName.trim()) {
-      errors.lastName = 'Last name is required'
-    }
+  if (!billingAddress.lastName.trim()) {
+    errors.lastName = 'Last name is required'
+  }
 
-    if (!billingAddress.address.trim()) {
-      errors.address = 'Address is required'
-    }
+  if (!billingAddress.address.trim()) {
+    errors.address = 'Address is required'
+  }
 
-    if (!billingAddress.city.trim()) {
-      errors.city = 'City is required'
-    }
+  if (!billingAddress.city.trim()) {
+    errors.city = 'City is required'
+  }
 
-    if (!billingAddress.state.trim()) {
-      errors.state = 'State is required'
-    }
+  if (!billingAddress.state.trim()) {
+    errors.state = 'State is required'
+  }
 
-    if (!billingAddress.zipCode.trim()) {
-      errors.zipCode = 'ZIP code is required'
-    }
+  if (!billingAddress.zipCode.trim()) {
+    errors.zipCode = 'ZIP code is required'
   }
 
   return Object.keys(errors).length === 0
@@ -469,54 +399,9 @@ const processCardPayment = async () => {
   }
 }
 
-const handlePayPalPayment = async () => {
-  isProcessingPayment.value = true
-  
-  try {
-    // Simulate PayPal redirect
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    // In a real implementation, this would redirect to PayPal
-    const mockPaymentIntent = {
-      id: 'pi_mock_paypal_' + Date.now(),
-      status: 'succeeded',
-      payment_method: 'paypal'
-    }
-    
-    emit('payment-success', mockPaymentIntent)
-  } catch (error: any) {
-    emit('payment-error', error.message || 'PayPal payment failed')
-  } finally {
-    isProcessingPayment.value = false
-  }
-}
-
-const handleApplePayPayment = async () => {
-  isProcessingPayment.value = true
-  
-  try {
-    // Simulate Apple Pay processing
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    // In a real implementation, this would use Apple Pay API
-    const mockPaymentIntent = {
-      id: 'pi_mock_applepay_' + Date.now(),
-      status: 'succeeded',
-      payment_method: 'apple_pay'
-    }
-    
-    emit('payment-success', mockPaymentIntent)
-  } catch (error: any) {
-    emit('payment-error', error.message || 'Apple Pay payment failed')
-  } finally {
-    isProcessingPayment.value = false
-  }
-}
-
 // Expose methods for parent component
 defineExpose({
   processPayment: processCardPayment,
-  paymentMethod,
   isProcessingPayment
 })
 </script>

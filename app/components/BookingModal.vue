@@ -352,9 +352,18 @@ const removeGoal = (index: number) => {
   bookingForm.goals.splice(index, 1)
 }
 
-const nextStep = () => {
+const nextStep = async () => {
   if (validateCurrentStep()) {
-    currentStep.value++
+    if (currentStep.value === 3) {
+      try {
+        await initiateBooking()
+        currentStep.value++
+      } catch (error) {
+        // Error is handled in initiateBooking
+      }
+    } else {
+      currentStep.value++
+    }
   }
 }
 
@@ -419,7 +428,7 @@ const initiateBooking = async () => {
   
   const bookingRequest: BookingRequest = {
     mentorId: props.mentor.id,
-    date: String(calendarSelection.value.date!.toISOString().split('T')[0]),
+    date: `${calendarSelection.value.date!.getFullYear()}-${String(calendarSelection.value.date!.getMonth() + 1).padStart(2, '0')}-${String(calendarSelection.value.date!.getDate()).padStart(2, '0')}`,
     time: calendarSelection.value.timeSlot.startTime,
     duration: calendarSelection.value.duration,
     title: bookingForm.title,
