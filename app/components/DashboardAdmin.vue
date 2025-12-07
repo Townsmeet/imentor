@@ -32,14 +32,25 @@
     </div>
 
     <!-- Key Metrics -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div v-for="i in 4" :key="i" class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 animate-pulse">
+        <div class="flex items-center">
+          <div class="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+          <div class="ml-4 flex-1">
+            <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-2"></div>
+            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-else class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
       <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
         <div class="flex items-center">
           <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
             <Icon name="heroicons:users" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
           </div>
           <div class="ml-4">
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ totalUsers }}</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ adminStats?.stats?.totalUsers?.value ?? 0 }}</p>
             <p class="text-sm text-gray-600 dark:text-gray-400">Total Users</p>
           </div>
         </div>
@@ -51,7 +62,7 @@
             <Icon name="heroicons:academic-cap" class="w-6 h-6 text-green-600 dark:text-green-400" />
           </div>
           <div class="ml-4">
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ activeMentors }}</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ adminStats?.stats?.activeMentors?.value ?? 0 }}</p>
             <p class="text-sm text-gray-600 dark:text-gray-400">Active Mentors</p>
           </div>
         </div>
@@ -63,7 +74,7 @@
             <Icon name="heroicons:calendar-days" class="w-6 h-6 text-purple-600 dark:text-purple-400" />
           </div>
           <div class="ml-4">
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ totalSessions }}</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ adminStats?.stats?.sessionsThisMonth?.value ?? 0 }}</p>
             <p class="text-sm text-gray-600 dark:text-gray-400">Sessions This Month</p>
           </div>
         </div>
@@ -75,7 +86,7 @@
             <Icon name="heroicons:currency-dollar" class="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
           </div>
           <div class="ml-4">
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">${{ platformRevenue }}</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">${{ adminStats?.stats?.platformRevenue?.value ?? 0 }}</p>
             <p class="text-sm text-gray-600 dark:text-gray-400">Platform Revenue</p>
           </div>
         </div>
@@ -94,9 +105,22 @@
           </div>
           
           <div class="p-6">
-            <div class="space-y-4">
+            <div v-if="isLoading" class="space-y-4 animate-pulse">
+              <div v-for="i in 5" :key="i" class="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                <div class="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                <div class="flex-1">
+                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+                  <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                </div>
+              </div>
+            </div>
+            <div v-else-if="recentActivityList.length === 0" class="text-center py-8">
+              <Icon name="heroicons:clock" class="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p class="text-gray-500 dark:text-gray-400">No recent activity</p>
+            </div>
+            <div v-else class="space-y-4">
               <div
-                v-for="activity in recentActivity"
+                v-for="activity in recentActivityList"
                 :key="activity.id"
                 class="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
               >
@@ -139,9 +163,25 @@
           </div>
           
           <div class="p-6">
-            <div class="space-y-4">
+            <div v-if="isLoading" class="space-y-4 animate-pulse">
+              <div v-for="i in 5" :key="i" class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div class="flex items-center space-x-4">
+                  <div class="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                  <div>
+                    <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-2"></div>
+                    <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-48"></div>
+                  </div>
+                </div>
+                <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+              </div>
+            </div>
+            <div v-else-if="recentUsersList.length === 0" class="text-center py-8">
+              <Icon name="heroicons:users" class="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p class="text-gray-500 dark:text-gray-400">No recent users</p>
+            </div>
+            <div v-else class="space-y-4">
               <div
-                v-for="user in recentUsers"
+                v-for="user in recentUsersList"
                 :key="user.id"
                 class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg"
               >
@@ -219,25 +259,31 @@
             Today's Stats
           </h3>
           
-          <div class="space-y-3">
+          <div v-if="isLoading" class="space-y-3 animate-pulse">
+            <div v-for="i in 4" :key="i" class="flex items-center justify-between">
+              <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+              <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12"></div>
+            </div>
+          </div>
+          <div v-else class="space-y-3">
             <div class="flex items-center justify-between">
               <span class="text-sm text-gray-600 dark:text-gray-400">New Signups</span>
-              <span class="text-sm font-medium text-gray-900 dark:text-white">{{ todaySignups }}</span>
+              <span class="text-sm font-medium text-gray-900 dark:text-white">{{ adminStats?.today?.signups ?? 0 }}</span>
             </div>
             
             <div class="flex items-center justify-between">
               <span class="text-sm text-gray-600 dark:text-gray-400">Sessions Booked</span>
-              <span class="text-sm font-medium text-gray-900 dark:text-white">{{ todaySessions }}</span>
+              <span class="text-sm font-medium text-gray-900 dark:text-white">{{ adminStats?.today?.sessions ?? 0 }}</span>
             </div>
             
             <div class="flex items-center justify-between">
               <span class="text-sm text-gray-600 dark:text-gray-400">Messages Sent</span>
-              <span class="text-sm font-medium text-gray-900 dark:text-white">{{ todayMessages }}</span>
+              <span class="text-sm font-medium text-gray-900 dark:text-white">{{ adminStats?.today?.messages ?? 0 }}</span>
             </div>
             
             <div class="flex items-center justify-between">
               <span class="text-sm text-gray-600 dark:text-gray-400">Revenue</span>
-              <span class="text-sm font-medium text-gray-900 dark:text-white">${{ todayRevenue }}</span>
+              <span class="text-sm font-medium text-gray-900 dark:text-white">${{ adminStats?.today?.revenue ?? 0 }}</span>
             </div>
           </div>
         </div>
@@ -289,18 +335,21 @@
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
               Pending Approvals
             </h3>
-            <UBadge color="warning" variant="soft">{{ pendingApprovals }}</UBadge>
+            <UBadge color="warning" variant="soft">{{ adminStats?.pendingApprovals ?? 0 }}</UBadge>
           </div>
           
-          <div class="space-y-3">
+          <div v-if="isLoading" class="space-y-3 animate-pulse">
+            <div v-for="i in 3" :key="i" class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+          </div>
+          <div v-else class="space-y-3">
             <div class="text-sm text-gray-600 dark:text-gray-400">
-              • 3 Mentor applications
+              • {{ adminStats?.pendingApprovals ?? 0 }} Mentor application{{ (adminStats?.pendingApprovals ?? 0) !== 1 ? 's' : '' }}
             </div>
             <div class="text-sm text-gray-600 dark:text-gray-400">
-              • 2 Profile updates
+              • 0 Profile updates
             </div>
             <div class="text-sm text-gray-600 dark:text-gray-400">
-              • 1 Dispute resolution
+              • 0 Dispute resolution{{ (adminStats?.pendingApprovals ?? 0) !== 1 ? 's' : '' }}
             </div>
           </div>
         </div>
@@ -310,76 +359,93 @@
 </template>
 
 <script setup lang="ts">
-// Mock admin dashboard data
-const totalUsers = ref(1247)
-const activeMentors = ref(89)
-const totalSessions = ref(342)
-const platformRevenue = ref(15750)
+interface AdminStats {
+  stats: {
+    totalUsers: { value: number; change: number }
+    activeMentors: { value: number; change: number }
+    sessionsThisMonth: { value: number; change: number }
+    platformRevenue: { value: number; change: number }
+  }
+  today: {
+    signups: number
+    sessions: number
+    revenue: number
+    messages: number
+  }
+  recentBookings: Array<{
+    id: string
+    title: string
+    mentorName: string
+    status: string
+    amount: number
+  }>
+  topMentors: Array<{
+    id: string
+    name: string
+    avatar?: string
+    sessions: number
+    revenue: number
+    rating: number
+  }>
+  recentUsers: Array<{
+    id: string
+    name: string
+    email: string
+    avatar?: string
+    role: string
+    status: string
+  }>
+  recentActivity: Array<{
+    id: string
+    type: 'user' | 'session' | 'payment' | 'system'
+    icon: string
+    description: string
+    timestamp: Date | string
+  }>
+  pendingApprovals: number
+}
+
+const adminStats = ref<AdminStats | null>(null)
+const isLoading = ref(false)
+const error = ref<string | null>(null)
+
+// Fetch admin stats
+const fetchAdminStats = async () => {
+  isLoading.value = true
+  error.value = null
+  try {
+    const data = await $fetch<AdminStats>('/api/admin/stats')
+    // Convert timestamp strings to Date objects
+    data.recentActivity = data.recentActivity.map(activity => ({
+      ...activity,
+      timestamp: typeof activity.timestamp === 'string' ? new Date(activity.timestamp) : activity.timestamp
+    }))
+    adminStats.value = data
+  } catch (e: any) {
+    error.value = e.data?.message || 'Failed to fetch admin stats'
+    console.error('[DashboardAdmin] Error:', e)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Fetch on mount
+onMounted(() => {
+  fetchAdminStats()
+})
+
+// Computed properties for template
+const recentActivityList = computed(() => {
+  return adminStats.value?.recentActivity || []
+})
+
+const recentUsersList = computed(() => {
+  return adminStats.value?.recentUsers || []
+})
+
+// Platform health (static for now)
 const serverLoad = ref(23)
 const apiResponse = ref(145)
-const todaySignups = ref(12)
-const todaySessions = ref(28)
-const todayMessages = ref(156)
-const todayRevenue = ref(890)
-const pendingApprovals = ref(6)
-
-const recentActivity = ref([
-  {
-    id: '1',
-    type: 'user',
-    icon: 'heroicons:user-plus',
-    description: 'New mentor Sarah Chen joined the platform',
-    timestamp: new Date(Date.now() - 30 * 60 * 1000)
-  },
-  {
-    id: '2',
-    type: 'session',
-    icon: 'heroicons:calendar-days',
-    description: '15 sessions completed successfully today',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000)
-  },
-  {
-    id: '3',
-    type: 'payment',
-    icon: 'heroicons:currency-dollar',
-    description: 'Payment of $450 processed for Marcus Johnson',
-    timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000)
-  },
-  {
-    id: '4',
-    type: 'system',
-    icon: 'heroicons:cog-6-tooth',
-    description: 'System maintenance completed successfully',
-    timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000)
-  }
-])
-
-const recentUsers = ref([
-  {
-    id: '1',
-    name: 'Sarah Chen',
-    email: 'sarah.chen@example.com',
-    role: 'mentor',
-    status: 'active',
-    avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150'
-  },
-  {
-    id: '2',
-    name: 'Alex Thompson',
-    email: 'alex.thompson@example.com',
-    role: 'mentee',
-    status: 'active',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150'
-  },
-  {
-    id: '3',
-    name: 'Maria Garcia',
-    email: 'maria.garcia@example.com',
-    role: 'mentee',
-    status: 'pending',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150'
-  }
-])
 
 const getActivityColor = (type: string) => {
   switch (type) {
@@ -412,15 +478,16 @@ const getUserActions = (user: any) => {
 }
 
 const viewUserProfile = (user: any) => {
-  console.log('View profile for:', user.name)
+  navigateTo(`/admin/users/${user.id}`)
 }
 
 const editUser = (user: any) => {
-  console.log('Edit user:', user.name)
+  navigateTo(`/admin/users/${user.id}/edit`)
 }
 
 const toggleUserStatus = (user: any) => {
-  user.status = user.status === 'active' ? 'suspended' : 'active'
+  // TODO: Implement user status toggle API call
+  console.log('Toggle user status:', user.id, user.status)
 }
 
 const formatTimeAgo = (date: Date) => {

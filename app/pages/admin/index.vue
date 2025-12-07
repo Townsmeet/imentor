@@ -1,7 +1,18 @@
 <template>
   <NuxtLayout name="admin">
     <!-- Quick Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div v-for="i in 4" :key="i" class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 animate-pulse">
+        <div class="flex items-center">
+          <div class="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          <div class="ml-5 flex-1">
+            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-2"></div>
+            <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <div
         v-for="stat in stats"
         :key="stat.name"
@@ -72,7 +83,20 @@
         <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
           Recent Activity
         </h3>
-        <div class="space-y-4">
+        <div v-if="isLoading" class="space-y-4 animate-pulse">
+          <div v-for="i in 5" :key="i" class="flex items-start space-x-3">
+            <div class="w-2 h-2 bg-gray-200 dark:bg-gray-700 rounded-full mt-2"></div>
+            <div class="flex-1">
+              <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+              <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+            </div>
+          </div>
+        </div>
+        <div v-else-if="recentActivity.length === 0" class="text-center py-8">
+          <Icon name="heroicons:clock" class="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <p class="text-gray-500 dark:text-gray-400">No recent activity</p>
+        </div>
+        <div v-else class="space-y-4">
           <div
             v-for="activity in recentActivity"
             :key="activity.id"
@@ -135,7 +159,24 @@
               </tr>
             </thead>
             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              <tr v-for="booking in recentBookings" :key="booking.id">
+              <tr v-if="isLoading" v-for="i in 5" :key="i" class="animate-pulse">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-2"></div>
+                  <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+                </td>
+              </tr>
+              <tr v-else-if="recentBookings.length === 0">
+                <td colspan="3" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                  No recent bookings
+                </td>
+              </tr>
+              <tr v-else v-for="booking in recentBookings" :key="booking.id">
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="text-sm font-medium text-gray-900 dark:text-white">
                     {{ booking.title }}
@@ -180,7 +221,21 @@
           </h3>
         </div>
         <div class="p-6">
-          <div class="space-y-4">
+          <div v-if="isLoading" class="space-y-4 animate-pulse">
+            <div v-for="i in 5" :key="i" class="flex items-center space-x-4">
+              <div class="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+              <div class="flex-1">
+                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-2"></div>
+                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-48"></div>
+              </div>
+              <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-8"></div>
+            </div>
+          </div>
+          <div v-else-if="topMentors.length === 0" class="text-center py-8">
+            <Icon name="heroicons:academic-cap" class="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p class="text-gray-500 dark:text-gray-400">No mentors yet</p>
+          </div>
+          <div v-else class="space-y-4">
             <div
               v-for="mentor in topMentors"
               :key="mentor.id"
@@ -227,114 +282,109 @@ definePageMeta({
   layout: false
 })
 
-const stats = ref([
-  {
-    name: 'Total Users',
-    value: '2,847',
-    change: 12,
-    icon: 'heroicons:users',
-    color: 'blue'
-  },
-  {
-    name: 'Active Mentors',
-    value: '156',
-    change: 8,
-    icon: 'heroicons:academic-cap',
-    color: 'green'
-  },
-  {
-    name: 'Sessions This Month',
-    value: '1,234',
-    change: 15,
-    icon: 'heroicons:calendar-days',
-    color: 'yellow'
-  },
-  {
-    name: 'Revenue',
-    value: '$48,392',
-    change: 23,
-    icon: 'heroicons:currency-dollar',
-    color: 'purple'
+interface AdminStats {
+  stats: {
+    totalUsers: { value: number; change: number }
+    activeMentors: { value: number; change: number }
+    sessionsThisMonth: { value: number; change: number }
+    platformRevenue: { value: number; change: number }
   }
-])
+  recentBookings: Array<{
+    id: string
+    title: string
+    mentorName: string
+    status: string
+    amount: number
+  }>
+  topMentors: Array<{
+    id: string
+    name: string
+    avatar?: string
+    sessions: number
+    revenue: number
+    rating: number
+  }>
+  recentActivity: Array<{
+    id: string
+    type: 'user' | 'session' | 'payment' | 'system'
+    icon: string
+    description: string
+    timestamp: Date | string
+  }>
+}
 
-const recentActivity = ref([
-  {
-    id: '1',
-    type: 'booking',
-    description: 'New session booked: Career Growth Discussion',
-    timestamp: new Date(Date.now() - 5 * 60 * 1000)
-  },
-  {
-    id: '2',
-    type: 'payment',
-    description: 'Payment received: $75 from John Doe',
-    timestamp: new Date(Date.now() - 15 * 60 * 1000)
-  },
-  {
-    id: '3',
-    type: 'user',
-    description: 'New mentor application from Sarah Chen',
-    timestamp: new Date(Date.now() - 30 * 60 * 1000)
-  },
-  {
-    id: '4',
-    type: 'booking',
-    description: 'Session completed: Technical Interview Prep',
-    timestamp: new Date(Date.now() - 45 * 60 * 1000)
-  }
-])
+const adminStats = ref<AdminStats | null>(null)
+const isLoading = ref(false)
 
-const recentBookings = ref([
-  {
-    id: '1',
-    title: 'Career Growth Discussion',
-    mentorName: 'Sarah Chen',
-    status: 'confirmed',
-    amount: 75
-  },
-  {
-    id: '2',
-    title: 'Technical Interview Prep',
-    mentorName: 'Marcus Johnson',
-    status: 'pending',
-    amount: 90
-  },
-  {
-    id: '3',
-    title: 'UX Design Review',
-    mentorName: 'Elena Rodriguez',
-    status: 'confirmed',
-    amount: 65
+// Fetch admin stats
+const fetchAdminStats = async () => {
+  isLoading.value = true
+  try {
+    const data = await $fetch<AdminStats>('/api/admin/stats')
+    // Convert timestamp strings to Date objects
+    data.recentActivity = data.recentActivity.map(activity => ({
+      ...activity,
+      timestamp: typeof activity.timestamp === 'string' ? new Date(activity.timestamp) : activity.timestamp
+    }))
+    adminStats.value = data
+  } catch (e: any) {
+    console.error('[Admin Index] Error fetching stats:', e)
+  } finally {
+    isLoading.value = false
   }
-])
+}
 
-const topMentors = ref([
-  {
-    id: '1',
-    name: 'Sarah Chen',
-    avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150',
-    sessions: 127,
-    revenue: 9525,
-    rating: 4.9
-  },
-  {
-    id: '2',
-    name: 'Marcus Johnson',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-    sessions: 89,
-    revenue: 8010,
-    rating: 4.8
-  },
-  {
-    id: '3',
-    name: 'Elena Rodriguez',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150',
-    sessions: 156,
-    revenue: 10140,
-    rating: 4.9
-  }
-])
+// Fetch on mount
+onMounted(() => {
+  fetchAdminStats()
+})
+
+// Computed stats for display
+const stats = computed(() => {
+  if (!adminStats.value) return []
+  return [
+    {
+      name: 'Total Users',
+      value: adminStats.value.stats.totalUsers.value.toLocaleString(),
+      change: adminStats.value.stats.totalUsers.change,
+      icon: 'heroicons:users',
+      color: 'blue'
+    },
+    {
+      name: 'Active Mentors',
+      value: adminStats.value.stats.activeMentors.value.toLocaleString(),
+      change: adminStats.value.stats.activeMentors.change,
+      icon: 'heroicons:academic-cap',
+      color: 'green'
+    },
+    {
+      name: 'Sessions This Month',
+      value: adminStats.value.stats.sessionsThisMonth.value.toLocaleString(),
+      change: adminStats.value.stats.sessionsThisMonth.change,
+      icon: 'heroicons:calendar-days',
+      color: 'yellow'
+    },
+    {
+      name: 'Revenue',
+      value: `$${adminStats.value.stats.platformRevenue.value.toLocaleString()}`,
+      change: adminStats.value.stats.platformRevenue.change,
+      icon: 'heroicons:currency-dollar',
+      color: 'purple'
+    }
+  ]
+})
+
+const recentActivity = computed(() => {
+  return adminStats.value?.recentActivity || []
+})
+
+const recentBookings = computed(() => {
+  return adminStats.value?.recentBookings || []
+})
+
+const topMentors = computed(() => {
+  return adminStats.value?.topMentors || []
+})
 
 const formatTime = (timestamp: Date) => {
   const now = new Date()

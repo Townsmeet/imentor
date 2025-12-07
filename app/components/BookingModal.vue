@@ -424,7 +424,15 @@ const handlePaymentError = (error: string) => {
 const pendingBookingId = ref<string | null>(null)
 
 const initiateBooking = async () => {
-  if (!calendarSelection.value.date || !calendarSelection.value.timeSlot) return
+  if (!calendarSelection.value.date || !calendarSelection.value.timeSlot) {
+    const error = new Error('Date and time slot are required to create a booking')
+    toast.add({
+      title: 'Booking Failed',
+      description: 'Please select a date and time slot before proceeding.',
+      color: 'error'
+    })
+    throw error
+  }
   
   const bookingRequest: BookingRequest = {
     mentorId: props.mentor.id,

@@ -171,17 +171,17 @@ const userMenuItems = [
   {
     label: 'Profile',
     icon: 'heroicons:user',
-    onSelect: () => navigateTo('/profile'),
+    click: () => navigateTo('/profile'),
   },
   {
     label: 'Settings',
     icon: 'heroicons:cog-6-tooth',
-    onSelect: () => navigateTo('/settings'),
+    click: () => navigateTo('/settings'),
   },
   {
     label: 'Sign out',
     icon: 'heroicons:arrow-right-on-rectangle',
-    onSelect: () => logout(),
+    click: () => logout(),
   },
 ]
 
