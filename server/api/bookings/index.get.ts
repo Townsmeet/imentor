@@ -1,4 +1,4 @@
-import { eq, and, or, desc } from 'drizzle-orm'
+import { eq, and, or, desc, inArray } from 'drizzle-orm'
 import { db } from '../../utils/drizzle'
 import { booking, user, mentorProfile } from '../../db/schema'
 import { auth } from '../../utils/auth'
@@ -35,6 +35,7 @@ export default defineEventHandler(async (event) => {
             whereClause = and(whereClause, eq(booking.status, status as any))
         }
 
+        // Need to join both mentor and mentee user tables
         const bookings = await db
             .select({
                 id: booking.id,
@@ -60,28 +61,50 @@ export default defineEventHandler(async (event) => {
             .where(whereClause!)
             .orderBy(desc(booking.scheduledDate))
 
+        // Fetch mentee info separately for bookings where user is mentor
+        const menteeIds = [...new Set(bookings.map(b => b.menteeId).filter(Boolean))]
+        const mentees = menteeIds.length > 0 ? await db
+            .select({
+                id: user.id,
+                name: user.name,
+                image: user.image,
+            })
+            .from(user)
+            .where(inArray(user.id, menteeIds))
+            : []
+
+        const menteeMap = new Map(mentees.map(m => [m.id, m]))
+
         // Parse and format bookings
-        const formattedBookings = bookings.map(b => ({
-            id: b.id,
-            mentorId: b.mentorId,
-            menteeId: b.menteeId,
-            title: b.title,
-            description: b.description,
-            scheduledDate: b.scheduledDate,
-            duration: b.duration,
-            status: b.status,
-            price: b.price ? parseFloat(b.price) : 0,
-            meetingLink: b.meetingLink,
-            notes: b.notes,
-            paymentStatus: b.paymentStatus,
-            createdAt: b.createdAt,
-            confirmedAt: b.confirmedAt,
-            mentor: b.mentorName ? {
-                id: b.mentorId,
-                name: b.mentorName,
-                image: b.mentorImage,
-            } : null,
-        }))
+        const formattedBookings = bookings.map(b => {
+            const mentee = menteeMap.get(b.menteeId)
+            return {
+                id: b.id,
+                mentorId: b.mentorId,
+                menteeId: b.menteeId,
+                title: b.title,
+                description: b.description,
+                scheduledDate: b.scheduledDate,
+                duration: b.duration,
+                status: b.status,
+                price: b.price ? parseFloat(b.price) : 0,
+                meetingLink: b.meetingLink,
+                notes: b.notes,
+                paymentStatus: b.paymentStatus,
+                createdAt: b.createdAt,
+                confirmedAt: b.confirmedAt,
+                mentor: b.mentorName ? {
+                    id: b.mentorId,
+                    name: b.mentorName,
+                    image: b.mentorImage,
+                } : null,
+                mentee: mentee ? {
+                    id: mentee.id,
+                    name: mentee.name,
+                    image: mentee.image,
+                } : null,
+            }
+        })
 
         return { bookings: formattedBookings }
     } catch (error: any) {

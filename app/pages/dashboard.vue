@@ -36,14 +36,25 @@
       </div>
 
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div v-if="dashboardLoading" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div v-for="i in 3" :key="i" class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 animate-pulse">
+        <div class="flex items-center">
+          <div class="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+          <div class="ml-4 flex-1">
+            <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-2"></div>
+            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
       <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
         <div class="flex items-center">
           <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
             <Icon name="heroicons:calendar-days" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
           </div>
           <div class="ml-4">
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ upcomingSessions }}</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ dashboardStats?.stats?.upcomingSessions ?? 0 }}</p>
             <p class="text-sm text-gray-600 dark:text-gray-400">Upcoming Sessions</p>
           </div>
         </div>
@@ -55,7 +66,7 @@
             <Icon name="heroicons:check-circle" class="w-6 h-6 text-green-600 dark:text-green-400" />
           </div>
           <div class="ml-4">
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ completedSessions }}</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ dashboardStats?.stats?.completedSessions ?? 0 }}</p>
             <p class="text-sm text-gray-600 dark:text-gray-400">Completed Sessions</p>
           </div>
         </div>
@@ -67,7 +78,7 @@
             <Icon name="heroicons:chat-bubble-left-right" class="w-6 h-6 text-purple-600 dark:text-purple-400" />
           </div>
           <div class="ml-4">
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ unreadMessages }}</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ dashboardStats?.stats?.unreadMessages ?? 0 }}</p>
             <p class="text-sm text-gray-600 dark:text-gray-400">Unread Messages</p>
           </div>
         </div>
@@ -96,7 +107,12 @@
           </div>
           
           <div class="p-6">
-            <div v-if="mockUpcomingSessions.length === 0" class="text-center py-8">
+            <div v-if="bookingsLoading" class="text-center py-8">
+              <div class="animate-pulse space-y-4">
+                <div v-for="i in 2" :key="i" class="h-20 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+              </div>
+            </div>
+            <div v-else-if="upcomingSessionsList.length === 0" class="text-center py-8">
               <Icon name="heroicons:calendar-days" class="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p class="text-gray-500 dark:text-gray-400">No upcoming sessions</p>
               <UButton
@@ -110,14 +126,14 @@
             
             <div v-else class="space-y-4">
               <div
-                v-for="session in mockUpcomingSessions"
+                v-for="session in upcomingSessionsList"
                 :key="session.id"
                 class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
               >
                 <div class="flex items-center space-x-4">
                   <UAvatar
-                    :src="session.avatar"
-                    :alt="session.name"
+                    :src="session.mentor?.image || undefined"
+                    :alt="session.mentor?.name || 'Mentor'"
                     size="md"
                   />
                   <div>
@@ -125,16 +141,19 @@
                       {{ session.title }}
                     </p>
                     <p class="text-sm text-gray-600 dark:text-gray-400">
-                      with {{ session.name }}
+                      with {{ session.mentor?.name || 'Mentor' }}
                     </p>
                     <p class="text-sm text-blue-600 dark:text-blue-400">
-                      {{ formatDate(session.date) }} at {{ session.time }}
+                      {{ formatDate(session.scheduledDate) }} at {{ formatTime(session.scheduledDate) }}
                     </p>
                   </div>
                 </div>
                 
                 <div class="flex items-center space-x-2">
                   <UButton
+                    v-if="session.meetingLink"
+                    :href="session.meetingLink"
+                    target="_blank"
                     icon="heroicons:video-camera"
                     size="sm"
                     variant="outline"
@@ -142,6 +161,7 @@
                     Join
                   </UButton>
                   <UButton
+                    :to="`/messages?booking=${session.id}`"
                     icon="heroicons:chat-bubble-left-right"
                     size="sm"
                     variant="ghost"
@@ -161,9 +181,22 @@
           </div>
           
           <div class="p-6">
-            <div class="space-y-4">
+            <div v-if="bookingsLoading" class="space-y-4">
+              <div v-for="i in 3" :key="i" class="flex items-start space-x-3 animate-pulse">
+                <div class="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                <div class="flex-1">
+                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+                  <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                </div>
+              </div>
+            </div>
+            <div v-else-if="recentActivity.length === 0" class="text-center py-8">
+              <Icon name="heroicons:clock" class="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p class="text-gray-500 dark:text-gray-400">No recent activity</p>
+            </div>
+            <div v-else class="space-y-4">
               <div
-                v-for="activity in mockRecentActivity"
+                v-for="activity in recentActivity"
                 :key="activity.id"
                 class="flex items-start space-x-3"
               >
@@ -356,6 +389,9 @@ definePageMeta({
 })
 
 const { user } = useAuth()
+const { stats: dashboardStats, isLoading: dashboardLoading, fetchDashboardStats } = useDashboard()
+const { bookings, isLoading: bookingsLoading, fetchBookings, getUpcomingBookings } = useBookings()
+const { fetchRecentActivity } = useDashboard()
 
 // Type guard to ensure proper role typing
 const isRole = (role: string): role is UserRole => {
@@ -373,7 +409,59 @@ const currentUser = computed(() => {
   } as User
 })
 
-// Mock data - replace with actual API calls later
+// Fetch dashboard data on mount
+onMounted(async () => {
+  if (currentUser.value && currentUser.value.role === 'mentee') {
+    await Promise.all([
+      fetchDashboardStats(),
+      fetchBookings({ role: 'mentee' })
+    ])
+  }
+})
+
+// Get upcoming sessions list (limited to 5 for dashboard)
+const upcomingSessionsList = computed(() => {
+  return getUpcomingBookings.value.slice(0, 5)
+})
+
+// Generate recent activity from bookings
+const recentActivity = computed(() => {
+  const activities: Array<{
+    id: string
+    type: 'session' | 'message' | 'booking'
+    icon: string
+    description: string
+    timestamp: Date
+  }> = []
+
+  bookings.value.forEach(booking => {
+    // Booking created/confirmed
+    activities.push({
+      id: `${booking.id}-created`,
+      type: 'booking',
+      icon: 'heroicons:calendar-days',
+      description: `Session "${booking.title}" ${booking.status === 'confirmed' ? 'confirmed' : 'booked'}`,
+      timestamp: booking.createdAt,
+    })
+
+    // Session completed
+    if (booking.status === 'completed') {
+      activities.push({
+        id: `${booking.id}-completed`,
+        type: 'session',
+        icon: 'heroicons:check-circle',
+        description: `Completed session "${booking.title}"`,
+        timestamp: booking.scheduledDate,
+      })
+    }
+  })
+
+  return activities
+    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+    .slice(0, 10)
+})
+
+// Notifications (keeping existing mock for now)
 type NotificationType = 'info' | 'warning' | 'error'
 interface NotificationItem {
   id: string
@@ -384,7 +472,6 @@ interface NotificationItem {
   timestamp: Date
 }
 
-// Shared notifications state with header bell
 const showNotifications = useState<boolean>('notifications-open', () => false)
 const notificationCount = ref(3)
 const notifications = ref<NotificationItem[]>([
@@ -414,60 +501,19 @@ const notifications = ref<NotificationItem[]>([
   }
 ])
 
-const upcomingSessions = ref(2)
-const completedSessions = ref(8)
-const unreadMessages = ref(3)
-const mockMentorRating = ref(4.8)
-const mockTotalSessions = ref(127)
-
-const mockUpcomingSessions = ref([
-  {
-    id: '1',
-    title: 'Career Growth Strategy',
-    name: 'Sarah Chen',
-    avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150',
-    date: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
-    time: '2:00 PM'
-  },
-  {
-    id: '2',
-    title: 'Technical Interview Prep',
-    name: 'Marcus Johnson',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-    date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
-    time: '10:00 AM'
-  }
-])
-
-const mockRecentActivity = ref([
-  {
-    id: '1',
-    type: 'session',
-    icon: 'heroicons:video-camera',
-    description: 'Completed session with Sarah Chen',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000) // 2 hours ago
-  },
-  {
-    id: '2',
-    type: 'message',
-    icon: 'heroicons:chat-bubble-left-right',
-    description: 'New message from Marcus Johnson',
-    timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000) // 4 hours ago
-  },
-  {
-    id: '3',
-    type: 'booking',
-    icon: 'heroicons:calendar-days',
-    description: 'Session booked with Elena Rodriguez',
-    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000) // 1 day ago
-  }
-])
-
 const formatDate = (date: Date) => {
   return new Intl.DateTimeFormat('en-US', {
     weekday: 'long',
     month: 'short',
     day: 'numeric'
+  }).format(date)
+}
+
+const formatTime = (date: Date) => {
+  return new Intl.DateTimeFormat('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
   }).format(date)
 }
 

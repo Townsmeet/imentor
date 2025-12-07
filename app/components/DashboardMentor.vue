@@ -34,14 +34,25 @@
     </div>
 
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div v-if="dashboardLoading" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div v-for="i in 4" :key="i" class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 animate-pulse">
+        <div class="flex items-center">
+          <div class="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+          <div class="ml-4 flex-1">
+            <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-16 mb-2"></div>
+            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-else class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
       <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
         <div class="flex items-center">
           <div class="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
             <Icon name="heroicons:currency-dollar" class="w-6 h-6 text-green-600 dark:text-green-400" />
           </div>
           <div class="ml-4">
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">${{ monthlyEarnings }}</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">${{ dashboardStats?.stats?.monthlyEarnings ?? 0 }}</p>
             <p class="text-sm text-gray-600 dark:text-gray-400">This Month</p>
           </div>
         </div>
@@ -53,7 +64,7 @@
             <Icon name="heroicons:calendar-days" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
           </div>
           <div class="ml-4">
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ upcomingSessions }}</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ dashboardStats?.stats?.upcomingSessions ?? 0 }}</p>
             <p class="text-sm text-gray-600 dark:text-gray-400">Upcoming Sessions</p>
           </div>
         </div>
@@ -65,7 +76,7 @@
             <Icon name="heroicons:users" class="w-6 h-6 text-purple-600 dark:text-purple-400" />
           </div>
           <div class="ml-4">
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ activeMentees }}</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ dashboardStats?.stats?.activeMentees ?? 0 }}</p>
             <p class="text-sm text-gray-600 dark:text-gray-400">Active Mentees</p>
           </div>
         </div>
@@ -77,7 +88,7 @@
             <Icon name="heroicons:star" class="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
           </div>
           <div class="ml-4">
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ averageRating }}</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ dashboardStats?.stats?.averageRating?.toFixed(1) ?? '0.0' }}</p>
             <p class="text-sm text-gray-600 dark:text-gray-400">Average Rating</p>
           </div>
         </div>
@@ -106,21 +117,26 @@
           </div>
           
           <div class="p-6">
-            <div v-if="mockUpcomingSessions.length === 0" class="text-center py-8">
+            <div v-if="bookingsLoading" class="text-center py-8">
+              <div class="animate-pulse space-y-4">
+                <div v-for="i in 2" :key="i" class="h-20 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+              </div>
+            </div>
+            <div v-else-if="upcomingSessionsList.length === 0" class="text-center py-8">
               <Icon name="heroicons:calendar-days" class="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p class="text-gray-500 dark:text-gray-400">No upcoming sessions</p>
             </div>
             
             <div v-else class="space-y-4">
               <div
-                v-for="session in mockUpcomingSessions"
+                v-for="session in upcomingSessionsList"
                 :key="session.id"
                 class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
               >
                 <div class="flex items-center space-x-4">
                   <UAvatar
-                    :src="session.menteeAvatar"
-                    :alt="session.menteeName"
+                    :src="session.mentee?.image || undefined"
+                    :alt="session.mentee?.name || 'Mentee'"
                     size="md"
                   />
                   <div>
@@ -128,16 +144,19 @@
                       {{ session.title }}
                     </p>
                     <p class="text-sm text-gray-600 dark:text-gray-400">
-                      with {{ session.menteeName }}
+                      with {{ session.mentee?.name || 'Mentee' }}
                     </p>
                     <p class="text-sm text-blue-600 dark:text-blue-400">
-                      {{ formatDate(session.date) }} at {{ session.time }}
+                      {{ formatDate(session.scheduledDate) }} at {{ formatTime(session.scheduledDate) }}
                     </p>
                   </div>
                 </div>
                 
                 <div class="flex items-center space-x-2">
                   <UButton
+                    v-if="session.meetingLink"
+                    :href="session.meetingLink"
+                    target="_blank"
                     icon="heroicons:video-camera"
                     size="sm"
                     variant="outline"
@@ -145,6 +164,7 @@
                     Join
                   </UButton>
                   <UButton
+                    :to="`/messages?booking=${session.id}`"
                     icon="heroicons:chat-bubble-left-right"
                     size="sm"
                     variant="ghost"
@@ -164,38 +184,51 @@
           </div>
           
           <div class="p-6">
-            <div class="grid grid-cols-3 gap-4 mb-6">
-              <div class="text-center">
-                <p class="text-2xl font-bold text-gray-900 dark:text-white">${{ totalEarnings }}</p>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Total Earnings</p>
-              </div>
-              <div class="text-center">
-                <p class="text-2xl font-bold text-gray-900 dark:text-white">${{ monthlyEarnings }}</p>
-                <p class="text-sm text-gray-600 dark:text-gray-400">This Month</p>
-              </div>
-              <div class="text-center">
-                <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ totalSessions }}</p>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Total Sessions</p>
+            <div v-if="dashboardLoading" class="animate-pulse">
+              <div class="grid grid-cols-3 gap-4 mb-6">
+                <div v-for="i in 3" :key="i" class="text-center">
+                  <div class="h-8 bg-gray-200 dark:bg-gray-700 rounded w-24 mx-auto mb-2"></div>
+                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20 mx-auto"></div>
+                </div>
               </div>
             </div>
-            
-            <!-- Simple earnings visualization -->
-            <div class="space-y-3">
-              <div
-                v-for="month in earningsData"
-                :key="month.name"
-                class="flex items-center justify-between"
-              >
-                <span class="text-sm text-gray-600 dark:text-gray-400">{{ month.name }}</span>
-                <div class="flex items-center space-x-2">
-                  <div class="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div
-                      class="bg-green-600 h-2 rounded-full"
-                      :style="{ width: `${(month.amount / 2000) * 100}%` }"
-                    ></div>
-                  </div>
-                  <span class="text-sm font-medium text-gray-900 dark:text-white">${{ month.amount }}</span>
+            <div v-else>
+              <div class="grid grid-cols-3 gap-4 mb-6">
+                <div class="text-center">
+                  <p class="text-2xl font-bold text-gray-900 dark:text-white">${{ dashboardStats?.stats?.totalEarnings ?? 0 }}</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">Total Earnings</p>
                 </div>
+                <div class="text-center">
+                  <p class="text-2xl font-bold text-gray-900 dark:text-white">${{ dashboardStats?.stats?.monthlyEarnings ?? 0 }}</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">This Month</p>
+                </div>
+                <div class="text-center">
+                  <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ dashboardStats?.stats?.totalSessions ?? 0 }}</p>
+                  <p class="text-sm text-gray-600 dark:text-gray-400">Total Sessions</p>
+                </div>
+              </div>
+              
+              <!-- Simple earnings visualization -->
+              <div v-if="earningsChartData.length > 0" class="space-y-3">
+                <div
+                  v-for="month in earningsChartData"
+                  :key="month.name"
+                  class="flex items-center justify-between"
+                >
+                  <span class="text-sm text-gray-600 dark:text-gray-400">{{ month.name }}</span>
+                  <div class="flex items-center space-x-2">
+                    <div class="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div
+                        class="bg-green-600 h-2 rounded-full"
+                        :style="{ width: `${Math.min((month.amount / maxEarnings) * 100, 100)}%` }"
+                      ></div>
+                    </div>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">${{ month.amount }}</span>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="text-center py-4 text-gray-500 dark:text-gray-400">
+                No earnings data available
               </div>
             </div>
           </div>
@@ -210,25 +243,31 @@
             Profile Performance
           </h3>
           
-          <div class="space-y-4">
+          <div v-if="dashboardLoading" class="space-y-4 animate-pulse">
+            <div v-for="i in 4" :key="i" class="flex items-center justify-between">
+              <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+              <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12"></div>
+            </div>
+          </div>
+          <div v-else class="space-y-4">
             <div class="flex items-center justify-between">
               <span class="text-sm text-gray-600 dark:text-gray-400">Profile Views</span>
-              <span class="text-sm font-medium text-gray-900 dark:text-white">{{ profileViews }}</span>
+              <span class="text-sm font-medium text-gray-900 dark:text-white">{{ dashboardStats?.stats?.profileViews ?? 0 }}</span>
             </div>
             
             <div class="flex items-center justify-between">
               <span class="text-sm text-gray-600 dark:text-gray-400">Booking Rate</span>
-              <span class="text-sm font-medium text-gray-900 dark:text-white">{{ bookingRate }}%</span>
+              <span class="text-sm font-medium text-gray-900 dark:text-white">{{ dashboardStats?.stats?.bookingRate ?? 0 }}%</span>
             </div>
             
             <div class="flex items-center justify-between">
               <span class="text-sm text-gray-600 dark:text-gray-400">Response Time</span>
-              <span class="text-sm font-medium text-gray-900 dark:text-white">{{ responseTime }}</span>
+              <span class="text-sm font-medium text-gray-900 dark:text-white">{{ dashboardStats?.stats?.responseTime ?? 'N/A' }}</span>
             </div>
             
             <div class="flex items-center justify-between">
               <span class="text-sm text-gray-600 dark:text-gray-400">Completion Rate</span>
-              <span class="text-sm font-medium text-gray-900 dark:text-white">{{ completionRate }}%</span>
+              <span class="text-sm font-medium text-gray-900 dark:text-white">{{ dashboardStats?.stats?.completionRate ?? 0 }}%</span>
             </div>
           </div>
         </div>
@@ -326,46 +365,37 @@
 
 <script setup lang="ts">
 const { user } = useAuth()
+const { stats: dashboardStats, isLoading: dashboardLoading, fetchDashboardStats } = useDashboard()
+const { bookings, isLoading: bookingsLoading, fetchBookings, getUpcomingBookings } = useBookings()
 
-// Mock data for mentor dashboard
-const monthlyEarnings = ref(1250)
-const upcomingSessions = ref(8)
-const activeMentees = ref(12)
-const averageRating = ref(4.9)
-const totalEarnings = ref(8750)
-const totalSessions = ref(127)
-const profileViews = ref(89)
-const bookingRate = ref(78)
-const responseTime = ref('2h')
-const completionRate = ref(96)
-
-const mockUpcomingSessions = ref([
-  {
-    id: '1',
-    title: 'Career Growth Strategy',
-    menteeName: 'Alex Thompson',
-    menteeAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
-    date: new Date(Date.now() + 24 * 60 * 60 * 1000),
-    time: '2:00 PM'
-  },
-  {
-    id: '2',
-    title: 'Technical Interview Prep',
-    menteeName: 'Maria Garcia',
-    menteeAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150',
-    date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-    time: '10:00 AM'
+// Fetch dashboard data on mount
+onMounted(async () => {
+  if (user.value?.role === 'mentor') {
+    await Promise.all([
+      fetchDashboardStats(),
+      fetchBookings({ role: 'mentor' })
+    ])
   }
-])
+})
 
-const earningsData = ref([
-  { name: 'Jan', amount: 1100 },
-  { name: 'Feb', amount: 1350 },
-  { name: 'Mar', amount: 1250 },
-  { name: 'Apr', amount: 1450 },
-  { name: 'May', amount: 1600 }
-])
+// Get upcoming sessions list (limited to 5 for dashboard)
+const upcomingSessionsList = computed(() => {
+  return getUpcomingBookings.value.slice(0, 5)
+})
 
+// Get earnings chart data
+const earningsChartData = computed(() => {
+  return dashboardStats.value?.earningsData || []
+})
+
+// Calculate max earnings for chart scaling
+const maxEarnings = computed(() => {
+  if (earningsChartData.value.length === 0) return 1
+  return Math.max(...earningsChartData.value.map(m => m.amount), 1)
+})
+
+
+// Recent reviews (placeholder - would need reviews system)
 const recentReviews = ref([
   {
     id: '1',
@@ -386,6 +416,14 @@ const formatDate = (date: Date) => {
     weekday: 'long',
     month: 'short',
     day: 'numeric'
+  }).format(date)
+}
+
+const formatTime = (date: Date) => {
+  return new Intl.DateTimeFormat('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
   }).format(date)
 }
 </script>
