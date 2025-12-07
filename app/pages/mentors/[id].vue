@@ -203,22 +203,38 @@
         Recent Reviews
       </h2>
       
-      <div class="space-y-6">
+      <div v-if="reviewsLoading" class="space-y-6 animate-pulse">
+        <div v-for="i in 3" :key="i" class="border-b border-gray-200 dark:border-gray-700 pb-6">
+          <div class="flex items-start space-x-4">
+            <div class="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+            <div class="flex-1">
+              <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-2"></div>
+              <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-48 mb-2"></div>
+              <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-else-if="reviews.length === 0" class="text-center py-8">
+        <Icon name="heroicons:star" class="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <p class="text-gray-500 dark:text-gray-400">No reviews yet</p>
+      </div>
+      <div v-else class="space-y-6">
         <div
-          v-for="review in mockReviews"
+          v-for="review in reviews"
           :key="review.id"
           class="border-b border-gray-200 dark:border-gray-700 last:border-b-0 pb-6 last:pb-0"
         >
           <div class="flex items-start space-x-4">
             <UAvatar
-              :src="review.avatar"
-              :alt="review.name"
+              :src="review.mentee?.image || undefined"
+              :alt="review.mentee?.name || 'Mentee'"
               size="md"
             />
             <div class="flex-1">
               <div class="flex items-center space-x-2 mb-2">
                 <h4 class="font-medium text-gray-900 dark:text-white">
-                  {{ review.name }}
+                  {{ review.mentee?.name || 'Anonymous' }}
                 </h4>
                 <div class="flex items-center space-x-1">
                   <Icon
@@ -232,10 +248,10 @@
                   />
                 </div>
                 <span class="text-sm text-gray-500 dark:text-gray-400">
-                  {{ formatDate(review.date) }}
+                  {{ formatDate(review.createdAt) }}
                 </span>
               </div>
-              <p class="text-gray-600 dark:text-gray-400">
+              <p v-if="review.comment" class="text-gray-600 dark:text-gray-400">
                 {{ review.comment }}
               </p>
             </div>
@@ -346,17 +362,19 @@ const route = useRoute()
 const toast = useToast()
 const { getMentorById } = useMentors()
 const { slots: mentorSlots, fetchAvailability } = useAvailability()
+const { reviews, fetchReviewsByMentor, isLoading: reviewsLoading } = useReviews()
 
 const mentorId = route.params.id as string
 const mentor = ref<MentorProfile | null>(null)
 const isLoadingMentor = ref(true)
 
-// Fetch mentor and their availability on mount
+// Fetch mentor, availability, and reviews on mount
 onMounted(async () => {
   isLoadingMentor.value = true
   const [mentorData] = await Promise.all([
     getMentorById(mentorId),
-    fetchAvailability(mentorId)
+    fetchAvailability(mentorId),
+    fetchReviewsByMentor(mentorId, 10, 0)
   ])
   mentor.value = mentorData
   isLoadingMentor.value = false
@@ -390,24 +408,6 @@ const durationOptions = [
   { label: '90 minutes', value: 90 }
 ]
 
-const mockReviews = [
-  {
-    id: '1',
-    name: 'Alex Thompson',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
-    rating: 5,
-    date: new Date('2024-01-15'),
-    comment: 'Excellent session! Sarah provided clear guidance on my career transition and gave me actionable steps to follow.'
-  },
-  {
-    id: '2',
-    name: 'Maria Garcia',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150',
-    rating: 5,
-    date: new Date('2024-01-10'),
-    comment: 'Very knowledgeable and patient. Helped me understand complex technical concepts in a simple way.'
-  }
-]
 
 const getAvailableSlots = (dayIndex: number) => {
   // Get actual availability from the mentor's slots
@@ -431,12 +431,13 @@ const handleBookingConfirmed = (booking: any) => {
   navigateTo('/bookings')
 }
 
-const formatDate = (date: Date) => {
+const formatDate = (date: Date | string) => {
+  const dateObj = typeof date === 'string' ? new Date(date) : date
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric'
-  }).format(date)
+  }).format(dateObj)
 }
 
 // SEO

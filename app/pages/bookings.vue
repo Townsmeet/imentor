@@ -221,6 +221,7 @@ const {
 } = useBookings()
 
 const { getMentorProfile, fetchMentors } = useMentors()
+const { createReview, fetchReviewByBooking, hasReview } = useReviews()
 const toast = useToast()
 
 const activeTab = ref('upcoming')
@@ -336,8 +337,24 @@ const handleJoin = (booking: Booking) => {
   }
 }
 
-const handleReview = (booking: Booking) => {
+const handleReview = async (booking: Booking) => {
   selectedBooking.value = booking
+  
+  // Check if review already exists
+  try {
+    const existingReview = await fetchReviewByBooking(booking.id)
+    if (existingReview) {
+      toast.add({
+        title: 'Already Reviewed',
+        description: 'You have already reviewed this session.',
+        color: 'info'
+      })
+      return
+    }
+  } catch (error) {
+    // If error, continue to show review modal
+  }
+  
   reviewForm.rating = 0
   reviewForm.comment = ''
   showReviewModal.value = true
@@ -381,8 +398,11 @@ const submitReview = async () => {
   
   isSubmittingReview.value = true
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    await createReview({
+      bookingId: selectedBooking.value.id,
+      rating: reviewForm.rating,
+      comment: reviewForm.comment || undefined,
+    })
     
     toast.add({
       title: 'Review Submitted',
@@ -390,11 +410,16 @@ const submitReview = async () => {
       color: 'success'
     })
     
+    // Refresh bookings to update review status
+    await fetchBookings()
+    
     showReviewModal.value = false
-  } catch (error) {
+    reviewForm.rating = 0
+    reviewForm.comment = ''
+  } catch (error: any) {
     toast.add({
       title: 'Review Failed',
-      description: 'Unable to submit review. Please try again.',
+      description: error.data?.message || 'Unable to submit review. Please try again.',
       color: 'error'
     })
   } finally {

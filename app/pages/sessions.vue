@@ -303,6 +303,7 @@ interface Session {
   meetingLink?: string
   notes?: string
   reviewed?: boolean
+  bookingId?: string // Add bookingId to map to reviews
 }
 
 definePageMeta({
@@ -310,6 +311,8 @@ definePageMeta({
 })
 
 const { user } = useAuth()
+const { createReview, fetchReviewByBooking } = useReviews()
+const { bookings, fetchBookings, getUpcomingBookings, getPastBookings } = useBookings()
 const toast = useToast()
 
 const activeTab = ref(0)
@@ -327,37 +330,49 @@ const reviewForm = reactive({
   comment: ''
 })
 
-// Mock data - replace with actual API calls
-const upcomingSessions = ref<Session[]>([
-  {
-    id: '1',
-    title: 'Career Growth Strategy',
-    description: 'Discussing next steps for career advancement and skill development',
-    participantId: '2',
-    participantName: 'Sarah Chen',
-    avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150',
-    scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-    duration: 60,
-    status: 'confirmed',
-    meetingLink: 'https://meet.example.com/abc123'
-  }
-])
+// Convert bookings to sessions format
+const upcomingSessions = computed(() => {
+  return getUpcomingBookings.value.map(booking => {
+    const participant = user.value?.role === 'mentee' ? booking.mentor : booking.mentee
+    return {
+      id: booking.id,
+      bookingId: booking.id,
+      title: booking.title,
+      description: booking.description || '',
+      participantId: user.value?.role === 'mentee' ? booking.mentorId : booking.menteeId,
+      participantName: participant?.name || 'Unknown',
+      avatar: participant?.image || undefined,
+      scheduledAt: booking.scheduledDate,
+      duration: booking.duration,
+      status: booking.status,
+      meetingLink: booking.meetingLink,
+      notes: booking.notes,
+      reviewed: false, // Will be checked via API
+    } as Session
+  })
+})
 
-const pastSessions = ref<Session[]>([
-  {
-    id: '2',
-    title: 'Technical Interview Preparation',
-    description: 'Mock interview and feedback session',
-    participantId: '3',
-    participantName: 'Marcus Johnson',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-    scheduledAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-    duration: 90,
-    status: 'completed',
-    notes: 'Great session! Covered system design and behavioral questions.',
-    reviewed: false
-  }
-])
+// Convert past bookings to sessions format
+const pastSessions = computed(() => {
+  return getPastBookings.value.map(booking => {
+    const participant = user.value?.role === 'mentee' ? booking.mentor : booking.mentee
+    return {
+      id: booking.id,
+      bookingId: booking.id,
+      title: booking.title,
+      description: booking.description || '',
+      participantId: user.value?.role === 'mentee' ? booking.mentorId : booking.menteeId,
+      participantName: participant?.name || 'Unknown',
+      avatar: participant?.image || undefined,
+      scheduledAt: booking.scheduledDate,
+      duration: booking.duration,
+      status: booking.status,
+      meetingLink: booking.meetingLink,
+      notes: booking.notes,
+      reviewed: false, // Will be checked when review modal opens
+    } as Session
+  })
+})
 
 const formatDate = (date: Date) => {
   return new Intl.DateTimeFormat('en-US', {
@@ -458,24 +473,50 @@ const cancelSession = async (session: Session) => {
   }
 }
 
-const openReviewModal = (session: Session) => {
+const openReviewModal = async (session: Session) => {
   selectedSession.value = session
+  
+  // Check if review already exists
+  if (session.bookingId) {
+    try {
+      const existingReview = await fetchReviewByBooking(session.bookingId)
+      if (existingReview) {
+        toast.add({
+          title: 'Already Reviewed',
+          description: 'You have already reviewed this session.',
+          color: 'info'
+        })
+        return
+      }
+    } catch (error) {
+      // Continue to show review modal if check fails
+    }
+  }
+  
   reviewForm.rating = 0
   reviewForm.comment = ''
   showReviewModal.value = true
 }
 
 const submitReview = async () => {
+  if (!selectedSession.value || !selectedSession.value.bookingId || reviewForm.rating === 0) return
+  
   isSubmittingReview.value = true
   
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    await createReview({
+      bookingId: selectedSession.value.bookingId,
+      rating: reviewForm.rating,
+      comment: reviewForm.comment || undefined,
+    })
     
     // Mark session as reviewed
     if (selectedSession.value) {
       selectedSession.value.reviewed = true
     }
+    
+    // Refresh bookings to update review status
+    await fetchBookings()
     
     toast.add({
       title: 'Review Submitted',
@@ -484,14 +525,21 @@ const submitReview = async () => {
     })
     
     showReviewModal.value = false
-  } catch (error) {
+    reviewForm.rating = 0
+    reviewForm.comment = ''
+  } catch (error: any) {
     toast.add({
       title: 'Error',
-      description: 'Failed to submit review. Please try again.',
+      description: error.data?.message || 'Failed to submit review. Please try again.',
       color: 'error'
     })
   } finally {
     isSubmittingReview.value = false
   }
 }
+
+// Fetch bookings on mount
+onMounted(async () => {
+  await fetchBookings()
+})
 </script>

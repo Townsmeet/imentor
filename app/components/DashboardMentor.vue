@@ -287,7 +287,16 @@
             </UButton>
           </div>
           
-          <div class="space-y-4">
+          <div v-if="reviewsLoading" class="space-y-4 animate-pulse">
+            <div v-for="i in 2" :key="i" class="border-b border-gray-200 dark:border-gray-700 pb-4">
+              <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-2"></div>
+              <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+            </div>
+          </div>
+          <div v-else-if="recentReviews.length === 0" class="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+            No reviews yet
+          </div>
+          <div v-else class="space-y-4">
             <div
               v-for="review in recentReviews"
               :key="review.id"
@@ -307,7 +316,7 @@
                 </div>
                 <span class="text-sm text-gray-600 dark:text-gray-400">{{ review.name }}</span>
               </div>
-              <p class="text-sm text-gray-600 dark:text-gray-400">
+              <p v-if="review.comment" class="text-sm text-gray-600 dark:text-gray-400">
                 "{{ review.comment }}"
               </p>
             </div>
@@ -367,13 +376,15 @@
 const { user } = useAuth()
 const { stats: dashboardStats, isLoading: dashboardLoading, fetchDashboardStats } = useDashboard()
 const { bookings, isLoading: bookingsLoading, fetchBookings, getUpcomingBookings } = useBookings()
+const { reviews: recentReviewsList, fetchReviewsByMentor, isLoading: reviewsLoading } = useReviews()
 
 // Fetch dashboard data on mount
 onMounted(async () => {
   if (user.value?.role === 'mentor') {
     await Promise.all([
       fetchDashboardStats(),
-      fetchBookings({ role: 'mentor' })
+      fetchBookings({ role: 'mentor' }),
+      fetchReviewsByMentor(user.value.id, 3, 0) // Get 3 most recent reviews
     ])
   }
 })
@@ -395,21 +406,15 @@ const maxEarnings = computed(() => {
 })
 
 
-// Recent reviews (placeholder - would need reviews system)
-const recentReviews = ref([
-  {
-    id: '1',
-    name: 'Alex T.',
-    rating: 5,
-    comment: 'Excellent guidance on career transition. Very helpful!'
-  },
-  {
-    id: '2',
-    name: 'Maria G.',
-    rating: 5,
-    comment: 'Great technical insights and practical advice.'
-  }
-])
+// Recent reviews from API
+const recentReviews = computed(() => {
+  return recentReviewsList.value.map(review => ({
+    id: review.id,
+    name: review.mentee?.name?.split(' ').map((n, i) => i === 0 ? n : n[0]).join(' ') || 'Anonymous',
+    rating: review.rating,
+    comment: review.comment || ''
+  }))
+})
 
 const formatDate = (date: Date) => {
   return new Intl.DateTimeFormat('en-US', {

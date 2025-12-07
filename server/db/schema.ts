@@ -184,3 +184,23 @@ export const booking = pgTable('booking', {
   cancelledAt: timestamp('cancelled_at'),
 })
 
+// ==================== Review Tables ====================
+
+export const review = pgTable('review', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  bookingId: text('booking_id')
+    .notNull()
+    .unique()
+    .references(() => booking.id, { onDelete: 'cascade' }),
+  mentorId: text('mentor_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  menteeId: text('mentee_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  rating: integer('rating').notNull(), // 1-5
+  comment: text('comment'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
