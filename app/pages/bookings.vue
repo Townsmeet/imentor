@@ -68,6 +68,7 @@
           @reschedule="handleReschedule"
           @cancel="handleCancel"
           @join="handleJoin"
+          @chat="handleChat"
         />
       </div>
     </div>
@@ -127,7 +128,7 @@
       <template #body>
         <BookingCalendar
           v-if="selectedBooking?.mentor"
-          :mentor="selectedBooking.mentor"
+          :mentor="selectedBooking.mentor as any"
           v-model="rescheduleSelection"
         />
       </template>
@@ -201,6 +202,28 @@
         />
       </template>
     </UModal>
+    <!-- Cancel Confirmation Modal -->
+    <UModal
+      v-model:open="showCancelModal"
+      title="Cancel Session"
+      description="Are you sure you want to cancel this session?"
+      :ui="{ footer: 'justify-end' }"
+    >
+      <template #footer="{ close }">
+        <UButton
+          label="No, Keep It"
+          color="neutral"
+          variant="ghost"
+          @click="showCancelModal = false"
+        />
+        <UButton
+          label="Yes, Cancel Session"
+          color="error"
+          @click="confirmCancel"
+          :loading="isCancelling"
+        />
+      </template>
+    </UModal>
   </div>
 </template>
 
@@ -216,7 +239,9 @@ const {
   getUpcomingBookings,
   getPastBookings,
   getPendingBookings,
+
   cancelBooking,
+  rescheduleBooking,
   isLoading
 } = useBookings()
 
@@ -227,9 +252,12 @@ const toast = useToast()
 const activeTab = ref('upcoming')
 const showRescheduleModal = ref(false)
 const showReviewModal = ref(false)
+const showCancelModal = ref(false)
 const selectedBooking = ref<Booking | null>(null)
+const bookingToCancel = ref<Booking | null>(null)
 const isRescheduling = ref(false)
 const isSubmittingReview = ref(false)
+const isCancelling = ref(false)
 
 const rescheduleSelection = ref<{
   date: Date | null
@@ -264,29 +292,50 @@ const tabs = computed(() => [
   }
 ])
 
+const enrichBookingMentor = (booking: Booking): Booking => {
+  let mentor = booking.mentor || getMentorProfile(booking.mentorId)
+  
+  // If mentor object exists but missing firstName/lastName (from API), derive them from name
+  if (mentor && (!('firstName' in mentor) || !('lastName' in mentor)) && 'name' in mentor) {
+    const m = mentor as any
+    const nameParts = m.name.split(' ')
+    mentor = {
+      ...m,
+      firstName: nameParts[0] || '',
+      lastName: nameParts.slice(1).join(' ') || '',
+      role: 'mentor', // Ensure role is present
+      // Add other required fields with defaults if missing
+      bio: m.bio || '',
+      skills: m.skills || [],
+      categories: m.categories || [],
+      hourlyRate: m.hourlyRate || 0,
+      experience: m.experience || '',
+      availability: [],
+      rating: m.rating || 0,
+      totalSessions: m.totalSessions || 0,
+      languages: m.languages || [],
+      timezone: m.timezone || '',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    } as any // Cast to any to satisfy the strict MentorProfile type for now
+  }
+  
+  return {
+    ...booking,
+    mentor: mentor as any
+  }
+}
+
 const upcomingBookings = computed(() => {
-  return getUpcomingBookings.value.map(booking => {
-    // Use mentor data from booking if available, otherwise try to get from mentors list
-    const mentor = booking.mentor || getMentorProfile(booking.mentorId)
-    return {
-      ...booking,
-      mentor
-    }
-  })
+  return getUpcomingBookings.value.map(enrichBookingMentor)
 })
 
 const pendingBookings = computed(() => {
-  return getPendingBookings.value.map(booking => ({
-    ...booking,
-    mentor: booking.mentor || getMentorProfile(booking.mentorId)
-  }))
+  return getPendingBookings.value.map(enrichBookingMentor)
 })
 
 const pastBookings = computed(() => {
-  return getPastBookings.value.map(booking => ({
-    ...booking,
-    mentor: booking.mentor || getMentorProfile(booking.mentorId)
-  }))
+  return getPastBookings.value.map(enrichBookingMentor)
 })
 
 const handleReschedule = (booking: Booking) => {
@@ -298,7 +347,7 @@ const handleReschedule = (booking: Booking) => {
   })
 }
 
-const handleCancel = async (booking: Booking) => {
+const handleCancel = (booking: Booking) => {
   // Check if booking is confirmed - cannot cancel confirmed bookings
   if (booking.status === 'confirmed') {
     toast.add({
@@ -309,19 +358,31 @@ const handleCancel = async (booking: Booking) => {
     return
   }
   
+  bookingToCancel.value = booking
+  showCancelModal.value = true
+}
+
+const confirmCancel = async () => {
+  if (!bookingToCancel.value) return
+  
+  isCancelling.value = true
   try {
-    await cancelBooking(booking.id)
+    await cancelBooking(bookingToCancel.value.id)
     toast.add({
       title: 'Session Cancelled',
       description: 'Your pending session has been cancelled.',
       color: 'success'
     })
+    showCancelModal.value = false
+    bookingToCancel.value = null
   } catch (error: any) {
     toast.add({
       title: 'Cancellation Failed',
       description: error.data?.message || 'Unable to cancel session. Please try again.',
       color: 'error'
     })
+  } finally {
+    isCancelling.value = false
   }
 }
 
@@ -362,6 +423,22 @@ const handleReview = async (booking: Booking) => {
 
 const handleBookAgain = (booking: Booking) => {
   navigateTo(`/mentors/${booking.mentorId}`)
+}
+
+const handleChat = (booking: Booking) => {
+  // Determine the other participant ID based on current user role
+  // For mentee, it's the mentor. For mentor, it's the mentee (but booking usually has mentorId)
+  // Ideally booking should have menteeId too, but for now we assume user is mentee or we use what we have.
+  // Actually, let's look at how sessions.vue did it:
+  // participantId: user.value?.role === 'mentee' ? booking.mentorId : booking.menteeId
+  
+  // Since we don't have user in this scope yet, let's get it.
+  const { user } = useAuth()
+  const participantId = user.value?.role === 'mentee' ? booking.mentorId : booking.menteeId
+  
+  if (participantId) {
+    navigateTo(`/messages?user=${participantId}`)
+  }
 }
 
 const confirmReschedule = async () => {

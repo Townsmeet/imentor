@@ -65,6 +65,14 @@
             Join Session
           </UButton>
           <UButton
+            @click="$emit('chat', booking)"
+            variant="outline"
+            size="sm"
+            icon="heroicons:chat-bubble-left-right"
+          >
+            Chat
+          </UButton>
+          <UButton
             @click="$emit('reschedule', booking)"
             variant="outline"
             size="sm"
@@ -74,7 +82,7 @@
           </UButton>
           <UButton
             @click="$emit('cancel', booking)"
-            variant="ghost"
+            variant="outline"
             size="sm"
             color="error"
             icon="heroicons:x-mark"
@@ -193,6 +201,7 @@ interface Emits {
   (e: 'join', booking: Booking): void
   (e: 'review', booking: Booking): void
   (e: 'book-again', booking: Booking): void
+  (e: 'chat', booking: Booking): void
 }
 
 const props = defineProps<Props>()

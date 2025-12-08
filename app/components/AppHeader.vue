@@ -36,13 +36,7 @@
           >
             My Bookings
           </NuxtLink>
-          <NuxtLink 
-            to="/sessions" 
-            class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
-            active-class="text-blue-600 dark:text-blue-400"
-          >
-            Sessions
-          </NuxtLink>
+
           <NuxtLink 
             to="/messages" 
             class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors relative"
@@ -129,22 +123,8 @@
           >
             My Bookings
           </NuxtLink>
-          <NuxtLink 
-            to="/sessions" 
-            class="px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors rounded-md"
-            active-class="text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
-            @click="isMobileMenuOpen = false"
-          >
-            Sessions
-          </NuxtLink>
-          <NuxtLink 
-            to="/messages" 
-            class="px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors rounded-md"
-            active-class="text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
-            @click="isMobileMenuOpen = false"
-          >
-            Messages
-          </NuxtLink>
+
+
         </nav>
       </div>
     </div>
@@ -171,12 +151,7 @@ const userMenuItems = [
   {
     label: 'Profile',
     icon: 'heroicons:user',
-    onSelect: () => navigateTo('/profile'),
-  },
-  {
-    label: 'Settings',
-    icon: 'heroicons:cog-6-tooth',
-    onSelect: () => navigateTo('/settings'),
+    onSelect: () => navigateTo('/profile/edit'),
   },
   {
     label: 'Sign out',
