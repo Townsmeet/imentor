@@ -249,19 +249,20 @@ interface Conversation {
   lastMessage: {
     id: string
     content: string
-    timestamp: Date
+    timestamp: string
     senderId: string
-  }
+  } | null
   unreadCount: number
-  updatedAt: Date
+  updatedAt: string
 }
 
 interface Message {
   id: string
   conversationId: string
-  senderId?: string
+  senderId: string
   content: string
-  timestamp: Date
+  timestamp: string // API returns string date
+  createdAt: string
   isRead: boolean
 }
 
@@ -277,7 +278,6 @@ const searchQuery = ref('')
 const selectedConversation = ref<Conversation | null>(null)
 const newMessage = ref('')
 const isSending = ref(false)
-const isTyping = ref(false)
 const showNewMessageModal = ref(false)
 const isCreatingConversation = ref(false)
 
@@ -288,86 +288,30 @@ const newMessageForm = reactive({
   content: ''
 })
 
-// Mock data - replace with actual API calls
-const conversations = ref<Conversation[]>([
-  {
-    id: '1',
-    otherParticipant: {
-      id: '2',
-      name: 'Sarah Chen',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150',
-      role: 'mentor'
-    },
-    lastMessage: {
-      id: '1',
-      content: 'Looking forward to our session tomorrow!',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      senderId: '2'
-    },
-    unreadCount: 1,
-    updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000)
-  },
-  {
-    id: '2',
-    otherParticipant: {
-      id: '3',
-      name: 'Marcus Johnson',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-      role: 'mentor'
-    },
-    lastMessage: {
-      id: '2',
-      content: 'Great session today! Here are the resources I mentioned.',
-      timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      senderId: '3'
-    },
-    unreadCount: 0,
-    updatedAt: new Date(Date.now() - 24 * 60 * 60 * 1000)
-  }
-])
+// Fetch conversations
+const { data: conversations, refresh: refreshConversations } = await useFetch<Conversation[]>('/api/conversations', {
+  default: () => []
+})
 
-const messages = ref<Message[]>([
+// Fetch messages for selected conversation
+const { data: messages, refresh: refreshMessages } = await useFetch<Message[]>(
+  () => selectedConversation.value ? `/api/conversations/${selectedConversation.value.id}/messages` : '',
   {
-    id: '1',
-    conversationId: '1',
-    senderId: '2',
-    content: 'Hi! I\'m excited about our upcoming session. Do you have any specific topics you\'d like to focus on?',
-    timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
-    isRead: true
-  },
-  {
-    id: '2',
-    conversationId: '1',
-    senderId: user.value?.id,
-    content: 'Hi Sarah! I\'d love to discuss career growth strategies and how to transition into a senior role.',
-    timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000),
-    isRead: true
-  },
-  {
-    id: '3',
-    conversationId: '1',
-    senderId: '2',
-    content: 'Perfect! I have some great insights to share about that. We can also talk about building leadership skills.',
-    timestamp: new Date(Date.now() - 2.5 * 60 * 60 * 1000),
-    isRead: true
-  },
-  {
-    id: '4',
-    conversationId: '1',
-    senderId: '2',
-    content: 'Looking forward to our session tomorrow!',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    isRead: false
+    immediate: false,
+    watch: [selectedConversation],
+    default: () => []
   }
-])
+)
 
-const availableContacts = [
+// Mock contacts for now - in a real app this would be a search API
+const availableContacts = ref([
   { label: 'Sarah Chen', value: '2' },
   { label: 'Marcus Johnson', value: '3' },
   { label: 'Elena Rodriguez', value: '4' }
-]
+])
 
 const filteredConversations = computed(() => {
+  if (!conversations.value) return []
   if (!searchQuery.value) return conversations.value
   
   return conversations.value.filter(conv =>
@@ -376,20 +320,12 @@ const filteredConversations = computed(() => {
 })
 
 const selectedConversationMessages = computed(() => {
-  if (!selectedConversation.value) return []
-  
-  return messages.value
-    .filter(msg => msg.conversationId === selectedConversation.value!.id)
-    .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
+  if (!messages.value) return []
+  // API returns newest first, but UI needs oldest first
+  return [...messages.value].reverse()
 })
 
-const selectConversation = (conversation: Conversation) => {
-  selectedConversation.value = conversation
-  
-  // Mark messages as read
-  conversation.unreadCount = 0
-  
-  // Scroll to bottom
+const scrollToBottom = () => {
   nextTick(() => {
     if (messagesContainer.value) {
       messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
@@ -397,67 +333,53 @@ const selectConversation = (conversation: Conversation) => {
   })
 }
 
+const selectConversation = async (conversation: Conversation) => {
+  selectedConversation.value = conversation
+  
+  // Mark as read
+  if (conversation.unreadCount > 0) {
+    try {
+      await $fetch(`/api/conversations/${conversation.id}/read`, { method: 'POST' })
+      conversation.unreadCount = 0
+      refreshConversations() // Refresh to update unread counts globally if needed
+    } catch (e) {
+      console.error('Failed to mark as read', e)
+    }
+  }
+  
+  scrollToBottom()
+}
+
 const sendMessage = async () => {
   if (!newMessage.value.trim() || !selectedConversation.value) return
   
   isSending.value = true
+  const content = newMessage.value.trim()
   
   try {
-    const message = {
-      id: Date.now().toString(),
-      conversationId: selectedConversation.value!.id,
-      senderId: user.value?.id || '',
-      content: newMessage.value.trim(),
-      timestamp: new Date(),
-      isRead: false
+    const message = await $fetch<Message>(`/api/conversations/${selectedConversation.value.id}/messages`, {
+      method: 'POST',
+      body: { content }
+    })
+    
+    // Add to local messages immediately
+    if (messages.value) {
+      messages.value.unshift(message) // Add to start because we reverse it for display
     }
     
-    // Add message to messages array
-    messages.value.push(message)
-    
-    // Update conversation's last message
-    selectedConversation.value!.lastMessage = message
-    selectedConversation.value!.updatedAt = new Date()
+    // Update conversation last message
+    selectedConversation.value.lastMessage = {
+      id: message.id,
+      content: message.content,
+      timestamp: message.createdAt,
+      senderId: message.senderId
+    }
+    selectedConversation.value.updatedAt = message.createdAt
     
     // Clear input
     newMessage.value = ''
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
-    // Scroll to bottom
-    nextTick(() => {
-      if (messagesContainer.value) {
-        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
-      }
-    })
-    
-    // Simulate typing indicator and response (for demo)
-    setTimeout(() => {
-      isTyping.value = true
-      setTimeout(() => {
-        isTyping.value = false
-        
-        const response = {
-          id: (Date.now() + 1).toString(),
-          conversationId: selectedConversation.value!.id,
-          senderId: selectedConversation.value!.otherParticipant.id,
-          content: 'Thanks for your message! I\'ll get back to you soon.',
-          timestamp: new Date(),
-          isRead: false
-        }
-        
-        messages.value.push(response)
-        selectedConversation.value!.lastMessage = response
-        selectedConversation.value!.unreadCount = 1
-        
-        nextTick(() => {
-          if (messagesContainer.value) {
-            messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
-          }
-        })
-      }, 2000)
-    }, 1000)
+    scrollToBottom()
     
   } catch (error) {
     toast.add({
@@ -470,61 +392,20 @@ const sendMessage = async () => {
   }
 }
 
-const handleTyping = async () => {
-  isTyping.value = true
-  
-  try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-  } catch (error) {
-    toast.add({
-      title: 'Error',
-      description: 'Failed to send message. Please try again.',
-      color: 'error'
-    })
-  } finally {
-    isTyping.value = false
-  }
-}
-
 const createNewConversation = async () => {
   isCreatingConversation.value = true
   
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // Create conversation
+    const result = await $fetch<{ id: string, isNew: boolean }>('/api/conversations', {
+      method: 'POST',
+      body: { recipientId: newMessageForm.recipient }
+    })
     
-    // Create new conversation
-    const newConv = {
-      id: Date.now().toString(),
-      otherParticipant: {
-        id: newMessageForm.recipient || '',
-        name: availableContacts.find(c => c.value === newMessageForm.recipient)?.label || '',
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
-        role: 'mentor'
-      },
-      lastMessage: {
-        id: Date.now().toString(),
-        content: newMessageForm.content,
-        timestamp: new Date(),
-        senderId: user.value?.id || ''
-      },
-      unreadCount: 0,
-      updatedAt: new Date()
-    }
-    
-    conversations.value.unshift(newConv)
-    selectConversation(newConv)
-    
-    // Add the message
-    messages.value.push({
-      id: Date.now().toString(),
-      conversationId: newConv.id,
-      senderId: user.value?.id,
-      content: newMessageForm.content,
-      timestamp: new Date(),
-      isRead: false
+    // Send initial message
+    await $fetch(`/api/conversations/${result.id}/messages`, {
+      method: 'POST',
+      body: { content: newMessageForm.content }
     })
     
     toast.add({
@@ -537,10 +418,19 @@ const createNewConversation = async () => {
     newMessageForm.recipient = null
     newMessageForm.content = ''
     
-  } catch (error) {
+    // Refresh conversations and select the new one
+    await refreshConversations()
+    if (conversations.value) {
+      const newConv = conversations.value.find(c => c.id === result.id)
+      if (newConv) {
+        selectConversation(newConv)
+      }
+    }
+    
+  } catch (error: any) {
     toast.add({
       title: 'Error',
-      description: 'Failed to send message. Please try again.',
+      description: error.data?.message || 'Failed to send message. Please try again.',
       color: 'error'
     })
   } finally {
@@ -548,11 +438,12 @@ const createNewConversation = async () => {
   }
 }
 
-const formatMessageTime = (timestamp: Date) => {
+const formatMessageTime = (timestamp: string | Date | undefined) => {
   if (!timestamp) return ''
   
+  const date = new Date(timestamp)
   const now = new Date()
-  const diff = now.getTime() - timestamp.getTime()
+  const diff = now.getTime() - date.getTime()
   const hours = Math.floor(diff / (1000 * 60 * 60))
   const days = Math.floor(hours / 24)
   
@@ -566,24 +457,44 @@ const formatMessageTime = (timestamp: Date) => {
 }
 
 // Handle URL parameters for direct messaging
-onMounted(() => {
+onMounted(async () => {
   const mentorId = route.query.mentor
   const userId = route.query.user
   
   if (mentorId || userId) {
-    const targetId = mentorId || userId
+    const targetId = (mentorId || userId) as string
     const targetIdStr = (Array.isArray(targetId) ? targetId[0] : targetId) as string
-    const existingConv = conversations.value.find(
-      conv => conv.otherParticipant.id === targetIdStr
-    )
     
-    if (existingConv) {
-      selectConversation(existingConv)
-    } else {
-      // Open new message modal with pre-selected recipient
-      newMessageForm.recipient = targetIdStr
-      showNewMessageModal.value = true
+    // Check if we already have a conversation with this user
+    if (conversations.value) {
+      const existingConv = conversations.value.find(
+        conv => conv.otherParticipant.id === targetIdStr
+      )
+      
+      if (existingConv) {
+        selectConversation(existingConv)
+      } else {
+        // Open new message modal with pre-selected recipient
+        newMessageForm.recipient = targetIdStr
+        showNewMessageModal.value = true
+      }
     }
   }
+})
+
+// Poll for new messages (simple implementation)
+// In a real app, use WebSockets or Server-Sent Events
+let pollInterval: NodeJS.Timeout
+onMounted(() => {
+  pollInterval = setInterval(() => {
+    refreshConversations()
+    if (selectedConversation.value) {
+      refreshMessages()
+    }
+  }, 5000) // Poll every 5 seconds
+})
+
+onUnmounted(() => {
+  clearInterval(pollInterval)
 })
 </script>

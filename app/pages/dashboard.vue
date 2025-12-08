@@ -161,7 +161,7 @@
                     Join
                   </UButton>
                   <UButton
-                    :to="`/messages?booking=${session.id}`"
+                    :to="`/messages?mentor=${session.mentorId}`"
                     icon="heroicons:chat-bubble-left-right"
                     size="sm"
                     variant="ghost"
