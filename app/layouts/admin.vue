@@ -126,7 +126,7 @@
 </template>
 
 <script setup lang="ts">
-const { user } = useAuth()
+const { user, logout } = useAuth()
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: 'heroicons:home' },
@@ -172,10 +172,7 @@ const userMenuItems = [
   [{
     label: 'Sign out',
     icon: 'heroicons:arrow-right-on-rectangle',
-    click: () => {
-      // Handle logout
-      navigateTo('/auth/login')
-    }
+    onSelect: () => logout()
   }]
 ]
 
