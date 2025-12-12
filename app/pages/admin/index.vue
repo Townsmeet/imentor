@@ -311,6 +311,11 @@ interface AdminStats {
     description: string
     timestamp: Date | string
   }>
+  revenueTrend: Array<{
+    month: string
+    revenue: number
+    bookings: number
+  }>
 }
 
 const adminStats = ref<AdminStats | null>(null)
@@ -402,14 +407,10 @@ useSeoMeta({
   description: 'Admin dashboard for managing the iMentor platform'
 })
 
-// Revenue chart (dummy data)
-const revenueData = [
-  { month: 'Jan', revenue: 1200, bookings: 42 },
-  { month: 'Feb', revenue: 1450, bookings: 48 },
-  { month: 'Mar', revenue: 1780, bookings: 57 },
-  { month: 'Apr', revenue: 1620, bookings: 51 },
-  { month: 'May', revenue: 1910, bookings: 63 }
-]
+// Revenue chart - now using real data from API
+const revenueData = computed(() => {
+  return adminStats.value?.revenueTrend || []
+})
 
 const revenueCategories = {
   revenue: {
@@ -422,5 +423,5 @@ const revenueCategories = {
   }
 }
 
-const xFormatter = (i: number) => revenueData[i]?.month ?? ''
+const xFormatter = (i: number) => revenueData.value[i]?.month ?? ''
 </script>

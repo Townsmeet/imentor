@@ -8,8 +8,15 @@ interface ApiSlot {
   isAvailable: boolean
 }
 
+interface ApiBooking {
+  id: string
+  scheduledDate: string
+  duration: number
+}
+
 export const useAvailability = () => {
   const slots = ref<TimeSlot[]>([])
+  const bookedSlots = ref<ApiBooking[]>([])
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
@@ -27,8 +34,9 @@ export const useAvailability = () => {
 
     try {
       const params = mentorId ? `?mentorId=${mentorId}` : ''
-      const response = await $fetch<{ slots: ApiSlot[] }>(`/api/availability${params}`)
+      const response = await $fetch<{ slots: ApiSlot[], bookings?: ApiBooking[] }>(`/api/availability${params}`)
       slots.value = response.slots.map(transformSlot)
+      bookedSlots.value = response.bookings || []
     } catch (e: any) {
       error.value = e.data?.message || 'Failed to fetch availability'
       console.error('[useAvailability] Error:', e)
@@ -136,17 +144,7 @@ export const useAvailability = () => {
   })
 
   const getAvailableSlots = (mentorId: string, dateStr: string): AvailabilitySlot[] => {
-    const date = new Date(dateStr)
-    // Adjust for timezone if necessary, but assuming dateStr is YYYY-MM-DD
-    // and we want the day of week in local time (or whatever the system uses)
-    // The dateStr coming from BookingCalendar is ISO string split at T, so it's YYYY-MM-DD.
-    // new Date('YYYY-MM-DD') creates a date in UTC usually, but let's be careful.
-    // Actually new Date('2023-01-01') is UTC.
-    // But getDay() returns local day of week unless we use getUTCDay().
-    // Let's assume the system works in local time for simplicity or that dateStr is correct.
-
-    // Better approach: create date from parts to avoid timezone issues with YYYY-MM-DD string
-    // Better approach: create date from parts to avoid timezone issues with YYYY-MM-DD string
+    // dateStr is YYYY-MM-DD
     const [year, month, day] = dateStr.split('-').map(Number)
     // Create date at noon to avoid midnight timezone shifts
     const d = new Date(year, month - 1, day, 12, 0, 0)
@@ -180,15 +178,38 @@ export const useAvailability = () => {
         let nextM = nextTotalMinutes % 60
         const endTimeStr = `${nextH.toString().padStart(2, '0')}:${nextM.toString().padStart(2, '0')}`
 
-        availableSlots.push({
-          id: `${slot.id}-${timeStr}`,
-          mentorId,
-          date: dateStr,
-          startTime: timeStr,
-          endTime: endTimeStr,
-          isBooked: false,
-          isAvailable: true
+        // Check if this slot overlaps with any existing booking
+        const slotStart = new Date(year, month - 1, day, currentH, currentM)
+        const slotEnd = new Date(year, month - 1, day, nextH, nextM)
+
+        const isBooked = bookedSlots.value.some(booking => {
+          const bookingDate = new Date(booking.scheduledDate)
+          // Check if booking is on the same day
+          if (bookingDate.getFullYear() !== year ||
+            bookingDate.getMonth() !== month - 1 ||
+            bookingDate.getDate() !== day) {
+            return false
+          }
+
+          const bookingStart = bookingDate
+          const bookingEnd = new Date(bookingDate.getTime() + booking.duration * 60000)
+
+          // Check for overlap
+          // Slot starts before booking ends AND slot ends after booking starts
+          return slotStart < bookingEnd && slotEnd > bookingStart
         })
+
+        if (!isBooked) {
+          availableSlots.push({
+            id: `${slot.id}-${timeStr}`,
+            mentorId,
+            date: dateStr,
+            startTime: timeStr,
+            endTime: endTimeStr,
+            isBooked: false,
+            isAvailable: true
+          })
+        }
 
         currentH = nextH
         currentM = nextM

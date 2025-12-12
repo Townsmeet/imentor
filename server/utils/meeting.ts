@@ -88,9 +88,6 @@ export async function createGoogleMeetLink(params: {
                 conferenceData: {
                     createRequest: {
                         requestId: `imentor-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
-                        conferenceSolutionKey: {
-                            type: 'hangoutsMeet',
-                        },
                     },
                 },
                 reminders: {

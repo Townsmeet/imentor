@@ -1,6 +1,6 @@
-import { eq } from 'drizzle-orm'
+import { eq, and, or, gte } from 'drizzle-orm'
 import { db } from '../../utils/drizzle'
-import { availabilitySlot } from '../../db/schema'
+import { availabilitySlot, booking } from '../../db/schema'
 import { auth } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
@@ -15,11 +15,32 @@ export default defineEventHandler(async (event) => {
   const mentorId = (query.mentorId as string) || session.user.id
 
   try {
-    const slots = await db
-      .select()
-      .from(availabilitySlot)
-      .where(eq(availabilitySlot.mentorId, mentorId))
-      .orderBy(availabilitySlot.dayOfWeek, availabilitySlot.startTime)
+    const [slots, bookings] = await Promise.all([
+      db
+        .select()
+        .from(availabilitySlot)
+        .where(eq(availabilitySlot.mentorId, mentorId))
+        .orderBy(availabilitySlot.dayOfWeek, availabilitySlot.startTime),
+
+      db
+        .select({
+          id: booking.id,
+          scheduledDate: booking.scheduledDate,
+          duration: booking.duration,
+          status: booking.status
+        })
+        .from(booking)
+        .where(
+          and(
+            eq(booking.mentorId, mentorId),
+            or(
+              eq(booking.status, 'confirmed'),
+              eq(booking.status, 'pending')
+            ),
+            gte(booking.scheduledDate, new Date()) // Only future bookings
+          )
+        )
+    ])
 
     return {
       slots: slots.map(slot => ({
@@ -29,6 +50,11 @@ export default defineEventHandler(async (event) => {
         endTime: slot.endTime,
         isAvailable: slot.isAvailable,
       })),
+      bookings: bookings.map(b => ({
+        id: b.id,
+        scheduledDate: b.scheduledDate,
+        duration: b.duration
+      }))
     }
   } catch (error: any) {
     console.error('[Availability API] Error fetching slots:', error)

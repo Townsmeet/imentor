@@ -13,23 +13,10 @@
         
         <div class="flex items-center space-x-4">
           <USelect
-            v-model="selectedRole"
-            :items="roleOptions"
-            placeholder="All Roles"
-          />
-          
-          <USelect
             v-model="selectedStatus"
             :items="statusOptions"
             placeholder="All Status"
           />
-          
-          <UButton
-            icon="heroicons:plus"
-            @click="showCreateModal = true"
-          >
-            Add User
-          </UButton>
         </div>
       </div>
     </div>
@@ -38,19 +25,41 @@
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
       <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
         <h3 class="text-lg font-medium text-gray-900 dark:text-white">
-          Users ({{ filteredUsers.length }})
+          Users ({{ totalUsers }})
         </h3>
       </div>
       
+        <!-- Error Display -->
+        <div v-if="error" class="px-6 py-4 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Error loading users</h3>
+                <div class="mt-2 text-sm text-red-700 dark:text-red-300">
+                  {{ error }}
+                </div>
+              </div>
+            </div>
+            <button 
+              @click="fetchUsers(1)" 
+              class="ml-4 bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200 px-3 py-1 rounded text-sm hover:bg-red-200 dark:hover:bg-red-700"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      
       <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <table v-if="!isLoading && users.length > 0" class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead class="bg-gray-50 dark:bg-gray-900">
             <tr>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 User
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Role
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Status
@@ -87,14 +96,6 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <UBadge
-                  :color="user.role === 'mentor' ? 'primary' : user.role === 'mentee' ? 'success' : 'warning'"
-                  variant="soft"
-                >
-                  {{ user.role }}
-                </UBadge>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <UBadge
                   :color="user.status === 'active' ? 'success' : user.status === 'pending' ? 'warning' : 'error'"
                   variant="soft"
                 >
@@ -118,13 +119,32 @@
             </tr>
           </tbody>
         </table>
+        
+        <!-- Loading State -->
+        <div v-if="isLoading" class="flex items-center justify-center py-12">
+          <div class="text-center">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Loading users...</p>
+          </div>
+        </div>
+        
+        <!-- Empty State -->
+        <div v-if="!isLoading && users.length === 0" class="text-center py-12">
+          <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+            <svg class="w-6 h-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+            </svg>
+          </div>
+          <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-1">No users found</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Get started by adding some mentees to the platform.</p>
+        </div>
       </div>
       
       <!-- Pagination -->
       <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
         <div class="flex items-center justify-between">
           <div class="text-sm text-gray-700 dark:text-gray-300">
-            Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, filteredUsers.length) }} of {{ filteredUsers.length }} results
+            Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, totalUsers) }} of {{ totalUsers }} results
           </div>
           <div class="flex items-center space-x-2">
             <UButton
@@ -259,12 +279,25 @@ definePageMeta({
   layout: false
 })
 
-// State
-const searchQuery = ref('')
-const selectedRole = ref(null)
-const selectedStatus = ref(null)
-const currentPage = ref(1)
-const pageSize = 10
+// Use admin users composable
+const {
+  users,
+  isLoading,
+  error,
+  searchQuery,
+  selectedStatus,
+  currentPage,
+  totalPages,
+  totalUsers,
+  pageSize,
+  filteredUsers,
+  fetchUsers,
+  getUserById,
+  toggleUserStatus,
+  deleteUser
+} = useAdminUsers()
+
+// Local state for modals
 const showCreateModal = ref(false)
 const showDetailsModal = ref(false)
 const selectedUser = ref<AdminUser | null>(null)
@@ -281,106 +314,17 @@ const newUser = reactive<{ firstName: string; lastName: string; email: string; r
   role: 'mentee'
 })
 
-// Mock data
-const users = ref<AdminUser[]>([
-  {
-    id: '1',
-    email: 'sarah.chen@example.com',
-    firstName: 'Sarah',
-    lastName: 'Chen',
-    role: 'mentor',
-    avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150',
-    createdAt: new Date('2024-01-15'),
-    updatedAt: new Date(),
-    status: 'active',
-    lastActive: new Date('2024-01-20'),
-    stats: { sessions: 127, rating: 4.9, revenue: 9525 }
-  },
-  {
-    id: '2',
-    email: 'john.doe@example.com',
-    firstName: 'John',
-    lastName: 'Doe',
-    role: 'mentee',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
-    createdAt: new Date('2024-01-10'),
-    updatedAt: new Date(),
-    status: 'active',
-    lastActive: new Date('2024-01-19')
-  },
-  {
-    id: '3',
-    email: 'marcus.johnson@example.com',
-    firstName: 'Marcus',
-    lastName: 'Johnson',
-    role: 'mentor',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-    createdAt: new Date('2024-01-08'),
-    updatedAt: new Date(),
-    status: 'active',
-    lastActive: new Date('2024-01-18'),
-    stats: { sessions: 89, rating: 4.8, revenue: 8010 }
-  },
-  {
-    id: '4',
-    email: 'elena.rodriguez@example.com',
-    firstName: 'Elena',
-    lastName: 'Rodriguez',
-    role: 'mentor',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150',
-    createdAt: new Date('2024-01-05'),
-    updatedAt: new Date(),
-    status: 'pending',
-    lastActive: new Date('2024-01-17'),
-    stats: { sessions: 156, rating: 4.9, revenue: 10140 }
-  }
-])
-
 // Options
-const roleOptions = [
-  { label: 'All Roles', value: null },
-  { label: 'Mentee', value: 'mentee' },
-  { label: 'Mentor', value: 'mentor' },
-  { label: 'Admin', value: 'admin' }
-]
-
 const statusOptions = [
-  { label: 'All Status', value: null },
+  { label: 'All Status', value: 'all' },
   { label: 'Active', value: 'active' },
   { label: 'Pending', value: 'pending' },
   { label: 'Suspended', value: 'suspended' }
 ]
 
 // Computed
-const filteredUsers = computed(() => {
-  let filtered = users.value
-
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(user =>
-      user.firstName.toLowerCase().includes(query) ||
-      user.lastName.toLowerCase().includes(query) ||
-      user.email.toLowerCase().includes(query)
-    )
-  }
-
-  if (selectedRole.value && selectedRole.value !== null) {
-    filtered = filtered.filter(user => user.role === selectedRole.value)
-  }
-
-  if (selectedStatus.value && selectedStatus.value !== null) {
-    filtered = filtered.filter(user => user.status === selectedStatus.value)
-  }
-
-  return filtered
-})
-
-const totalPages = computed(() => Math.ceil(filteredUsers.value.length / pageSize))
-
 const paginatedUsers = computed(() => {
-  const start = (currentPage.value - 1) * pageSize
-  const end = start + pageSize
-  return filteredUsers.value.slice(start, end)
+  return users.value
 })
 
 // Methods
@@ -409,7 +353,11 @@ const getUserActions = (user: AdminUser) => [
   [{
     label: 'Delete',
     icon: 'heroicons:trash',
-    click: () => deleteUser(user.id)
+    click: () => {
+      if (confirm('Are you sure you want to delete this user?')) {
+        deleteUser(user.id)
+      }
+    }
   }]
 ]
 
@@ -419,20 +367,8 @@ const createUser = async () => {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000))
     
-    const user: AdminUser = {
-      id: String(users.value.length + 1),
-      firstName: newUser.firstName,
-      lastName: newUser.lastName,
-      email: newUser.email,
-      role: newUser.role, // Explicitly typed as UserRole
-      avatar: `https://images.unsplash.com/photo-${Math.random().toString().slice(2, 15)}?w=150`,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      status: 'active',
-      lastActive: new Date()
-    }
-    
-    users.value.push(user)
+    // This would be an actual API call
+    // const user = await $fetch('/api/admin/users', { method: 'POST', body: { ...newUser, password: newUserPassword } })
     
     // Reset form
     Object.assign(newUser, {
@@ -444,20 +380,18 @@ const createUser = async () => {
     newUserPassword.value = ''
     
     showCreateModal.value = false
+    
+    // Refetch users to get updated list
+    await fetchUsers(currentPage.value)
   } finally {
     isCreating.value = false
   }
 }
 
-const toggleUserStatus = (user: AdminUser) => {
-  user.status = user.status === 'active' ? 'suspended' : 'active'
-}
-
-const deleteUser = (userId: string) => {
-  if (confirm('Are you sure you want to delete this user?')) {
-    users.value = users.value.filter(user => user.id !== userId)
-  }
-}
+// Initial fetch
+onMounted(() => {
+  fetchUsers(1)
+})
 
 // SEO
 useSeoMeta({

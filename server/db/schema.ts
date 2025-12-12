@@ -205,6 +205,28 @@ export const review = pgTable('review', {
 })
 
 
+// ==================== Content Management Tables ====================
+
+export const category = pgTable('category', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text('name').notNull(),
+  description: text('description').notNull(),
+  icon: text('icon').notNull().default('heroicons:folder'),
+  active: boolean('active').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const skill = pgTable('skill', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text('name').notNull(),
+  categoryId: text('category_id').references(() => category.id, { onDelete: 'cascade' }),
+  active: boolean('active').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+
 // ==================== Chat Tables ====================
 
 export const conversation = pgTable('conversation', {

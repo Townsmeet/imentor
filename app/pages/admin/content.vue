@@ -36,7 +36,41 @@
         </UButton>
       </div>
 
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+      <!-- Error Display -->
+      <div v-if="error" class="mb-6 px-6 py-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Error</h3>
+              <div class="mt-2 text-sm text-red-700 dark:text-red-300">
+                {{ error }}
+              </div>
+            </div>
+          </div>
+          <button 
+            @click="fetchCategories()" 
+            class="ml-4 bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200 px-3 py-1 rounded text-sm hover:bg-red-200 dark:hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div v-if="isLoading" class="bg-white dark:bg-gray-800 rounded-lg shadow p-8">
+        <div class="flex items-center justify-center">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          <span class="ml-2 text-gray-600 dark:text-gray-400">Loading categories...</span>
+        </div>
+      </div>
+
+      <!-- Categories Table -->
+      <div v-else class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead class="bg-gray-50 dark:bg-gray-900">
             <tr>
@@ -112,7 +146,41 @@
         </UButton>
       </div>
 
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <!-- Error Display -->
+      <div v-if="error" class="mb-6 px-6 py-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Error</h3>
+              <div class="mt-2 text-sm text-red-700 dark:text-red-300">
+                {{ error }}
+              </div>
+            </div>
+          </div>
+          <button 
+            @click="fetchSkills()" 
+            class="ml-4 bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200 px-3 py-1 rounded text-sm hover:bg-red-200 dark:hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div v-if="isLoading" class="bg-white dark:bg-gray-800 rounded-lg shadow p-8">
+        <div class="flex items-center justify-center">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          <span class="ml-2 text-gray-600 dark:text-gray-400">Loading skills...</span>
+        </div>
+      </div>
+
+      <!-- Skills Content -->
+      <div v-else class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <div class="mb-4">
           <UInput
             v-model="skillSearchQuery"
@@ -179,10 +247,12 @@
           </UFormField>
           
           <UFormField label="Category">
-            <USelect
+            <USelectMenu
               v-model="newSkill.categoryId"
               :items="categoryOptions"
               placeholder="Select a category"
+              value-key="value"
+              :portal="false"
               class="w-full"
             />
           </UFormField>
@@ -205,111 +275,40 @@ definePageMeta({
   layout: false
 })
 
-// State
+// Use admin content composable
+const {
+  categories,
+  skills,
+  filteredSkills,
+  isLoading,
+  error,
+  skillSearchQuery,
+  showCategoryModal,
+  showSkillModal,
+  isSavingCategory,
+  isSavingSkill,
+  newCategory,
+  newSkill,
+  categoryOptions,
+  fetchCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  toggleCategory,
+  fetchSkills,
+  createSkill,
+  updateSkill,
+  deleteSkill,
+} = useAdminContent()
+
+// Local state
 const activeTab = ref('categories')
-const showCategoryModal = ref(false)
-const showSkillModal = ref(false)
-const skillSearchQuery = ref('')
-const isSavingCategory = ref(false)
-const isSavingSkill = ref(false)
-
-const newCategory = reactive({
-  name: '',
-  description: '',
-  icon: 'heroicons:folder'
-})
-
-const newSkill = reactive({
-  name: '',
-  categoryId: '1'
-})
-
-// Settings removed
 
 // Tabs
 const tabs = [
   { id: 'categories', name: 'Categories' },
   { id: 'skills', name: 'Skills' }
 ]
-
-// Mock data
-const categories = ref([
-  {
-    id: '1',
-    name: 'Software Development',
-    description: 'Programming, web development, mobile apps',
-    icon: 'heroicons:code-bracket',
-    mentorCount: 45,
-    active: true
-  },
-  {
-    id: '2',
-    name: 'Career Growth',
-    description: 'Professional development, leadership, career transitions',
-    icon: 'heroicons:chart-bar-square',
-    mentorCount: 32,
-    active: true
-  },
-  {
-    id: '3',
-    name: 'Product Management',
-    description: 'Product strategy, roadmaps, user research',
-    icon: 'heroicons:cube',
-    mentorCount: 18,
-    active: true
-  },
-  {
-    id: '4',
-    name: 'Design',
-    description: 'UI/UX design, graphic design, design systems',
-    icon: 'heroicons:paint-brush',
-    mentorCount: 24,
-    active: true
-  },
-  {
-    id: '5',
-    name: 'Data Science',
-    description: 'Analytics, machine learning, data visualization',
-    icon: 'heroicons:chart-pie',
-    mentorCount: 15,
-    active: false
-  }
-])
-
-const skills = ref([
-  { id: '1', name: 'JavaScript', categoryId: '1', mentorCount: 28 },
-  { id: '2', name: 'React', categoryId: '1', mentorCount: 24 },
-  { id: '3', name: 'Node.js', categoryId: '1', mentorCount: 19 },
-  { id: '4', name: 'Python', categoryId: '1', mentorCount: 22 },
-  { id: '5', name: 'Leadership', categoryId: '2', mentorCount: 18 },
-  { id: '6', name: 'Team Management', categoryId: '2', mentorCount: 15 },
-  { id: '7', name: 'Product Strategy', categoryId: '3', mentorCount: 12 },
-  { id: '8', name: 'User Research', categoryId: '3', mentorCount: 10 },
-  { id: '9', name: 'UI Design', categoryId: '4', mentorCount: 16 },
-  { id: '10', name: 'Figma', categoryId: '4', mentorCount: 14 },
-  { id: '11', name: 'Machine Learning', categoryId: '5', mentorCount: 8 },
-  { id: '12', name: 'Data Analysis', categoryId: '5', mentorCount: 11 }
-])
-
-// Options: removed settings-related options
-
-// Computed
-const filteredSkills = computed(() => {
-  if (!skillSearchQuery.value) return skills.value
-  
-  const query = skillSearchQuery.value.toLowerCase()
-  return skills.value.filter(skill =>
-    skill.name.toLowerCase().includes(query)
-  )
-})
-
-const categoryOptions = computed(() => [
-  { label: 'Select a category', value: null },
-  ...categories.value.map(cat => ({
-    label: cat.name,
-    value: cat.id
-  }))
-])
 
 // Methods
 const getCategoryActions = (category: any) => [
@@ -326,7 +325,11 @@ const getCategoryActions = (category: any) => [
   [{
     label: 'Delete',
     icon: 'heroicons:trash',
-    click: () => deleteCategory(category.id)
+    click: () => {
+      if (confirm('Are you sure you want to delete this category?')) {
+        deleteCategory(category.id)
+      }
+    }
   }]
 ]
 
@@ -339,60 +342,20 @@ const getSkillActions = (skill: any) => [
   [{
     label: 'Delete',
     icon: 'heroicons:trash',
-    click: () => deleteSkill(skill.id)
+    click: () => {
+      if (confirm('Are you sure you want to delete this skill?')) {
+        deleteSkill(skill.id)
+      }
+    }
   }]
 ]
 
 const saveCategory = async () => {
-  isSavingCategory.value = true
-  try {
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    const category = {
-      id: String(categories.value.length + 1),
-      ...newCategory,
-      mentorCount: 0,
-      active: true
-    }
-    
-    categories.value.push(category)
-    
-    // Reset form
-    Object.assign(newCategory, {
-      name: '',
-      description: '',
-      icon: 'heroicons:folder'
-    })
-    
-    showCategoryModal.value = false
-  } finally {
-    isSavingCategory.value = false
-  }
+  await createCategory(newCategory)
 }
 
 const saveSkill = async () => {
-  isSavingSkill.value = true
-  try {
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    const skill = {
-      id: String(skills.value.length + 1),
-      ...newSkill,
-      mentorCount: 0
-    }
-    
-    skills.value.push(skill)
-    
-    // Reset form
-    Object.assign(newSkill, {
-      name: '',
-      categoryId: ''
-    })
-    
-    showSkillModal.value = false
-  } finally {
-    isSavingSkill.value = false
-  }
+  await createSkill(newSkill)
 }
 
 const editCategory = (category: any) => {
@@ -400,28 +363,16 @@ const editCategory = (category: any) => {
   console.log('Edit category:', category)
 }
 
-const toggleCategory = (category: any) => {
-  category.active = !category.active
-}
-
-const deleteCategory = (categoryId: string) => {
-  if (confirm('Are you sure you want to delete this category?')) {
-    categories.value = categories.value.filter(cat => cat.id !== categoryId)
-  }
-}
-
 const editSkill = (skill: any) => {
   // Implementation for editing skill
   console.log('Edit skill:', skill)
 }
 
-const deleteSkill = (skillId: string) => {
-  if (confirm('Are you sure you want to delete this skill?')) {
-    skills.value = skills.value.filter(skill => skill.id !== skillId)
-  }
-}
-
-// Settings save handler removed
+// Initial data fetch
+onMounted(() => {
+  fetchCategories()
+  fetchSkills()
+})
 
 // SEO
 useSeoMeta({

@@ -37,11 +37,19 @@
       <!-- Advanced Filters -->
       <div v-if="showFilters" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <UFormField label="Date Range">
+          <UFormField label="Date From">
             <UInput
-              v-model="dateRange"
+              v-model="dateFrom"
               type="date"
-              placeholder="Select date range"
+              placeholder="Select start date"
+            />
+          </UFormField>
+          
+          <UFormField label="Date To">
+            <UInput
+              v-model="dateTo"
+              type="date"
+              placeholder="Select end date"
             />
           </UFormField>
           
@@ -52,23 +60,49 @@
               placeholder="Any duration"
             />
           </UFormField>
-          
-          <UFormField label="Price Range">
-            <UInput
-              v-model="priceRange"
-              placeholder="$0 - $200"
-            />
-          </UFormField>
         </div>
       </div>
     </div>
 
+    <!-- Error Display -->
+    <div v-if="error" class="mb-6 px-6 py-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Error</h3>
+            <div class="mt-2 text-sm text-red-700 dark:text-red-300">
+              {{ error }}
+            </div>
+          </div>
+        </div>
+        <button 
+          @click="fetchSessions()" 
+          class="ml-4 bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200 px-3 py-1 rounded text-sm hover:bg-red-200 dark:hover:bg-red-700"
+        >
+          Retry
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div v-if="isLoading" class="bg-white dark:bg-gray-800 rounded-lg shadow p-8">
+      <div class="flex items-center justify-center">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <span class="ml-2 text-gray-600 dark:text-gray-400">Loading sessions...</span>
+      </div>
+    </div>
+
     <!-- Sessions Table -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+    <div v-else class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
       <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
         <div class="flex items-center justify-between">
           <h3 class="text-lg font-medium text-gray-900 dark:text-white">
-            Sessions ({{ filteredSessions.length }})
+            Sessions ({{ totalSessions }})
           </h3>
           <div class="flex items-center space-x-2">
             <UButton
@@ -82,8 +116,17 @@
           </div>
         </div>
       </div>
+
+      <!-- Empty State -->
+      <div v-if="sessions.length === 0" class="p-8 text-center">
+        <Icon name="heroicons:calendar" class="h-12 w-12 text-gray-300 mx-auto mb-4" />
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No sessions found</h3>
+        <p class="text-gray-500 dark:text-gray-400">
+          {{ searchQuery || selectedStatus !== 'all' || selectedMentor !== 'all' ? 'Try adjusting your filters' : 'No sessions have been booked yet' }}
+        </p>
+      </div>
       
-      <div class="overflow-x-auto">
+      <div v-else class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead class="bg-gray-50 dark:bg-gray-900">
             <tr>
@@ -111,13 +154,13 @@
             </tr>
           </thead>
           <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            <tr v-for="session in paginatedSessions" :key="session.id">
+            <tr v-for="session in sessions" :key="session.id">
               <td class="px-6 py-4">
                 <div class="text-sm font-medium text-gray-900 dark:text-white">
                   {{ session.title }}
                 </div>
                 <div class="text-sm text-gray-500 dark:text-gray-400">
-                  ID: {{ session.id }}
+                  ID: {{ session.id.substring(0, 8) }}...
                 </div>
               </td>
               <td class="px-6 py-4">
@@ -164,7 +207,7 @@
                 </UBadge>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                ${{ session.amount }}
+                ${{ session.amount.toFixed(2) }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <UDropdownMenu :items="getSessionActions(session)">
@@ -180,17 +223,17 @@
       </div>
       
       <!-- Pagination -->
-      <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+      <div v-if="sessions.length > 0" class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
         <div class="flex items-center justify-between">
           <div class="text-sm text-gray-700 dark:text-gray-300">
-            Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, filteredSessions.length) }} of {{ filteredSessions.length }} results
+            Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, totalSessions) }} of {{ totalSessions }} results
           </div>
           <div class="flex items-center space-x-2">
             <UButton
               variant="ghost"
               icon="heroicons:chevron-left"
               :disabled="currentPage === 1"
-              @click="currentPage--"
+              @click="previousPage"
             />
             <span class="text-sm text-gray-700 dark:text-gray-300">
               Page {{ currentPage }} of {{ totalPages }}
@@ -198,8 +241,8 @@
             <UButton
               variant="ghost"
               icon="heroicons:chevron-right"
-              :disabled="currentPage === totalPages"
-              @click="currentPage++"
+              :disabled="currentPage >= totalPages"
+              @click="nextPage"
             />
           </div>
         </div>
@@ -264,7 +307,7 @@
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Amount</label>
-              <p class="text-sm text-gray-900 dark:text-white">${{ selectedSession.amount }}</p>
+              <p class="text-sm text-gray-900 dark:text-white">${{ selectedSession.amount.toFixed(2) }}</p>
             </div>
           </div>
           
@@ -281,10 +324,10 @@
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment Information</label>
             <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
               <p class="text-sm text-gray-900 dark:text-white">
-                Payment ID: {{ selectedSession.paymentId }}
+                Payment ID: {{ selectedSession.paymentId.substring(0, 20) }}...
               </p>
               <p class="text-sm text-gray-600 dark:text-gray-400">
-                Processed on {{ formatDate(selectedSession.createdAt) }}
+                Status: {{ selectedSession.paymentStatus || 'N/A' }}
               </p>
             </div>
           </div>
@@ -307,173 +350,49 @@
 </template>
 
 <script setup lang="ts">
-import type { AdminSession } from '~/types'
-
 definePageMeta({
   middleware: 'admin',
   layout: false
 })
 
-// State
-const searchQuery = ref('')
-const selectedStatus = ref(null)
-const selectedMentor = ref(null)
-const selectedDuration = ref(null)
-const dateRange = ref('')
-const priceRange = ref('')
-const showFilters = ref(false)
-const currentPage = ref(1)
-const pageSize = 15
-const showDetailsModal = ref(false)
-const selectedSession = ref<AdminSession | null>(null)
+const toast = useToast()
 
-// Mock data
-const sessions = ref<AdminSession[]>([
-  {
-    id: 'SES-001',
-    title: 'Career Growth Discussion',
-    mentor: {
-      name: 'Sarah Chen',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150'
-    },
-    mentee: {
-      name: 'John Doe',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150'
-    },
-    date: new Date('2024-01-25'),
-    time: '2:00 PM',
-    duration: 1,
-    status: 'confirmed' as const,
-    amount: 75,
-    description: 'Discussing career advancement strategies and goal setting',
-    paymentId: 'PAY-12345',
-    createdAt: new Date('2024-01-20')
-  } as AdminSession,
-  {
-    id: 'SES-002',
-    title: 'Technical Interview Prep',
-    mentor: {
-      name: 'Marcus Johnson',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'
-    },
-    mentee: {
-      name: 'Jane Smith',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150'
-    },
-    date: new Date('2024-01-26'),
-    time: '10:00 AM',
-    duration: 1.5,
-    status: 'pending' as const,
-    amount: 135,
-    description: 'Mock technical interviews and coding practice',
-    paymentId: 'PAY-12346',
-    createdAt: new Date('2024-01-21')
-  } as AdminSession,
-  {
-    id: 'SES-003',
-    title: 'UX Design Review',
-    mentor: {
-      name: 'Elena Rodriguez',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150'
-    },
-    mentee: {
-      name: 'Mike Wilson',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150'
-    },
-    date: new Date('2024-01-24'),
-    time: '3:30 PM',
-    duration: 1,
-    status: 'completed' as const,
-    amount: 65,
-    description: 'Portfolio review and design feedback session',
-    paymentId: 'PAY-12347',
-    createdAt: new Date('2024-01-19')
-  } as AdminSession,
-  {
-    id: 'SES-004',
-    title: 'Startup Strategy Session',
-    mentor: {
-      name: 'Sarah Chen',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150'
-    },
-    mentee: {
-      name: 'Alex Brown',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'
-    },
-    date: new Date('2024-01-27'),
-    time: '1:00 PM',
-    duration: 2,
-    status: 'cancelled' as const,
-    amount: 150,
-    description: 'Business model validation and go-to-market strategy',
-    paymentId: 'PAY-12348',
-    createdAt: new Date('2024-01-22')
-  } as AdminSession
-])
-
-// Options
-const statusOptions = [
-  { label: 'All Status', value: null },
-  { label: 'Pending', value: 'pending' },
-  { label: 'Confirmed', value: 'confirmed' },
-  { label: 'Completed', value: 'completed' },
-  { label: 'Cancelled', value: 'cancelled' }
-]
-
-const mentorOptions = computed(() => [
-  { label: 'All Mentors', value: null },
-  ...Array.from(new Set(sessions.value.map(s => s.mentor.name)))
-    .map(name => ({ label: name, value: name }))
-])
-
-const durationOptions = [
-  { label: 'Any duration', value: null },
-  { label: '30 minutes', value: '0.5' },
-  { label: '1 hour', value: '1' },
-  { label: '1.5 hours', value: '1.5' },
-  { label: '2+ hours', value: '2+' }
-]
-
-// Computed
-const filteredSessions = computed(() => {
-  let filtered = sessions.value
-
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(session =>
-      session.title.toLowerCase().includes(query) ||
-      session.mentor.name.toLowerCase().includes(query) ||
-      session.mentee.name.toLowerCase().includes(query) ||
-      session.id.toLowerCase().includes(query)
-    )
-  }
-
-  if (selectedStatus.value && selectedStatus.value !== null) {
-    filtered = filtered.filter(session => session.status === selectedStatus.value)
-  }
-
-  if (selectedMentor.value && selectedMentor.value !== null) {
-    filtered = filtered.filter(session => session.mentor.name === selectedMentor.value)
-  }
-
-  return filtered
-})
-
-const totalPages = computed(() => Math.ceil(filteredSessions.value.length / pageSize))
-
-const paginatedSessions = computed(() => {
-  const start = (currentPage.value - 1) * pageSize
-  const end = start + pageSize
-  return filteredSessions.value.slice(start, end)
-})
+// Use admin sessions composable
+const {
+  sessions,
+  isLoading,
+  error,
+  searchQuery,
+  selectedStatus,
+  selectedMentor,
+  selectedDuration,
+  dateFrom,
+  dateTo,
+  showFilters,
+  statusOptions,
+  durationOptions,
+  mentorOptions,
+  currentPage,
+  totalPages,
+  totalSessions,
+  pageSize,
+  showDetailsModal,
+  selectedSession,
+  fetchSessions,
+  viewSessionDetails,
+  updateSessionStatus,
+  previousPage,
+  nextPage,
+} = useAdminSessions()
 
 // Methods
-const formatDate = (date: Date) => {
+const formatDate = (date: string | Date) => {
+  const d = typeof date === 'string' ? new Date(date) : date
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric'
-  }).format(date)
+  }).format(d)
 }
 
 const getStatusColor = (status: string) => {
@@ -486,14 +405,11 @@ const getStatusColor = (status: string) => {
   }
 }
 
-const getSessionActions = (session: AdminSession) => [
+const getSessionActions = (session: any) => [
   [{
     label: 'View Details',
     icon: 'heroicons:eye',
-    click: () => {
-      selectedSession.value = session
-      showDetailsModal.value = true
-    }
+    click: () => viewSessionDetails(session)
   }],
   [{
     label: session.status === 'pending' ? 'Confirm' : 'Edit',
@@ -511,22 +427,18 @@ const getSessionActions = (session: AdminSession) => [
   }]
 ]
 
-const updateSessionStatus = (sessionId: string, newStatus: string) => {
-  const session = sessions.value.find(s => s.id === sessionId)
-  if (session) {
-    session.status = newStatus as AdminSession['status']
-    showDetailsModal.value = false
-  }
-}
-
 const exportSessions = () => {
-  if (filteredSessions.value.length === 0) {
-    alert('No sessions to export')
+  if (sessions.value.length === 0) {
+    toast.add({
+      title: 'No Data',
+      description: 'No sessions to export',
+      color: 'warning'
+    })
     return
   }
 
   // Create CSV data
-  const csvData = filteredSessions.value.map((session: AdminSession) => ({
+  const csvData = sessions.value.map((session: any) => ({
     ID: session.id,
     Title: session.title,
     Mentor: session.mentor.name,
@@ -535,7 +447,7 @@ const exportSessions = () => {
     Time: session.time,
     Duration: `${session.duration}h`,
     Status: session.status,
-    Amount: `$${session.amount}`
+    Amount: `$${session.amount.toFixed(2)}`
   }))
 
   // Convert to CSV string
@@ -553,7 +465,18 @@ const exportSessions = () => {
   link.click()
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
+
+  toast.add({
+    title: 'Export Complete',
+    description: `Exported ${csvData.length} sessions`,
+    color: 'success'
+  })
 }
+
+// Initial data fetch
+onMounted(() => {
+  fetchSessions()
+})
 
 // SEO
 useSeoMeta({

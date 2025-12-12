@@ -1,4 +1,4 @@
-import { eq, and, gte, count, sql, desc } from 'drizzle-orm'
+import { eq, and, gte, lt, count, sql, desc } from 'drizzle-orm'
 import { db } from '../../utils/drizzle'
 import { user, booking, mentorProfile } from '../../db/schema'
 import { auth } from '../../utils/auth'
@@ -31,9 +31,9 @@ export default defineEventHandler(async (event) => {
         const totalUsersLastMonthResult = await db
             .select({ count: count() })
             .from(user)
-            .where(sql`${user.createdAt} < ${startOfMonth}`)
+            .where(lt(user.createdAt, startOfMonth))
         const totalUsersLastMonth = totalUsersLastMonthResult[0]?.count || 0
-        const usersChange = totalUsersLastMonth > 0 
+        const usersChange = totalUsersLastMonth > 0
             ? Math.round(((totalUsers - totalUsersLastMonth) / totalUsersLastMonth) * 100)
             : 0
 
@@ -61,7 +61,7 @@ export default defineEventHandler(async (event) => {
                     eq(user.role, 'mentor'),
                     eq(user.emailVerified, true),
                     eq(user.hasCompletedOnboarding, true),
-                    sql`${user.createdAt} < ${startOfMonth}`
+                    lt(user.createdAt, startOfMonth)
                 )
             )
         const activeMentorsLastMonth = activeMentorsLastMonthResult[0]?.count || 0
@@ -88,7 +88,7 @@ export default defineEventHandler(async (event) => {
             .where(
                 and(
                     gte(booking.createdAt, startOfLastMonth),
-                    sql`${booking.createdAt} < ${startOfMonth}`,
+                    lt(booking.createdAt, startOfMonth),
                     sql`${booking.status} IN ('confirmed', 'completed')`
                 )
             )
@@ -97,13 +97,13 @@ export default defineEventHandler(async (event) => {
             ? Math.round(((sessionsThisMonth - sessionsLastMonth) / sessionsLastMonth) * 100)
             : 0
 
-        // Platform revenue (from completed bookings)
+        // Platform revenue (from successful payments)
         const revenueResult = await db
             .select({
                 total: sql<number>`COALESCE(SUM(${booking.price}::numeric), 0)::float`
             })
             .from(booking)
-            .where(eq(booking.status, 'completed'))
+            .where(eq(booking.paymentStatus, 'succeeded'))
         const platformRevenue = parseFloat(revenueResult[0]?.total?.toString() || '0')
 
         // Revenue last month
@@ -114,9 +114,9 @@ export default defineEventHandler(async (event) => {
             .from(booking)
             .where(
                 and(
-                    eq(booking.status, 'completed'),
-                    gte(booking.completedAt!, startOfLastMonth),
-                    sql`${booking.completedAt} < ${startOfMonth}`
+                    eq(booking.paymentStatus, 'succeeded'),
+                    gte(booking.createdAt, startOfLastMonth),
+                    lt(booking.createdAt, startOfMonth)
                 )
             )
         const revenueLastMonth = parseFloat(revenueLastMonthResult[0]?.total?.toString() || '0')
@@ -320,10 +320,40 @@ export default defineEventHandler(async (event) => {
             })),
             recentActivity,
             pendingApprovals,
+            // Revenue trend for last 6 months
+            revenueTrend: await getRevenueTrend(now),
         }
     } catch (error: any) {
         console.error('[Admin Stats API] Error:', error)
         throw createError({ statusCode: 500, message: 'Failed to fetch admin stats' })
     }
 })
+
+// Helper function to get revenue trend for last 6 months
+async function getRevenueTrend(now: Date) {
+    const trend = []
+    for (let i = 5; i >= 0; i--) {
+        const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1)
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0, 23, 59, 59)
+
+        const [monthData] = await db
+            .select({
+                revenue: sql<number>`COALESCE(SUM(${booking.price}::numeric), 0)::float`,
+                bookings: count()
+            })
+            .from(booking)
+            .where(and(
+                gte(booking.createdAt, monthStart),
+                lt(booking.createdAt, monthEnd),
+                eq(booking.paymentStatus, 'succeeded')
+            ))
+
+        trend.push({
+            month: monthStart.toLocaleString('en-US', { month: 'short' }),
+            revenue: Math.round(parseFloat(monthData?.revenue?.toString() || '0')),
+            bookings: monthData?.bookings || 0
+        })
+    }
+    return trend
+}
 

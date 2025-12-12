@@ -10,7 +10,7 @@
           </div>
           <div class="ml-4">
             <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Mentors</p>
-            <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ mentors.length }}</p>
+            <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ totalMentors }}</p>
           </div>
         </div>
       </div>
@@ -46,7 +46,7 @@
           </div>
           <div class="ml-4">
             <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Avg Rating</p>
-            <p class="text-2xl font-semibold text-gray-900 dark:text-white">4.8</p>
+            <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ averageRating }}</p>
           </div>
         </div>
       </div>
@@ -67,7 +67,7 @@
           </div>
           <div>
             <USelect
-              v-model="statusFilter"
+              v-model="selectedStatus"
               :items="statusOptions"
               placeholder="All Statuses"
               size="md"
@@ -76,7 +76,7 @@
           </div>
           <div>
             <USelect
-              v-model="categoryFilter"
+              v-model="selectedCategory"
               :items="categoryOptions"
               placeholder="All Categories"
               size="md"
@@ -85,7 +85,7 @@
           </div>
           <div>
             <USelect
-              v-model="ratingFilter"
+              v-model="selectedRating"
               :items="ratingOptions"
               placeholder="All Ratings"
               size="md"
@@ -96,12 +96,45 @@
       </div>
     </div>
 
+    <!-- Error Display -->
+    <div v-if="error" class="mb-6 px-6 py-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Error</h3>
+            <div class="mt-2 text-sm text-red-700 dark:text-red-300">
+              {{ error }}
+            </div>
+          </div>
+        </div>
+        <button 
+          @click="fetchMentors()" 
+          class="ml-4 bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200 px-3 py-1 rounded text-sm hover:bg-red-200 dark:hover:bg-red-700"
+        >
+          Retry
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div v-if="isLoading" class="bg-white dark:bg-gray-800 rounded-lg shadow p-8">
+      <div class="flex items-center justify-center">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <span class="ml-2 text-gray-600 dark:text-gray-400">Loading mentors...</span>
+      </div>
+    </div>
+
     <!-- Mentors Table -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+    <div v-else class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
       <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
         <div class="flex items-center justify-between">
           <h3 class="text-lg font-medium text-gray-900 dark:text-white">
-            Mentors ({{ filteredMentors.length }})
+            Mentors ({{ mentors.length }})
           </h3>
           <div class="flex space-x-2">
             <UButton
@@ -116,7 +149,16 @@
         </div>
       </div>
 
-      <div class="overflow-x-auto">
+      <!-- Empty State -->
+      <div v-if="mentors.length === 0" class="p-8 text-center">
+        <Icon name="heroicons:academic-cap" class="h-12 w-12 text-gray-300 mx-auto mb-4" />
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No mentors found</h3>
+        <p class="text-gray-500 dark:text-gray-400">
+          {{ searchQuery || selectedStatus !== 'all' || selectedCategory !== 'all' ? 'Try adjusting your filters' : 'No mentors have registered yet' }}
+        </p>
+      </div>
+
+      <div v-else class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead class="bg-gray-50 dark:bg-gray-700">
             <tr>
@@ -148,7 +190,7 @@
           </thead>
           <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             <tr
-              v-for="mentor in paginatedMentors"
+              v-for="mentor in mentors"
               :key="mentor.id"
               class="hover:bg-gray-50 dark:hover:bg-gray-700"
             >
@@ -186,7 +228,7 @@
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center">
                   <Icon name="heroicons:star" class="h-4 w-4 text-yellow-400 mr-1" />
-                  <span class="text-sm text-gray-900 dark:text-white">{{ mentor.rating }}</span>
+                  <span class="text-sm text-gray-900 dark:text-white">{{ mentor.rating.toFixed(1) }}</span>
                   <span class="text-sm text-gray-500 dark:text-gray-400 ml-1">({{ mentor.reviews }})</span>
                 </div>
               </td>
@@ -215,14 +257,14 @@
       </div>
 
       <!-- Pagination -->
-      <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+      <div v-if="mentors.length > 0" class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
         <div class="flex items-center justify-between">
           <div class="text-sm text-gray-700 dark:text-gray-300">
-            Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, filteredMentors.length) }} of {{ filteredMentors.length }} mentors
+            Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, totalMentors) }} of {{ totalMentors }} mentors
           </div>
           <div class="flex space-x-2">
             <UButton
-              @click="currentPage--"
+              @click="previousPage"
               :disabled="currentPage === 1"
               variant="outline"
               size="sm"
@@ -231,8 +273,8 @@
               Previous
             </UButton>
             <UButton
-              @click="currentPage++"
-              :disabled="currentPage * pageSize >= filteredMentors.length"
+              @click="nextPage"
+              :disabled="currentPage >= totalPages"
               variant="outline"
               size="sm"
               icon="heroicons:chevron-right"
@@ -245,7 +287,7 @@
     </div>
 
     <!-- Mentor Details Modal -->
-    <UModal v-model="showMentorModal">
+    <UModal v-model:open="showMentorModal">
       <div class="p-6" v-if="selectedMentor">
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
@@ -276,7 +318,7 @@
                   <p class="text-gray-600 dark:text-gray-400">{{ selectedMentor.email }}</p>
                   <div class="flex items-center mt-2">
                     <Icon name="heroicons:star" class="h-4 w-4 text-yellow-400 mr-1" />
-                    <span class="text-sm text-gray-900 dark:text-white">{{ selectedMentor.rating }}</span>
+                    <span class="text-sm text-gray-900 dark:text-white">{{ selectedMentor.rating.toFixed(1) }}</span>
                     <span class="text-sm text-gray-500 dark:text-gray-400 ml-1">({{ selectedMentor.reviews }} reviews)</span>
                   </div>
                 </div>
@@ -305,7 +347,7 @@
             <!-- Bio -->
             <div class="mb-6">
               <h5 class="font-semibold text-gray-900 dark:text-white mb-2">Bio</h5>
-              <p class="text-gray-600 dark:text-gray-400">{{ selectedMentor.bio }}</p>
+              <p class="text-gray-600 dark:text-gray-400">{{ selectedMentor.bio || 'No bio provided' }}</p>
             </div>
 
             <!-- Skills -->
@@ -320,6 +362,7 @@
                 >
                   {{ skill }}
                 </UBadge>
+                <span v-if="selectedMentor.skills.length === 0" class="text-gray-500 dark:text-gray-400">No skills listed</span>
               </div>
             </div>
           </div>
@@ -411,204 +454,43 @@ useSeoMeta({
 
 const toast = useToast()
 
-// State
-interface Mentor {
-  id: string
-  name: string
-  email: string
-  avatar: string
-  category: string
-  experience: string
-  status: 'verified' | 'pending' | 'suspended'
-  rating: number
-  reviews: number
-  totalSessions: number
-  totalRevenue: number
-  hourlyRate: number
-  responseRate: number
-  completionRate: number
-  joinedAt: string
-  bio: string
-  skills: string[]
-}
-
-const searchQuery = ref('')
-const statusFilter = ref(null )
-const categoryFilter = ref(null)
-const ratingFilter = ref(null)
-const currentPage = ref(1)
-const pageSize = 10
-const showMentorModal = ref(false)
-const selectedMentor = ref<Mentor | null>(null)
-
-// Filter options
-const statusOptions = [
-  { label: 'All Statuses', value: null },
-  { label: 'Verified', value: 'verified' },
-  { label: 'Pending Review', value: 'pending' },
-  { label: 'Suspended', value: 'suspended' }
-]
-
-const categoryOptions = [
-  { label: 'All Categories', value: null },
-  { label: 'Software Development', value: 'Software Development' },
-  { label: 'Product Management', value: 'Product Management' },
-  { label: 'Design', value: 'Design' },
-  { label: 'Marketing', value: 'Marketing' },
-  { label: 'Leadership', value: 'Leadership' }
-]
-
-const ratingOptions = [
-  { label: 'All Ratings', value: null },
-  { label: '4.5+ Stars', value: '4.5' },
-  { label: '4.0+ Stars', value: '4.0' },
-  { label: '3.5+ Stars', value: '3.5' },
-  { label: 'Below 3.5', value: '3.5-below' }
-]
-
-// Mock data
-const mentors = ref<Mentor[]>([
-  {
-    id: '1',
-    name: 'Sarah Chen',
-    email: 'sarah.chen@example.com',
-    avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150',
-    category: 'Software Development',
-    experience: '8+ years',
-    status: 'verified',
-    rating: 4.9,
-    reviews: 127,
-    totalSessions: 243,
-    totalRevenue: 18225,
-    hourlyRate: 85,
-    responseRate: 98,
-    completionRate: 96,
-    joinedAt: '2023-01-15',
-    bio: 'Senior Software Engineer with expertise in React, Node.js, and system architecture. Passionate about mentoring junior developers.',
-    skills: ['React', 'Node.js', 'TypeScript', 'System Design', 'AWS']
-  },
-  {
-    id: '2',
-    name: 'Michael Rodriguez',
-    email: 'michael.r@example.com',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
-    category: 'Product Management',
-    experience: '6+ years',
-    status: 'verified',
-    rating: 4.8,
-    reviews: 89,
-    totalSessions: 156,
-    totalRevenue: 12480,
-    hourlyRate: 95,
-    responseRate: 95,
-    completionRate: 94,
-    joinedAt: '2023-02-20',
-    bio: 'Product Manager at a Fortune 500 company. Expert in product strategy, user research, and agile methodologies.',
-    skills: ['Product Strategy', 'User Research', 'Agile', 'Analytics', 'Leadership']
-  },
-  {
-    id: '3',
-    name: 'Emily Johnson',
-    email: 'emily.j@example.com',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150',
-    category: 'Design',
-    experience: '5+ years',
-    status: 'pending',
-    rating: 4.7,
-    reviews: 45,
-    totalSessions: 78,
-    totalRevenue: 5850,
-    hourlyRate: 75,
-    responseRate: 92,
-    completionRate: 89,
-    joinedAt: '2023-11-10',
-    bio: 'UX/UI Designer with a passion for creating user-centered designs. Experienced in design systems and user research.',
-    skills: ['UI/UX Design', 'Figma', 'Design Systems', 'User Research', 'Prototyping']
-  },
-  {
-    id: '4',
-    name: 'David Kim',
-    email: 'david.kim@example.com',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-    category: 'Marketing',
-    experience: '7+ years',
-    status: 'suspended',
-    rating: 4.2,
-    reviews: 67,
-    totalSessions: 134,
-    totalRevenue: 8020,
-    hourlyRate: 70,
-    responseRate: 85,
-    completionRate: 82,
-    joinedAt: '2023-03-05',
-    bio: 'Digital Marketing Specialist with expertise in SEO, content marketing, and social media strategy.',
-    skills: ['SEO', 'Content Marketing', 'Social Media', 'Analytics', 'PPC']
-  },
-  {
-    id: '5',
-    name: 'Lisa Thompson',
-    email: 'lisa.t@example.com',
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
-    category: 'Leadership',
-    experience: '10+ years',
-    status: 'verified',
-    rating: 4.9,
-    reviews: 156,
-    totalSessions: 289,
-    totalRevenue: 26010,
-    hourlyRate: 120,
-    responseRate: 99,
-    completionRate: 97,
-    joinedAt: '2022-12-01',
-    bio: 'Executive Coach and Leadership Development expert. Former VP at tech startup, now helping others grow their careers.',
-    skills: ['Leadership', 'Executive Coaching', 'Team Management', 'Strategy', 'Communication']
-  }
-])
+// Use admin mentors composable
+const {
+  mentors,
+  isLoading,
+  error,
+  searchQuery,
+  selectedStatus,
+  selectedCategory,
+  selectedRating,
+  statusOptions,
+  categoryOptions,
+  ratingOptions,
+  currentPage,
+  totalPages,
+  totalMentors,
+  pageSize,
+  showMentorModal,
+  selectedMentor,
+  verifiedMentors,
+  pendingMentors,
+  fetchMentors,
+  viewMentorDetails,
+  updateMentorStatus,
+  toggleMentorStatus,
+  previousPage,
+  nextPage,
+} = useAdminMentors()
 
 // Computed
-const verifiedMentors = computed(() => mentors.value.filter(m => m.status === 'verified').length)
-const pendingMentors = computed(() => mentors.value.filter(m => m.status === 'pending').length)
-
-const filteredMentors = computed(() => {
-  let filtered = mentors.value
-
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(mentor =>
-      mentor.name.toLowerCase().includes(query) ||
-      mentor.email.toLowerCase().includes(query) ||
-      mentor.category.toLowerCase().includes(query)
-    )
-  }
-
-  if (statusFilter.value && statusFilter.value !== null) {
-    filtered = filtered.filter(mentor => mentor.status === statusFilter.value)
-  }
-
-  if (categoryFilter.value && categoryFilter.value !== null) {
-    filtered = filtered.filter(mentor => mentor.category === categoryFilter.value)
-  }
-
-  if (ratingFilter.value && ratingFilter.value !== null) {
-    const rating = parseFloat(ratingFilter.value)
-    if (ratingFilter.value === '3.5-below') {
-      filtered = filtered.filter(mentor => mentor.rating < 3.5)
-    } else {
-      filtered = filtered.filter(mentor => mentor.rating >= rating)
-    }
-  }
-
-  return filtered
-})
-
-const paginatedMentors = computed(() => {
-  const start = (currentPage.value - 1) * pageSize
-  const end = start + pageSize
-  return filteredMentors.value.slice(start, end)
+const averageRating = computed(() => {
+  if (mentors.value.length === 0) return '0.0'
+  const sum = mentors.value.reduce((acc, m) => acc + m.rating, 0)
+  return (sum / mentors.value.length).toFixed(1)
 })
 
 // Methods
-const getStatusColor = (status: Mentor['status'] | string) => {
+const getStatusColor = (status: string) => {
   switch (status) {
     case 'verified': return 'success'
     case 'pending': return 'warning'
@@ -625,7 +507,7 @@ const formatDate = (dateString: string) => {
   })
 }
 
-const getMentorActions = (mentor: Mentor) => {
+const getMentorActions = (mentor: any) => {
   return [
     [{
       label: 'View Details',
@@ -645,30 +527,7 @@ const getMentorActions = (mentor: Mentor) => {
   ]
 }
 
-const viewMentorDetails = (mentor: Mentor) => {
-  selectedMentor.value = mentor
-  showMentorModal.value = true
-}
-
-const updateMentorStatus = (mentorId: string, newStatus: Mentor['status']) => {
-  const mentor = mentors.value.find(m => m.id === mentorId)
-  if (mentor) {
-    mentor.status = newStatus
-    toast.add({
-      title: 'Status Updated',
-      description: `Mentor status changed to ${newStatus}`,
-      color: 'success'
-    })
-    showMentorModal.value = false
-  }
-}
-
-const toggleMentorStatus = (mentor: Mentor) => {
-  const newStatus = mentor.status === 'verified' ? 'suspended' : 'verified'
-  updateMentorStatus(mentor.id, newStatus)
-}
-
-const sendMessage = (mentor: Mentor) => {
+const sendMessage = (mentor: any) => {
   toast.add({
     title: 'Message Sent',
     description: `Message sent to ${mentor.name}`,
@@ -684,8 +543,8 @@ const exportMentors = () => {
   })
 }
 
-// Watch for filter changes to reset pagination
-watch([searchQuery, statusFilter, categoryFilter, ratingFilter], () => {
-  currentPage.value = 1
+// Initial data fetch
+onMounted(() => {
+  fetchMentors()
 })
 </script>

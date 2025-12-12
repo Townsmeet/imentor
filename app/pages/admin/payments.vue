@@ -3,24 +3,24 @@
     <!-- Summary Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <div
-        v-for="summary in paymentSummary"
-        :key="summary.name"
+        v-for="card in paymentSummaryCards"
+        :key="card.name"
         class="bg-white dark:bg-gray-800 rounded-lg shadow p-6"
       >
         <div class="flex items-center">
           <div class="flex-shrink-0">
             <Icon
-              :name="summary.icon"
-              :class="['w-8 h-8', `text-${summary.color}-500`]"
+              :name="card.icon"
+              :class="['w-8 h-8', `text-${card.color}-500`]"
             />
           </div>
           <div class="ml-5 w-0 flex-1">
             <dl>
               <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                {{ summary.name }}
+                {{ card.name }}
               </dt>
               <dd class="text-2xl font-semibold text-gray-900 dark:text-white">
-                {{ summary.value }}
+                {{ card.value }}
               </dd>
             </dl>
           </div>
@@ -63,15 +63,57 @@
       </div>
     </div>
 
+    <!-- Error Display -->
+    <div v-if="error" class="mb-6 px-6 py-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Error</h3>
+            <div class="mt-2 text-sm text-red-700 dark:text-red-300">
+              {{ error }}
+            </div>
+          </div>
+        </div>
+        <button 
+          @click="fetchPayments()" 
+          class="ml-4 bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200 px-3 py-1 rounded text-sm hover:bg-red-200 dark:hover:bg-red-700"
+        >
+          Retry
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div v-if="isLoading" class="bg-white dark:bg-gray-800 rounded-lg shadow p-8">
+      <div class="flex items-center justify-center">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <span class="ml-2 text-gray-600 dark:text-gray-400">Loading payments...</span>
+      </div>
+    </div>
+
     <!-- Payments Table -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+    <div v-else class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
       <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
         <h3 class="text-lg font-medium text-gray-900 dark:text-white">
-          Payment Transactions ({{ filteredPayments.length }})
+          Payment Transactions ({{ totalPayments }})
         </h3>
       </div>
+
+      <!-- Empty State -->
+      <div v-if="payments.length === 0" class="p-8 text-center">
+        <Icon name="heroicons:currency-dollar" class="h-12 w-12 text-gray-300 mx-auto mb-4" />
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No payments found</h3>
+        <p class="text-gray-500 dark:text-gray-400">
+          {{ searchQuery || selectedStatus !== 'all' || selectedTimeframe !== 'all' ? 'Try adjusting your filters' : 'No payments have been processed yet' }}
+        </p>
+      </div>
       
-      <div class="overflow-x-auto">
+      <div v-else class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead class="bg-gray-50 dark:bg-gray-900">
             <tr>
@@ -99,10 +141,10 @@
             </tr>
           </thead>
           <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            <tr v-for="payment in paginatedPayments" :key="payment.id">
+            <tr v-for="payment in payments" :key="payment.id">
               <td class="px-6 py-4">
                 <div class="text-sm font-medium text-gray-900 dark:text-white">
-                  {{ payment.transactionId }}
+                  {{ payment.transactionId.substring(0, 15) }}...
                 </div>
                 <div class="text-sm text-gray-500 dark:text-gray-400">
                   {{ payment.paymentMethod }}
@@ -142,10 +184,10 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="text-sm font-medium text-gray-900 dark:text-white">
-                  ${{ payment.amount }}
+                  ${{ payment.amount.toFixed(2) }}
                 </div>
                 <div class="text-sm text-gray-500 dark:text-gray-400">
-                  Fee: ${{ payment.platformFee }}
+                  Fee: ${{ payment.platformFee.toFixed(2) }}
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
@@ -173,17 +215,17 @@
       </div>
       
       <!-- Pagination -->
-      <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+      <div v-if="payments.length > 0" class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
         <div class="flex items-center justify-between">
           <div class="text-sm text-gray-700 dark:text-gray-300">
-            Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, filteredPayments.length) }} of {{ filteredPayments.length }} results
+            Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, totalPayments) }} of {{ totalPayments }} results
           </div>
           <div class="flex items-center space-x-2">
             <UButton
               variant="ghost"
               icon="heroicons:chevron-left"
               :disabled="currentPage === 1"
-              @click="currentPage--"
+              @click="previousPage"
             />
             <span class="text-sm text-gray-700 dark:text-gray-300">
               Page {{ currentPage }} of {{ totalPages }}
@@ -191,8 +233,8 @@
             <UButton
               variant="ghost"
               icon="heroicons:chevron-right"
-              :disabled="currentPage === totalPages"
-              @click="currentPage++"
+              :disabled="currentPage >= totalPages"
+              @click="nextPage"
             />
           </div>
         </div>
@@ -200,7 +242,7 @@
     </div>
 
     <!-- Payment Details Modal -->
-    <UModal v-model:open="showDetailsModal" :title="`Payment ${selectedPayment?.transactionId}`">
+    <UModal v-model:open="showDetailsModal" :title="`Payment ${selectedPayment?.transactionId?.substring(0, 15)}...`">
       <template #body>
         <div v-if="selectedPayment" class="space-y-6">
           <!-- Transaction Info -->
@@ -217,11 +259,11 @@
               </div>
               <div>
                 <span class="text-gray-600 dark:text-gray-400">Amount:</span>
-                <p class="font-medium text-gray-900 dark:text-white">${{ selectedPayment.amount }}</p>
+                <p class="font-medium text-gray-900 dark:text-white">${{ selectedPayment.amount.toFixed(2) }}</p>
               </div>
               <div>
                 <span class="text-gray-600 dark:text-gray-400">Platform Fee:</span>
-                <p class="font-medium text-gray-900 dark:text-white">${{ selectedPayment.platformFee }}</p>
+                <p class="font-medium text-gray-900 dark:text-white">${{ selectedPayment.platformFee.toFixed(2) }}</p>
               </div>
             </div>
           </div>
@@ -270,31 +312,12 @@
             </div>
           </div>
 
-          <!-- Status Timeline -->
-          <div v-if="selectedPayment.statusHistory">
-            <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Status History</h4>
-            <div class="space-y-3">
-              <div
-                v-for="status in selectedPayment.statusHistory"
-                :key="status.timestamp.getTime()"
-                class="flex items-center space-x-3"
-              >
-                <div
-                  :class="[
-                    'w-2 h-2 rounded-full',
-                    status.status === 'completed' ? 'bg-green-500' :
-                    status.status === 'processing' ? 'bg-yellow-500' :
-                    'bg-gray-400'
-                  ]"
-                />
-                <div class="flex-1">
-                  <p class="text-sm text-gray-900 dark:text-white">{{ status.status }}</p>
-                  <p class="text-xs text-gray-500 dark:text-gray-400">
-                    {{ formatDate(status.timestamp) }}
-                  </p>
-                </div>
-              </div>
-            </div>
+          <!-- Status -->
+          <div>
+            <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">Status</h4>
+            <UBadge :color="getPaymentStatusColor(selectedPayment.status)" variant="soft" size="lg">
+              {{ selectedPayment.status }}
+            </UBadge>
           </div>
         </div>
       </template>
@@ -303,8 +326,10 @@
         <div class="flex justify-end space-x-3">
           <UButton variant="ghost" @click="close">Close</UButton>
           <UButton
-            v-if="selectedPayment?.status === 'pending'"
-            @click="processRefund(selectedPayment.id)"
+            v-if="selectedPayment?.status === 'succeeded'"
+            color="error"
+            variant="outline"
+            @click="handleProcessRefund(selectedPayment.id)"
           >
             Process Refund
           </UButton>
@@ -320,276 +345,71 @@ definePageMeta({
   layout: false
 })
 
-// Types
-interface Participant {
-  name: string
-  avatar: string
-}
+const toast = useToast()
 
-type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'refunded'
-
-interface PaymentStatusEntry {
-  status: PaymentStatus
-  timestamp: Date
-}
-
-interface Payment {
-  id: string
-  transactionId: string
-  sessionTitle: string
-  sessionDate: Date
-  mentor: Participant
-  mentee: Participant
-  amount: number
-  platformFee: number
-  paymentMethod: string
-  status: PaymentStatus
-  duration: number
-  createdAt: Date
-  statusHistory?: PaymentStatusEntry[]
-}
-
-// State
-const searchQuery = ref('')
-const selectedStatus = ref(null)
-const selectedTimeframe = ref(null)
-const currentPage = ref(1)
-const pageSize = 15
-const showDetailsModal = ref(false)
-const selectedPayment = ref<Payment | null>(null)
-
-// Mock data
-const paymentSummary = ref([
-  {
-    name: 'Total Revenue',
-    value: '$48,392',
-    icon: 'heroicons:currency-dollar',
-    color: 'green'
-  },
-  {
-    name: 'This Month',
-    value: '$12,847',
-    icon: 'heroicons:calendar-days',
-    color: 'blue'
-  },
-  {
-    name: 'Platform Fees',
-    value: '$4,839',
-    icon: 'heroicons:receipt-percent',
-    color: 'purple'
-  },
-  {
-    name: 'Pending Payouts',
-    value: '$2,156',
-    icon: 'heroicons:clock',
-    color: 'yellow'
-  }
-])
-
-const payments = ref<Payment[]>([
-  {
-    id: 'PAY-001',
-    transactionId: 'pi_1234567890',
-    sessionTitle: 'Career Growth Discussion',
-    sessionDate: new Date('2024-01-25'),
-    mentor: {
-      name: 'Sarah Chen',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150'
-    },
-    mentee: {
-      name: 'John Doe',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150'
-    },
-    amount: 75,
-    platformFee: 7.5,
-    paymentMethod: 'Visa ****4242',
-    status: 'completed',
-    duration: 1,
-    createdAt: new Date('2024-01-20'),
-    statusHistory: [
-      { status: 'pending', timestamp: new Date('2024-01-20T10:00:00') },
-      { status: 'processing', timestamp: new Date('2024-01-20T10:01:00') },
-      { status: 'completed', timestamp: new Date('2024-01-20T10:02:00') }
-    ]
-  },
-  {
-    id: 'PAY-002',
-    transactionId: 'pi_0987654321',
-    sessionTitle: 'Technical Interview Prep',
-    sessionDate: new Date('2024-01-26'),
-    mentor: {
-      name: 'Marcus Johnson',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'
-    },
-    mentee: {
-      name: 'Jane Smith',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150'
-    },
-    amount: 135,
-    platformFee: 13.5,
-    paymentMethod: 'Mastercard ****8888',
-    status: 'pending',
-    duration: 1.5,
-    createdAt: new Date('2024-01-21'),
-    statusHistory: [
-      { status: 'pending', timestamp: new Date('2024-01-21T14:30:00') }
-    ]
-  },
-  {
-    id: 'PAY-003',
-    transactionId: 'pi_1122334455',
-    sessionTitle: 'UX Design Review',
-    sessionDate: new Date('2024-01-24'),
-    mentor: {
-      name: 'Elena Rodriguez',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150'
-    },
-    mentee: {
-      name: 'Mike Wilson',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150'
-    },
-    amount: 65,
-    platformFee: 6.5,
-    paymentMethod: 'PayPal',
-    status: 'completed',
-    duration: 1,
-    createdAt: new Date('2024-01-19'),
-    statusHistory: [
-      { status: 'pending', timestamp: new Date('2024-01-19T09:15:00') },
-      { status: 'processing', timestamp: new Date('2024-01-19T09:16:00') },
-      { status: 'completed', timestamp: new Date('2024-01-19T09:17:00') }
-    ]
-  },
-  {
-    id: 'PAY-004',
-    transactionId: 'pi_5566778899',
-    sessionTitle: 'Startup Strategy Session',
-    sessionDate: new Date('2024-01-27'),
-    mentor: {
-      name: 'Sarah Chen',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150'
-    },
-    mentee: {
-      name: 'Alex Brown',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'
-    },
-    amount: 150,
-    platformFee: 15,
-    paymentMethod: 'Visa ****1234',
-    status: 'refunded',
-    duration: 2,
-    createdAt: new Date('2024-01-22'),
-    statusHistory: [
-      { status: 'pending', timestamp: new Date('2024-01-22T11:00:00') },
-      { status: 'processing', timestamp: new Date('2024-01-22T11:01:00') },
-      { status: 'completed', timestamp: new Date('2024-01-22T11:02:00') },
-      { status: 'refunded', timestamp: new Date('2024-01-23T16:30:00') }
-    ]
-  }
-])
-
-// Options
-const statusOptions = [
-  { label: 'All Status', value: null },
-  { label: 'Pending', value: 'pending' },
-  { label: 'Processing', value: 'processing' },
-  { label: 'Completed', value: 'completed' },
-  { label: 'Failed', value: 'failed' },
-  { label: 'Refunded', value: 'refunded' }
-]
-
-const timeframeOptions = [
-  { label: 'All Time', value: null },
-  { label: 'Last 7 days', value: '7d' },
-  { label: 'Last 30 days', value: '30d' },
-  { label: 'Last 90 days', value: '90d' },
-  { label: 'This year', value: '1y' }
-]
-
-// Computed
-const filteredPayments = computed(() => {
-  let filtered = payments.value
-
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(payment =>
-      payment.transactionId.toLowerCase().includes(query) ||
-      payment.sessionTitle.toLowerCase().includes(query) ||
-      payment.mentor.name.toLowerCase().includes(query) ||
-      payment.mentee.name.toLowerCase().includes(query)
-    )
-  }
-
-  if (selectedStatus.value && selectedStatus.value !== null) {
-    filtered = filtered.filter(payment => payment.status === selectedStatus.value)
-  }
-
-  if (selectedTimeframe.value && selectedTimeframe.value !== null) {
-    const now = new Date()
-    const timeframe = selectedTimeframe.value
-    let cutoffDate = new Date()
-
-    if (timeframe === '7d') cutoffDate.setDate(now.getDate() - 7)
-    else if (timeframe === '30d') cutoffDate.setDate(now.getDate() - 30)
-    else if (timeframe === '90d') cutoffDate.setDate(now.getDate() - 90)
-    else if (timeframe === '1y') cutoffDate.setFullYear(now.getFullYear() - 1)
-
-    filtered = filtered.filter(payment => payment.createdAt >= cutoffDate)
-  }
-
-  return filtered
-})
-
-const totalPages = computed(() => Math.ceil(filteredPayments.value.length / pageSize))
-
-const paginatedPayments = computed(() => {
-  const start = (currentPage.value - 1) * pageSize
-  const end = start + pageSize
-  return filteredPayments.value.slice(start, end)
-})
+// Use admin payments composable
+const {
+  payments,
+  paymentSummaryCards,
+  isLoading,
+  error,
+  searchQuery,
+  selectedStatus,
+  selectedTimeframe,
+  statusOptions,
+  timeframeOptions,
+  currentPage,
+  totalPages,
+  totalPayments,
+  pageSize,
+  showDetailsModal,
+  selectedPayment,
+  fetchPayments,
+  viewPaymentDetails,
+  processRefund,
+  previousPage,
+  nextPage,
+} = useAdminPayments()
 
 // Methods
-const formatDate = (date: Date) => {
+const formatDate = (date: string | Date) => {
+  const d = typeof date === 'string' ? new Date(date) : date
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric'
-  }).format(date)
+  }).format(d)
 }
 
 const getPaymentStatusColor = (status: string) => {
   switch (status) {
-    case 'completed': return 'success'
+    case 'succeeded': return 'success'
     case 'pending': return 'warning'
-    case 'processing': return 'info'
     case 'failed': return 'error'
     case 'refunded': return 'neutral'
     default: return 'neutral'
   }
 }
 
-const getPaymentActions = (payment: Payment) => [
+const getPaymentActions = (payment: any) => [
   [{
     label: 'View Details',
     icon: 'heroicons:eye',
-    click: () => {
-      selectedPayment.value = payment
-      showDetailsModal.value = true
-    }
+    click: () => viewPaymentDetails(payment)
   }],
   [{
     label: 'Download Receipt',
     icon: 'heroicons:arrow-down-tray',
     click: () => downloadReceipt(payment)
   }],
-  ...(payment.status === 'completed' ? [[{
+  ...(payment.status === 'succeeded' ? [[{
     label: 'Process Refund',
     icon: 'heroicons:arrow-uturn-left',
-    click: () => processRefund(payment.id)
+    click: () => handleProcessRefund(payment.id)
   }]] : [])
 ]
 
-const downloadReceipt = (payment: Payment) => {
+const downloadReceipt = (payment: any) => {
   const receiptData = {
     transactionId: payment.transactionId,
     sessionTitle: payment.sessionTitle,
@@ -612,39 +432,46 @@ const downloadReceipt = (payment: Payment) => {
   link.click()
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
+
+  toast.add({
+    title: 'Receipt Downloaded',
+    description: 'Payment receipt has been downloaded',
+    color: 'success'
+  })
 }
 
-const processRefund = (paymentId: string) => {
+const handleProcessRefund = (paymentId: string) => {
   if (confirm('Are you sure you want to process a refund for this payment?')) {
-    const payment = payments.value.find(p => p.id === paymentId)
-    if (payment) {
-      payment.status = 'refunded'
-      payment.statusHistory?.push({
-        status: 'refunded',
-        timestamp: new Date()
-      })
-      showDetailsModal.value = false
-    }
+    processRefund(paymentId)
+    toast.add({
+      title: 'Refund Initiated',
+      description: 'The refund is being processed',
+      color: 'success'
+    })
   }
 }
 
 const exportPayments = () => {
-  const csvData = filteredPayments.value.map(payment => ({
+  if (payments.value.length === 0) {
+    toast.add({
+      title: 'No Data',
+      description: 'No payments to export for the current filters',
+      color: 'warning'
+    })
+    return
+  }
+
+  const csvData = payments.value.map((payment: any) => ({
     'Transaction ID': payment.transactionId,
     'Session': payment.sessionTitle,
     'Mentor': payment.mentor.name,
     'Mentee': payment.mentee.name,
-    'Amount': `$${payment.amount}`,
-    'Platform Fee': `$${payment.platformFee}`,
+    'Amount': `$${payment.amount.toFixed(2)}`,
+    'Platform Fee': `$${payment.platformFee.toFixed(2)}`,
     'Payment Method': payment.paymentMethod,
     'Status': payment.status,
     'Date': formatDate(payment.createdAt)
   }))
-
-  if (csvData.length === 0) {
-    alert('No payments to export for the current filters.')
-    return
-  }
 
   const headers = [
     'Transaction ID',
@@ -673,7 +500,18 @@ const exportPayments = () => {
   link.click()
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
+
+  toast.add({
+    title: 'Export Complete',
+    description: `Exported ${csvData.length} payments`,
+    color: 'success'
+  })
 }
+
+// Initial data fetch
+onMounted(() => {
+  fetchPayments()
+})
 
 // SEO
 useSeoMeta({
