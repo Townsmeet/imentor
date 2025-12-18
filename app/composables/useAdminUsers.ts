@@ -1,48 +1,19 @@
 import type { AdminUser } from '~/types'
 
-interface AdminUsersResponse {
-  users: AdminUser[]
-  pagination: {
-    page: number
-    limit: number
-    total: number
-    totalPages: number
-  }
-}
-
-interface ApiAdminUser {
-  id: string
-  firstName: string
-  lastName: string
-  email: string
-  role: 'mentee'
-  avatar?: string
-  status: 'active' | 'pending' | 'suspended'
-  createdAt: string // ISO string from API
-  updatedAt: string // ISO string from API
-  lastActive: string // ISO string from API
-  bio?: string
-  location?: string | null
-  experience?: string
-  interests: string[]
-  goals: string[]
-  languages: string[]
-  timezone?: string
-}
-
 export const useAdminUsers = () => {
-  const users = ref<AdminUser[]>([])
-  const isLoading = ref(false)
-  const error = ref<string | null>(null)
-  
+  const toast = useToast()
+  const users = useState<AdminUser[]>('admin-users-list', () => [])
+  const isLoading = useState<boolean>('admin-users-loading', () => false)
+  const error = useState<string | null>('admin-users-error', () => null)
+
   // Filters
-  const searchQuery = ref('')
-  const selectedStatus = ref<string>('all')
-  
+  const searchQuery = useState<string>('admin-users-search', () => '')
+  const selectedStatus = useState<string>('admin-users-status', () => 'all')
+
   // Pagination
-  const currentPage = ref(1)
-  const totalPages = ref(1)
-  const totalUsers = ref(0)
+  const currentPage = useState<number>('admin-users-page', () => 1)
+  const totalPages = useState<number>('admin-users-total-pages', () => 1)
+  const totalUsers = useState<number>('admin-users-total-count', () => 0)
   const pageSize = 10
 
   // Transform API user to AdminUser type
@@ -64,17 +35,17 @@ export const useAdminUsers = () => {
   const fetchUsers = async (page = 1) => {
     isLoading.value = true
     error.value = null
-    
+
     try {
       const params = new URLSearchParams()
-      
+
       if (searchQuery.value) params.set('search', searchQuery.value)
       if (selectedStatus.value && selectedStatus.value !== 'all') params.set('status', selectedStatus.value)
       params.set('page', page.toString())
       params.set('limit', pageSize.toString())
 
       const response = await $fetch<AdminUsersResponse>(`/api/admin/users?${params.toString()}`)
-      
+
       users.value = response.users.map((user: any) => transformUser(user))
       currentPage.value = response.pagination.page
       totalPages.value = response.pagination.totalPages
@@ -89,8 +60,13 @@ export const useAdminUsers = () => {
 
   const getUserById = async (id: string): Promise<AdminUser | null> => {
     try {
-      // For now, get from the local ref. Could be extended to fetch from API
-      return users.value.find(u => u.id === id) || null
+      // First check local state
+      const localUser = users.value.find(u => u.id === id)
+      if (localUser) return localUser
+
+      // If not found, fetch from API
+      const response = await $fetch<any>(`/api/admin/users/${id}`)
+      return transformUser(response)
     } catch (e) {
       console.error('[useAdminUsers] Error fetching user:', e)
       return null
@@ -99,40 +75,59 @@ export const useAdminUsers = () => {
 
   const toggleUserStatus = async (user: AdminUser) => {
     try {
-      // This would be an API call to update user status
       const newStatus = user.status === 'active' ? 'suspended' : 'active'
-      
-      // Optimistic update
-      const originalStatus = user.status
+
+      await $fetch(`/api/admin/users/${user.id}`, {
+        method: 'PUT',
+        body: { status: newStatus }
+      })
+
+      // Update local state
       user.status = newStatus
-      
-      // API call would go here
-      // await $fetch(`/api/admin/users/${user.id}/status`, { method: 'PUT', body: { status: newStatus } })
-      
-      console.log(`User ${user.id} status updated to ${newStatus}`)
+
+      // Refetch to ensure list is in sync (especially for filters)
+      await fetchUsers(currentPage.value)
+
+      toast.add({
+        title: 'Status Updated',
+        description: `User status changed to ${newStatus}`,
+        color: 'success'
+      })
     } catch (e: any) {
-      // Revert on error
-      user.status = user.status === 'active' ? 'suspended' : 'active'
       error.value = e.data?.message || 'Failed to update user status'
-      console.error('[useAdminUsers] Error updating user status:', e)
+      toast.add({
+        title: 'Error',
+        description: error.value || 'Failed to update user status',
+        color: 'error'
+      })
+      throw e
     }
   }
 
   const deleteUser = async (userId: string) => {
     try {
-      // This would be an API call to delete user
-      // await $fetch(`/api/admin/users/${userId}`, { method: 'DELETE' })
-      
-      // Optimistic update
+      await $fetch(`/api/admin/users/${userId}`, { method: 'DELETE' })
+
+      // Update local state
       users.value = users.value.filter(user => user.id !== userId)
       totalUsers.value -= 1
-      
-      console.log(`User ${userId} deleted`)
-    } catch (e: any) {
-      // Refetch on error to restore state
+
+      // Refetch to ensure pagination and list are in sync
       await fetchUsers(currentPage.value)
+
+      toast.add({
+        title: 'User Deleted',
+        description: 'User has been successfully deleted',
+        color: 'success'
+      })
+    } catch (e: any) {
       error.value = e.data?.message || 'Failed to delete user'
-      console.error('[useAdminUsers] Error deleting user:', e)
+      toast.add({
+        title: 'Error',
+        description: error.value || 'Failed to delete user',
+        color: 'error'
+      })
+      throw e
     }
   }
 
@@ -144,7 +139,7 @@ export const useAdminUsers = () => {
 
     if (searchQuery.value) {
       const query = searchQuery.value.toLowerCase()
-      filtered = filtered.filter(user => 
+      filtered = filtered.filter(user =>
         user.firstName.toLowerCase().includes(query) ||
         user.lastName.toLowerCase().includes(query) ||
         user.email.toLowerCase().includes(query)
@@ -160,7 +155,7 @@ export const useAdminUsers = () => {
 
   // Watch for filter changes and refetch (with debounce for search)
   let searchTimeout: ReturnType<typeof setTimeout> | null = null
-  
+
   watch(searchQuery, () => {
     if (searchTimeout) clearTimeout(searchTimeout)
     searchTimeout = setTimeout(() => {

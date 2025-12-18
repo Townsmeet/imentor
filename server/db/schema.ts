@@ -1,4 +1,5 @@
 import { pgTable, text, timestamp, boolean, integer, decimal, pgEnum } from 'drizzle-orm/pg-core'
+import { relations } from 'drizzle-orm'
 
 // Enums
 export const userRoleEnum = pgEnum('user_role', ['mentor', 'mentee', 'admin'])
@@ -17,6 +18,7 @@ export const user = pgTable('user', {
   hasCompletedOnboarding: boolean('has_completed_onboarding').notNull().default(false),
   onboardingStep: onboardingStepEnum('onboarding_step').notNull().default('verification'),
   onboardingCompletedAt: timestamp('onboarding_completed_at'),
+  suspended: boolean('suspended').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
@@ -261,3 +263,122 @@ export const message = pgTable('message', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
+
+// ==================== Relations ====================
+
+export const userRelations = relations(user, ({ one, many }) => ({
+  mentorProfile: one(mentorProfile, {
+    fields: [user.id],
+    references: [mentorProfile.userId],
+  }),
+  menteeProfile: one(menteeProfile, {
+    fields: [user.id],
+    references: [menteeProfile.userId],
+  }),
+  userPreferences: one(userPreferences, {
+    fields: [user.id],
+    references: [userPreferences.userId],
+  }),
+  sessions: many(session),
+  accounts: many(account),
+  availabilitySlots: many(availabilitySlot),
+  bookingsAsMentor: many(booking, { relationName: 'mentor' }),
+  bookingsAsMentee: many(booking, { relationName: 'mentee' }),
+  reviewsAsMentor: many(review, { relationName: 'mentor' }),
+  reviewsAsMentee: many(review, { relationName: 'mentee' }),
+  conversationParticipants: many(conversationParticipant),
+  messages: many(message),
+}))
+
+export const mentorProfileRelations = relations(mentorProfile, ({ one }) => ({
+  user: one(user, {
+    fields: [mentorProfile.userId],
+    references: [user.id],
+  }),
+}))
+
+export const menteeProfileRelations = relations(menteeProfile, ({ one }) => ({
+  user: one(user, {
+    fields: [menteeProfile.userId],
+    references: [user.id],
+  }),
+}))
+
+export const userPreferencesRelations = relations(userPreferences, ({ one }) => ({
+  user: one(user, {
+    fields: [userPreferences.userId],
+    references: [user.id],
+  }),
+}))
+
+export const sessionRelations = relations(session, ({ one }) => ({
+  user: one(user, {
+    fields: [session.userId],
+    references: [user.id],
+  }),
+}))
+
+export const accountRelations = relations(account, ({ one }) => ({
+  user: one(user, {
+    fields: [account.userId],
+    references: [user.id],
+  }),
+}))
+
+export const bookingRelations = relations(booking, ({ one, many }) => ({
+  mentor: one(user, {
+    fields: [booking.mentorId],
+    references: [user.id],
+    relationName: 'mentor',
+  }),
+  mentee: one(user, {
+    fields: [booking.menteeId],
+    references: [user.id],
+    relationName: 'mentee',
+  }),
+  review: one(review),
+}))
+
+export const reviewRelations = relations(review, ({ one }) => ({
+  booking: one(booking, {
+    fields: [review.bookingId],
+    references: [booking.id],
+  }),
+  mentor: one(user, {
+    fields: [review.mentorId],
+    references: [user.id],
+    relationName: 'mentor',
+  }),
+  mentee: one(user, {
+    fields: [review.menteeId],
+    references: [user.id],
+    relationName: 'mentee',
+  }),
+}))
+
+export const conversationRelations = relations(conversation, ({ many }) => ({
+  participants: many(conversationParticipant),
+  messages: many(message),
+}))
+
+export const conversationParticipantRelations = relations(conversationParticipant, ({ one }) => ({
+  conversation: one(conversation, {
+    fields: [conversationParticipant.conversationId],
+    references: [conversation.id],
+  }),
+  user: one(user, {
+    fields: [conversationParticipant.userId],
+    references: [user.id],
+  }),
+}))
+
+export const messageRelations = relations(message, ({ one }) => ({
+  conversation: one(conversation, {
+    fields: [message.conversationId],
+    references: [conversation.id],
+  }),
+  sender: one(user, {
+    fields: [message.senderId],
+    references: [user.id],
+  }),
+}))

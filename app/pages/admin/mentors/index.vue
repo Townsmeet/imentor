@@ -286,157 +286,26 @@
       </div>
     </div>
 
-    <!-- Mentor Details Modal -->
-    <UModal v-model:open="showMentorModal">
-      <div class="p-6" v-if="selectedMentor">
-        <div class="flex items-center justify-between mb-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-            Mentor Details
-          </h3>
+    <!-- Status Confirmation Modal -->
+    <UModal v-model:open="showStatusConfirmModal" :title="pendingStatus === 'verified' ? 'Verify Mentor' : 'Suspend Mentor'">
+      <template #body>
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          Are you sure you want to {{ pendingStatus === 'verified' ? 'verify' : 'suspend' }} <strong>{{ selectedMentor?.name }}</strong>?
+          {{ pendingStatus === 'verified' ? 'They will be able to accept bookings and appear in search results.' : 'They will no longer be able to accept new bookings.' }}
+        </p>
+      </template>
+      <template #footer="{ close }">
+        <div class="flex justify-end space-x-3">
+          <UButton variant="ghost" @click="close">Cancel</UButton>
           <UButton
-            @click="showMentorModal = false"
-            variant="ghost"
-            icon="heroicons:x-mark"
-            size="sm"
-          />
+            :color="pendingStatus === 'verified' ? 'success' : 'warning'"
+            @click="handleStatusUpdate"
+            :loading="isUpdating"
+          >
+            Confirm {{ pendingStatus === 'verified' ? 'Verification' : 'Suspension' }}
+          </UButton>
         </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Profile Info -->
-          <div class="lg:col-span-2">
-            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 mb-6">
-              <div class="flex items-center space-x-4 mb-4">
-                <UAvatar
-                  :src="selectedMentor.avatar"
-                  :alt="selectedMentor.name"
-                  size="xl"
-                />
-                <div>
-                  <h4 class="text-xl font-semibold text-gray-900 dark:text-white">
-                    {{ selectedMentor.name }}
-                  </h4>
-                  <p class="text-gray-600 dark:text-gray-400">{{ selectedMentor.email }}</p>
-                  <div class="flex items-center mt-2">
-                    <Icon name="heroicons:star" class="h-4 w-4 text-yellow-400 mr-1" />
-                    <span class="text-sm text-gray-900 dark:text-white">{{ selectedMentor.rating.toFixed(1) }}</span>
-                    <span class="text-sm text-gray-500 dark:text-gray-400 ml-1">({{ selectedMentor.reviews }} reviews)</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span class="font-medium text-gray-500 dark:text-gray-400">Category:</span>
-                  <span class="ml-2 text-gray-900 dark:text-white">{{ selectedMentor.category }}</span>
-                </div>
-                <div>
-                  <span class="font-medium text-gray-500 dark:text-gray-400">Experience:</span>
-                  <span class="ml-2 text-gray-900 dark:text-white">{{ selectedMentor.experience }}</span>
-                </div>
-                <div>
-                  <span class="font-medium text-gray-500 dark:text-gray-400">Hourly Rate:</span>
-                  <span class="ml-2 text-gray-900 dark:text-white">${{ selectedMentor.hourlyRate }}/hr</span>
-                </div>
-                <div>
-                  <span class="font-medium text-gray-500 dark:text-gray-400">Joined:</span>
-                  <span class="ml-2 text-gray-900 dark:text-white">{{ formatDate(selectedMentor.joinedAt) }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Bio -->
-            <div class="mb-6">
-              <h5 class="font-semibold text-gray-900 dark:text-white mb-2">Bio</h5>
-              <p class="text-gray-600 dark:text-gray-400">{{ selectedMentor.bio || 'No bio provided' }}</p>
-            </div>
-
-            <!-- Skills -->
-            <div class="mb-6">
-              <h5 class="font-semibold text-gray-900 dark:text-white mb-2">Skills</h5>
-              <div class="flex flex-wrap gap-2">
-                <UBadge
-                  v-for="skill in selectedMentor.skills"
-                  :key="skill"
-                  variant="soft"
-                  size="sm"
-                >
-                  {{ skill }}
-                </UBadge>
-                <span v-if="selectedMentor.skills.length === 0" class="text-gray-500 dark:text-gray-400">No skills listed</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Stats & Actions -->
-          <div>
-            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
-              <h5 class="font-semibold text-gray-900 dark:text-white mb-4">Performance</h5>
-              <div class="space-y-3">
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-500 dark:text-gray-400">Total Sessions</span>
-                  <span class="text-sm font-medium text-gray-900 dark:text-white">{{ selectedMentor.totalSessions }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-500 dark:text-gray-400">Total Revenue</span>
-                  <span class="text-sm font-medium text-gray-900 dark:text-white">${{ selectedMentor.totalRevenue.toLocaleString() }}</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-500 dark:text-gray-400">Response Rate</span>
-                  <span class="text-sm font-medium text-gray-900 dark:text-white">{{ selectedMentor.responseRate }}%</span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-sm text-gray-500 dark:text-gray-400">Completion Rate</span>
-                  <span class="text-sm font-medium text-gray-900 dark:text-white">{{ selectedMentor.completionRate }}%</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Status Actions -->
-            <div class="space-y-3">
-              <UButton
-                v-if="selectedMentor.status === 'pending'"
-                @click="updateMentorStatus(selectedMentor.id, 'verified')"
-                block
-                color="success"
-                icon="heroicons:check-circle"
-              >
-                Verify Mentor
-              </UButton>
-              
-              <UButton
-                v-if="selectedMentor.status === 'verified'"
-                @click="updateMentorStatus(selectedMentor.id, 'suspended')"
-                block
-                color="error"
-                variant="outline"
-                icon="heroicons:pause-circle"
-              >
-                Suspend Mentor
-              </UButton>
-              
-              <UButton
-                v-if="selectedMentor.status === 'suspended'"
-                @click="updateMentorStatus(selectedMentor.id, 'verified')"
-                block
-                color="success"
-                variant="outline"
-                icon="heroicons:play-circle"
-              >
-                Reactivate Mentor
-              </UButton>
-              
-              <UButton
-                @click="sendMessage(selectedMentor)"
-                block
-                variant="outline"
-                icon="heroicons:chat-bubble-left-right"
-              >
-                Send Message
-              </UButton>
-            </div>
-          </div>
-        </div>
-      </div>
+      </template>
     </UModal>
   </NuxtLayout>
 </template>
@@ -470,17 +339,16 @@ const {
   totalPages,
   totalMentors,
   pageSize,
-  showMentorModal,
-  selectedMentor,
   verifiedMentors,
   pendingMentors,
   fetchMentors,
-  viewMentorDetails,
   updateMentorStatus,
-  toggleMentorStatus,
-  previousPage,
-  nextPage,
 } = useAdminMentors()
+
+const selectedMentor = ref<any>(null)
+const showStatusConfirmModal = ref(false)
+const pendingStatus = ref<'verified' | 'suspended' | 'pending'>('pending')
+const isUpdating = ref(false)
 
 // Computed
 const averageRating = computed(() => {
@@ -508,31 +376,79 @@ const formatDate = (dateString: string) => {
 }
 
 const getMentorActions = (mentor: any) => {
-  return [
+  const actions = [
     [{
       label: 'View Details',
       icon: 'heroicons:eye',
-      click: () => viewMentorDetails(mentor)
-    }],
-    [{
-      label: 'Send Message',
-      icon: 'heroicons:chat-bubble-left-right',
-      click: () => sendMessage(mentor)
-    }],
-    [{
-      label: mentor.status === 'verified' ? 'Suspend' : 'Verify',
-      icon: mentor.status === 'verified' ? 'heroicons:pause-circle' : 'heroicons:check-circle',
-      click: () => toggleMentorStatus(mentor)
+      onSelect: () => navigateTo(`/admin/mentors/${mentor.id}`)
     }]
   ]
+
+  const statusActions = []
+  
+  // Verification action
+  if (mentor.status === 'pending') {
+    statusActions.push({
+      label: 'Verify Mentor',
+      icon: 'heroicons:check-badge',
+      onSelect: () => {
+        selectedMentor.value = mentor
+        pendingStatus.value = 'verified'
+        showStatusConfirmModal.value = true
+      }
+    })
+  }
+
+  // Suspension actions
+  if (mentor.status === 'suspended') {
+    statusActions.push({
+      label: 'Unsuspend Mentor',
+      icon: 'heroicons:play-circle',
+      onSelect: () => {
+        selectedMentor.value = mentor
+        pendingStatus.value = 'verified'
+        showStatusConfirmModal.value = true
+      }
+    })
+  } else {
+    statusActions.push({
+      label: 'Suspend Mentor',
+      icon: 'heroicons:pause-circle',
+      onSelect: () => {
+        selectedMentor.value = mentor
+        pendingStatus.value = 'suspended'
+        showStatusConfirmModal.value = true
+      }
+    })
+  }
+
+  if (statusActions.length > 0) {
+    actions.push(statusActions)
+  }
+
+  return actions
 }
 
-const sendMessage = (mentor: any) => {
-  toast.add({
-    title: 'Message Sent',
-    description: `Message sent to ${mentor.name}`,
-    color: 'success'
-  })
+const handleStatusUpdate = async () => {
+  if (!selectedMentor.value) return
+  isUpdating.value = true
+  try {
+    await updateMentorStatus(selectedMentor.value.id, pendingStatus.value)
+    showStatusConfirmModal.value = false
+    toast.add({
+      title: 'Status Updated',
+      description: `Mentor status has been updated to ${pendingStatus.value}.`,
+      color: 'success'
+    })
+  } catch (e: any) {
+    toast.add({
+      title: 'Error',
+      description: e.message || 'Failed to update status',
+      color: 'error'
+    })
+  } finally {
+    isUpdating.value = false
+  }
 }
 
 const exportMentors = () => {

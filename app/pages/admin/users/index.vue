@@ -209,7 +209,59 @@
       </template>
     </UModal>
 
-    <!-- User Details Modal -->
+    <!-- Status Confirmation Modal -->
+    <UModal v-model:open="showStatusConfirmModal" :title="selectedUser?.status === 'active' ? 'Suspend User' : 'Activate User'">
+      <template #body>
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          Are you sure you want to {{ selectedUser?.status === 'active' ? 'suspend' : 'activate' }} <strong>{{ selectedUser?.firstName }} {{ selectedUser?.lastName }}</strong>?
+          {{ selectedUser?.status === 'active' ? 'They will no longer be able to log in or use the platform.' : 'They will regain access to the platform.' }}
+        </p>
+      </template>
+      <template #footer="{ close }">
+        <div class="flex justify-end space-x-3">
+          <UButton variant="ghost" @click="close">Cancel</UButton>
+          <UButton
+            :color="selectedUser?.status === 'active' ? 'warning' : 'success'"
+            @click="handleStatusToggle"
+            :loading="isUpdating"
+          >
+            Confirm {{ selectedUser?.status === 'active' ? 'Suspension' : 'Activation' }}
+          </UButton>
+        </div>
+      </template>
+    </UModal>
+
+    <!-- Delete Confirmation Modal -->
+    <UModal v-model:open="showDeleteConfirmModal" title="Delete User">
+      <template #body>
+        <div class="flex items-start space-x-3">
+          <div class="flex-shrink-0">
+            <Icon name="heroicons:exclamation-triangle" class="h-6 w-6 text-red-600" />
+          </div>
+          <div>
+            <p class="text-sm text-gray-900 dark:text-white font-medium">This action is irreversible</p>
+            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              Are you sure you want to permanently delete <strong>{{ selectedUser?.firstName }} {{ selectedUser?.lastName }}</strong>? All their data will be removed.
+            </p>
+          </div>
+        </div>
+      </template>
+      <template #footer="{ close }">
+        <div class="flex justify-end space-x-3">
+          <UButton variant="ghost" @click="close">Cancel</UButton>
+          <UButton
+            color="error"
+            @click="handleDelete"
+            :loading="isUpdating"
+          >
+            Delete Permanently
+          </UButton>
+        </div>
+      </template>
+    </UModal>
+
+    <!-- User Details Modal (Keep for quick view if needed, but the request asked for a detail page) -->
+    <!-- I will keep it but maybe the "View Details" should go to the page -->
     <UModal v-model:open="showDetailsModal" :title="`${selectedUser?.firstName} ${selectedUser?.lastName}`">
       <template #body>
         <div v-if="selectedUser" class="space-y-6">
@@ -300,9 +352,12 @@ const {
 // Local state for modals
 const showCreateModal = ref(false)
 const showDetailsModal = ref(false)
+const showStatusConfirmModal = ref(false)
+const showDeleteConfirmModal = ref(false)
 const selectedUser = ref<AdminUser | null>(null)
 const newUserPassword = ref('')
-const isCreating = ref(false) // Loading state for user creation
+const isCreating = ref(false)
+const isUpdating = ref(false)
 
 // For template binding, create a computed that returns the value
 const isCreatingValue = computed(() => isCreating.value)
@@ -340,26 +395,49 @@ const getUserActions = (user: AdminUser) => [
   [{
     label: 'View Details',
     icon: 'heroicons:eye',
-    click: () => {
-      selectedUser.value = user
-      showDetailsModal.value = true
+    onSelect: () => {
+      navigateTo(`/admin/users/${user.id}`)
     }
   }],
   [{
     label: user.status === 'active' ? 'Suspend' : 'Activate',
     icon: user.status === 'active' ? 'heroicons:pause' : 'heroicons:play',
-    click: () => toggleUserStatus(user)
+    onSelect: () => {
+      selectedUser.value = user
+      showStatusConfirmModal.value = true
+    }
   }],
   [{
     label: 'Delete',
     icon: 'heroicons:trash',
-    click: () => {
-      if (confirm('Are you sure you want to delete this user?')) {
-        deleteUser(user.id)
-      }
+    onSelect: () => {
+      selectedUser.value = user
+      showDeleteConfirmModal.value = true
     }
   }]
 ]
+
+const handleStatusToggle = async () => {
+  if (!selectedUser.value) return
+  isUpdating.value = true
+  try {
+    await toggleUserStatus(selectedUser.value)
+    showStatusConfirmModal.value = false
+  } finally {
+    isUpdating.value = false
+  }
+}
+
+const handleDelete = async () => {
+  if (!selectedUser.value) return
+  isUpdating.value = true
+  try {
+    await deleteUser(selectedUser.value.id)
+    showDeleteConfirmModal.value = false
+  } finally {
+    isUpdating.value = false
+  }
+}
 
 const createUser = async () => {
   isCreating.value = true

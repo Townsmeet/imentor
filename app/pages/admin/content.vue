@@ -315,17 +315,17 @@ const getCategoryActions = (category: any) => [
   [{
     label: 'Edit',
     icon: 'heroicons:pencil',
-    click: () => editCategory(category)
+    onSelect: () => editCategory(category)
   }],
   [{
     label: category.active ? 'Deactivate' : 'Activate',
     icon: category.active ? 'heroicons:pause' : 'heroicons:play',
-    click: () => toggleCategory(category)
+    onSelect: () => toggleCategory(category)
   }],
   [{
     label: 'Delete',
     icon: 'heroicons:trash',
-    click: () => {
+    onSelect: () => {
       if (confirm('Are you sure you want to delete this category?')) {
         deleteCategory(category.id)
       }
@@ -337,12 +337,12 @@ const getSkillActions = (skill: any) => [
   [{
     label: 'Edit',
     icon: 'heroicons:pencil',
-    click: () => editSkill(skill)
+    onSelect: () => editSkill(skill)
   }],
   [{
     label: 'Delete',
     icon: 'heroicons:trash',
-    click: () => {
+    onSelect: () => {
       if (confirm('Are you sure you want to delete this skill?')) {
         deleteSkill(skill.id)
       }

@@ -158,6 +158,9 @@ export default defineEventHandler(async (event) => {
                 bio: m.bio || '',
                 skills: parseJsonArray(m.skills),
                 isAvailable: m.isAvailable ?? true,
+                location: m.location,
+                timezone: m.timezone,
+                languages: parseJsonArray(m.languages),
             }
         })
 

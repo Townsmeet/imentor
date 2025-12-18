@@ -409,12 +409,12 @@ const getSessionActions = (session: any) => [
   [{
     label: 'View Details',
     icon: 'heroicons:eye',
-    click: () => viewSessionDetails(session)
+    onSelect: () => viewSessionDetails(session)
   }],
   [{
     label: session.status === 'pending' ? 'Confirm' : 'Edit',
     icon: session.status === 'pending' ? 'heroicons:check' : 'heroicons:pencil',
-    click: () => {
+    onSelect: () => {
       if (session.status === 'pending') {
         updateSessionStatus(session.id, 'confirmed')
       }
@@ -423,7 +423,7 @@ const getSessionActions = (session: any) => [
   [{
     label: 'Cancel Session',
     icon: 'heroicons:x-mark',
-    click: () => updateSessionStatus(session.id, 'cancelled')
+    onSelect: () => updateSessionStatus(session.id, 'cancelled')
   }]
 ]
 

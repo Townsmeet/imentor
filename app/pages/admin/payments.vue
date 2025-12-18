@@ -395,17 +395,17 @@ const getPaymentActions = (payment: any) => [
   [{
     label: 'View Details',
     icon: 'heroicons:eye',
-    click: () => viewPaymentDetails(payment)
+    onSelect: () => viewPaymentDetails(payment)
   }],
   [{
     label: 'Download Receipt',
     icon: 'heroicons:arrow-down-tray',
-    click: () => downloadReceipt(payment)
+    onSelect: () => downloadReceipt(payment)
   }],
   ...(payment.status === 'succeeded' ? [[{
     label: 'Process Refund',
     icon: 'heroicons:arrow-uturn-left',
-    click: () => handleProcessRefund(payment.id)
+    onSelect: () => handleProcessRefund(payment.id)
   }]] : [])
 ]
 

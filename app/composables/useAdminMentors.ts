@@ -17,6 +17,9 @@ interface AdminMentor {
     bio: string
     skills: string[]
     isAvailable: boolean
+    location?: string
+    timezone?: string
+    languages: string[]
 }
 
 interface CategoryOption {
@@ -36,26 +39,26 @@ interface AdminMentorsResponse {
 }
 
 export const useAdminMentors = () => {
-    const mentors = ref<AdminMentor[]>([])
-    const isLoading = ref(false)
-    const error = ref<string | null>(null)
+    const mentors = useState<AdminMentor[]>('admin-mentors-list', () => [])
+    const isLoading = useState<boolean>('admin-mentors-loading', () => false)
+    const error = useState<string | null>('admin-mentors-error', () => null)
 
     // Categories for filter
-    const categories = ref<CategoryOption[]>([])
+    const categories = useState<CategoryOption[]>('admin-mentors-categories', () => [])
 
     // Filters
-    const searchQuery = ref('')
-    const selectedStatus = ref<string>('all')
-    const selectedCategory = ref<string>('all')
-    const selectedRating = ref<string>('all')
+    const searchQuery = useState<string>('admin-mentors-search', () => '')
+    const selectedStatus = useState<string>('admin-mentors-status', () => 'all')
+    const selectedCategory = useState<string>('admin-mentors-category', () => 'all')
+    const selectedRating = useState<string>('admin-mentors-rating', () => 'all')
 
     // Pagination
-    const currentPage = ref(1)
-    const totalPages = ref(1)
-    const totalMentors = ref(0)
+    const currentPage = useState<number>('admin-mentors-page', () => 1)
+    const totalPages = useState<number>('admin-mentors-total-pages', () => 1)
+    const totalMentors = useState<number>('admin-mentors-total-count', () => 0)
     const pageSize = 10
 
-    // Modal state
+    // Modal state (kept for compatibility but will be used less)
     const showMentorModal = ref(false)
     const selectedMentor = ref<AdminMentor | null>(null)
 
@@ -67,13 +70,11 @@ export const useAdminMentors = () => {
             const params = new URLSearchParams()
 
             if (searchQuery.value) params.set('search', searchQuery.value)
-            if (selectedStatus.value && selectedStatus.value !== 'all') params.set('status', selectedStatus.value)
-            if (selectedCategory.value && selectedCategory.value !== 'all') params.set('category', selectedCategory.value)
-            if (selectedRating.value && selectedRating.value !== 'all') params.set('rating', selectedRating.value)
             params.set('page', page.toString())
             params.set('limit', pageSize.toString())
 
-            const response = await $fetch<AdminMentorsResponse>(`/api/admin/mentors?${params.toString()}`)
+            const headers = useRequestHeaders(['cookie']) as Record<string, string>
+            const response = await $fetch<AdminMentorsResponse>(`/api/admin/mentors?${params.toString()}`, { headers })
 
             mentors.value = response.mentors
             categories.value = response.categories
@@ -88,6 +89,26 @@ export const useAdminMentors = () => {
         }
     }
 
+    const getMentorById = async (id: string): Promise<AdminMentor | null> => {
+        try {
+            // Always fetch from API to ensure full details
+            const response = await $fetch<any>(`/api/admin/mentors/${id}`)
+            if (!response) {
+                throw createError({
+                    statusCode: 404,
+                    message: 'Mentor not found'
+                })
+            }
+            return response
+        } catch (e: any) {
+            console.error('[useAdminMentors] Error fetching mentor:', e)
+            throw createError({
+                statusCode: e.statusCode || 500,
+                message: e.data?.message || e.message || 'Failed to fetch mentor details'
+            })
+        }
+    }
+
     const viewMentorDetails = (mentor: AdminMentor) => {
         selectedMentor.value = mentor
         showMentorModal.value = true
@@ -95,20 +116,22 @@ export const useAdminMentors = () => {
 
     const updateMentorStatus = async (mentorId: string, newStatus: AdminMentor['status']) => {
         try {
-            // TODO: Implement API call to update mentor status
-            // await $fetch(`/api/admin/mentors/${mentorId}/status`, { method: 'PUT', body: { status: newStatus } })
+            const headers = useRequestHeaders(['cookie']) as Record<string, string>
+            await $fetch(`/api/admin/mentors/${mentorId}`, {
+                method: 'PUT',
+                body: { status: newStatus },
+                headers
+            })
 
-            // Optimistic update
-            const mentor = mentors.value.find(m => m.id === mentorId)
-            if (mentor) {
-                mentor.status = newStatus
-            }
+            // Refetch to ensure list is in sync
+            await fetchMentors(currentPage.value)
 
             showMentorModal.value = false
-            console.log(`Mentor ${mentorId} status updated to ${newStatus}`)
+            return true
         } catch (e: any) {
             error.value = e.data?.message || 'Failed to update mentor status'
             console.error('[useAdminMentors] Error updating status:', e)
+            throw e
         }
     }
 
@@ -212,6 +235,7 @@ export const useAdminMentors = () => {
         pendingMentors,
         // Methods
         fetchMentors,
+        getMentorById,
         viewMentorDetails,
         updateMentorStatus,
         toggleMentorStatus,

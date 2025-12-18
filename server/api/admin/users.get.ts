@@ -29,13 +29,11 @@ export default defineEventHandler(async (event) => {
     // Add status filter if provided
     if (status && status !== 'all') {
       if (status === 'active') {
-        baseConditions.push(eq(user.emailVerified, true))
+        baseConditions.push(and(eq(user.emailVerified, true), eq(user.suspended, false)))
       } else if (status === 'pending') {
         baseConditions.push(eq(user.emailVerified, false))
       } else if (status === 'suspended') {
-        // For suspended, we'll need to add a suspended field to the user schema
-        // For now, treat as not email verified
-        baseConditions.push(eq(user.emailVerified, false))
+        baseConditions.push(eq(user.suspended, true))
       }
     }
 
@@ -73,6 +71,7 @@ export default defineEventHandler(async (event) => {
         goals: menteeProfile.goals,
         languages: menteeProfile.languages,
         timezone: menteeProfile.timezone,
+        suspended: user.suspended,
       })
       .from(user)
       .leftJoin(menteeProfile, eq(user.id, menteeProfile.userId))
@@ -85,12 +84,6 @@ export default defineEventHandler(async (event) => {
 
     // Transform data to match expected format
     const mentees = rawMentees.map(m => {
-      // Determine status based on email verification
-      let status = 'active'
-      if (!m.emailVerified) {
-        status = 'pending'
-      }
-
       // Parse name into firstName and lastName
       const nameParts = m.name?.split(' ') || ['', '']
       const firstName = nameParts[0] || ''
@@ -103,7 +96,7 @@ export default defineEventHandler(async (event) => {
         email: m.email,
         role: 'mentee' as const,
         avatar: m.image || undefined,
-        status,
+        status: m.suspended ? 'suspended' : (m.emailVerified ? 'active' : 'pending'),
         createdAt: m.createdAt,
         updatedAt: m.updatedAt,
         lastActive: m.updatedAt, // Using updatedAt as lastActive for now
