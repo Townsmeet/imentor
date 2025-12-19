@@ -4,17 +4,12 @@
     <div class="mb-6">
       <div class="border-b border-gray-200 dark:border-gray-700">
         <nav class="-mb-px flex space-x-8">
-          <button
-            v-for="tab in tabs"
-            :key="tab.id"
-            @click="activeTab = tab.id"
-            :class="[
-              'py-2 px-1 border-b-2 font-medium text-sm',
-              activeTab === tab.id
-                ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
-            ]"
-          >
+          <button v-for="tab in tabs" :key="tab.id" @click="activeTab = tab.id" :class="[
+            'py-2 px-1 border-b-2 font-medium text-sm',
+            activeTab === tab.id
+              ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+          ]">
             {{ tab.name }}
           </button>
         </nav>
@@ -28,21 +23,21 @@
           <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Categories</h2>
           <p class="text-gray-600 dark:text-gray-400">Manage mentoring categories</p>
         </div>
-        <UButton
-          icon="heroicons:plus"
-          @click="showCategoryModal = true"
-        >
+        <UButton icon="heroicons:plus" @click="() => { resetCategoryForm(); showCategoryModal = true; }">
           Add Category
         </UButton>
       </div>
 
       <!-- Error Display -->
-      <div v-if="error" class="mb-6 px-6 py-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+      <div v-if="error"
+        class="mb-6 px-6 py-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
         <div class="flex items-center justify-between">
           <div class="flex items-center">
             <div class="flex-shrink-0">
               <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                <path fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clip-rule="evenodd" />
               </svg>
             </div>
             <div class="ml-3">
@@ -52,10 +47,8 @@
               </div>
             </div>
           </div>
-          <button 
-            @click="fetchCategories()" 
-            class="ml-4 bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200 px-3 py-1 rounded text-sm hover:bg-red-200 dark:hover:bg-red-700"
-          >
+          <button @click="fetchCategories()"
+            class="ml-4 bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200 px-3 py-1 rounded text-sm hover:bg-red-200 dark:hover:bg-red-700">
             Retry
           </button>
         </div>
@@ -74,19 +67,24 @@
         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead class="bg-gray-50 dark:bg-gray-900">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Category
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Description
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Mentors
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Status
               </th>
-              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th
+                class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -110,19 +108,13 @@
                 {{ category.mentorCount }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <UBadge
-                  :color="category.active ? 'success' : 'neutral'"
-                  variant="soft"
-                >
+                <UBadge :color="category.active ? 'success' : 'neutral'" variant="soft">
                   {{ category.active ? 'Active' : 'Inactive' }}
                 </UBadge>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <UDropdownMenu :items="getCategoryActions(category)">
-                  <UButton
-                    variant="ghost"
-                    icon="heroicons:ellipsis-horizontal"
-                  />
+                  <UButton variant="ghost" icon="heroicons:ellipsis-horizontal" />
                 </UDropdownMenu>
               </td>
             </tr>
@@ -138,21 +130,21 @@
           <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Skills</h2>
           <p class="text-gray-600 dark:text-gray-400">Manage available skills</p>
         </div>
-        <UButton
-          icon="heroicons:plus"
-          @click="showSkillModal = true"
-        >
+        <UButton icon="heroicons:plus" @click="() => { resetSkillForm(); showSkillModal = true; }">
           Add Skill
         </UButton>
       </div>
 
       <!-- Error Display -->
-      <div v-if="error" class="mb-6 px-6 py-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+      <div v-if="error"
+        class="mb-6 px-6 py-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
         <div class="flex items-center justify-between">
           <div class="flex items-center">
             <div class="flex-shrink-0">
               <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                <path fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clip-rule="evenodd" />
               </svg>
             </div>
             <div class="ml-3">
@@ -162,10 +154,8 @@
               </div>
             </div>
           </div>
-          <button 
-            @click="fetchSkills()" 
-            class="ml-4 bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200 px-3 py-1 rounded text-sm hover:bg-red-200 dark:hover:bg-red-700"
-          >
+          <button @click="fetchSkills()"
+            class="ml-4 bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200 px-3 py-1 rounded text-sm hover:bg-red-200 dark:hover:bg-red-700">
             Retry
           </button>
         </div>
@@ -182,19 +172,12 @@
       <!-- Skills Content -->
       <div v-else class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <div class="mb-4">
-          <UInput
-            v-model="skillSearchQuery"
-            placeholder="Search skills..."
-            icon="heroicons:magnifying-glass"
-          />
+          <UInput v-model="skillSearchQuery" placeholder="Search skills..." icon="heroicons:magnifying-glass" />
         </div>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div
-            v-for="skill in filteredSkills"
-            :key="skill.id"
-            class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 flex items-center justify-between"
-          >
+          <div v-for="skill in filteredSkills" :key="skill.id"
+            class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 flex items-center justify-between">
             <div>
               <h4 class="text-sm font-medium text-gray-900 dark:text-white">
                 {{ skill.name }}
@@ -204,11 +187,7 @@
               </p>
             </div>
             <UDropdownMenu :items="getSkillActions(skill)">
-              <UButton
-                variant="ghost"
-                icon="heroicons:ellipsis-horizontal"
-                size="sm"
-              />
+              <UButton variant="ghost" icon="heroicons:ellipsis-horizontal" size="sm" />
             </UDropdownMenu>
           </div>
         </div>
@@ -217,52 +196,68 @@
 
 
     <!-- Category Modal -->
-    <UModal v-model:open="showCategoryModal" title="Add Category">
+    <UModal v-model:open="showCategoryModal" :title="editingCategory ? 'Edit Category' : 'Add Category'">
       <template #body>
-        <form @submit.prevent="saveCategory" class="space-y-4">
+        <UForm :state="newCategory" @submit="saveCategory" class="space-y-4">
           <UFormField label="Category Name" required>
             <UInput v-model="newCategory.name" placeholder="e.g. Software Development" class="w-full" />
           </UFormField>
-          
+
           <UFormField label="Description" required>
-            <UTextarea v-model="newCategory.description" placeholder="Brief description of this category" class="w-full" />
+            <UTextarea v-model="newCategory.description" placeholder="Brief description of this category"
+              class="w-full" />
           </UFormField>
-        </form>
+        </UForm>
       </template>
-      
+
       <template #footer="{ close }">
         <div class="w-full flex justify-end gap-3">
           <UButton variant="ghost" @click="close">Cancel</UButton>
-          <UButton @click="saveCategory" :loading="isSavingCategory">Save Category</UButton>
+          <UButton @click="saveCategory" :loading="isSavingCategory">{{ editingCategory ? 'Update Category' : 'Save Category' }}</UButton>
         </div>
       </template>
     </UModal>
 
     <!-- Skill Modal -->
-    <UModal v-model:open="showSkillModal" title="Add Skill">
+    <UModal v-model:open="showSkillModal" :title="editingSkill ? 'Edit Skill' : 'Add Skill'">
       <template #body>
-        <form @submit.prevent="saveSkill" class="space-y-4">
+        <UForm :state="newSkill" @submit="saveSkill" class="space-y-4">
           <UFormField label="Skill Name" required>
             <UInput v-model="newSkill.name" placeholder="e.g. JavaScript" class="w-full" />
           </UFormField>
-          
-          <UFormField label="Category">
-            <USelectMenu
-              v-model="newSkill.categoryId"
-              :items="categoryOptions"
-              placeholder="Select a category"
-              value-key="value"
-              :portal="false"
-              class="w-full"
-            />
+
+          <UFormField :label="`Category (${categoryOptions.length - 1} available)`">
+            <select v-model="newSkill.categoryId" class="w-full p-2 border rounded dark:bg-gray-800 dark:border-gray-700">
+              <option v-for="option in categoryOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
           </UFormField>
-        </form>
+        </UForm>
       </template>
-      
+
       <template #footer="{ close }">
         <div class="w-full flex justify-end gap-3">
           <UButton variant="ghost" @click="close">Cancel</UButton>
-          <UButton @click="saveSkill" :loading="isSavingSkill">Save Skill</UButton>
+          <UButton @click="saveSkill" :loading="isSavingSkill">{{ editingSkill ? 'Update Skill' : 'Save Skill' }}</UButton>
+        </div>
+      </template>
+    </UModal>
+
+    <!-- Confirmation Modal -->
+    <UModal v-model:open="showConfirmModal" :title="confirmTitle">
+      <template #body>
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          {{ confirmMessage }}
+        </p>
+      </template>
+
+      <template #footer="{ close }">
+        <div class="w-full flex justify-end gap-3">
+          <UButton variant="ghost" @click="close">Cancel</UButton>
+          <UButton :color="confirmButtonColor" @click="handleConfirm">
+            {{ confirmButtonText }}
+          </UButton>
         </div>
       </template>
     </UModal>
@@ -289,16 +284,20 @@ const {
   isSavingSkill,
   newCategory,
   newSkill,
+  editingCategory,
+  editingSkill,
   categoryOptions,
   fetchCategories,
   createCategory,
   updateCategory,
   deleteCategory,
   toggleCategory,
+  resetCategoryForm,
   fetchSkills,
   createSkill,
   updateSkill,
   deleteSkill,
+  resetSkillForm,
 } = useAdminContent()
 
 // Local state
@@ -310,6 +309,36 @@ const tabs = [
   { id: 'skills', name: 'Skills' }
 ]
 
+// Confirmation Modal State
+const showConfirmModal = ref(false)
+const confirmTitle = ref('')
+const confirmMessage = ref('')
+const confirmButtonText = ref('')
+const confirmButtonColor = ref('primary')
+const confirmAction = ref<(() => void) | null>(null)
+
+const openConfirmModal = (options: {
+  title: string,
+  message: string,
+  buttonText: string,
+  buttonColor?: string,
+  action: () => void
+}) => {
+  confirmTitle.value = options.title
+  confirmMessage.value = options.message
+  confirmButtonText.value = options.buttonText
+  confirmButtonColor.value = options.buttonColor || 'primary'
+  confirmAction.value = options.action
+  showConfirmModal.value = true
+}
+
+const handleConfirm = () => {
+  if (confirmAction.value) {
+    confirmAction.value()
+  }
+  showConfirmModal.value = false
+}
+
 // Methods
 const getCategoryActions = (category: any) => [
   [{
@@ -320,15 +349,31 @@ const getCategoryActions = (category: any) => [
   [{
     label: category.active ? 'Deactivate' : 'Activate',
     icon: category.active ? 'heroicons:pause' : 'heroicons:play',
-    onSelect: () => toggleCategory(category)
+    onSelect: () => {
+      if (category.active) {
+        openConfirmModal({
+          title: 'Deactivate Category',
+          message: `Are you sure you want to deactivate the category "${category.name}"? It will no longer be visible to users.`,
+          buttonText: 'Deactivate',
+          buttonColor: 'warning',
+          action: () => toggleCategory(category)
+        })
+      } else {
+        toggleCategory(category)
+      }
+    }
   }],
   [{
     label: 'Delete',
     icon: 'heroicons:trash',
     onSelect: () => {
-      if (confirm('Are you sure you want to delete this category?')) {
-        deleteCategory(category.id)
-      }
+      openConfirmModal({
+        title: 'Delete Category',
+        message: `Are you sure you want to delete the category "${category.name}"? This action cannot be undone.`,
+        buttonText: 'Delete',
+        buttonColor: 'error',
+        action: () => deleteCategory(category.id)
+      })
     }
   }]
 ]
@@ -343,9 +388,13 @@ const getSkillActions = (skill: any) => [
     label: 'Delete',
     icon: 'heroicons:trash',
     onSelect: () => {
-      if (confirm('Are you sure you want to delete this skill?')) {
-        deleteSkill(skill.id)
-      }
+      openConfirmModal({
+        title: 'Delete Skill',
+        message: `Are you sure you want to delete the skill "${skill.name}"? This action cannot be undone.`,
+        buttonText: 'Delete',
+        buttonColor: 'error',
+        action: () => deleteSkill(skill.id)
+      })
     }
   }]
 ]
@@ -359,13 +408,22 @@ const saveSkill = async () => {
 }
 
 const editCategory = (category: any) => {
-  // Implementation for editing category
-  console.log('Edit category:', category)
+  editingCategory.value = category
+  Object.assign(newCategory, {
+    name: category.name,
+    description: category.description,
+    icon: category.icon
+  })
+  showCategoryModal.value = true
 }
 
 const editSkill = (skill: any) => {
-  // Implementation for editing skill
-  console.log('Edit skill:', skill)
+  editingSkill.value = skill
+  Object.assign(newSkill, {
+    name: skill.name,
+    categoryId: skill.categoryId || ''
+  })
+  showSkillModal.value = true
 }
 
 // Initial data fetch

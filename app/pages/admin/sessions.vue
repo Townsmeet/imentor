@@ -42,6 +42,7 @@
               v-model="dateFrom"
               type="date"
               placeholder="Select start date"
+              class="w-full"
             />
           </UFormField>
           
@@ -50,6 +51,7 @@
               v-model="dateTo"
               type="date"
               placeholder="Select end date"
+              class="w-full"
             />
           </UFormField>
           
@@ -58,6 +60,7 @@
               v-model="selectedDuration"
               :items="durationOptions"
               placeholder="Any duration"
+              class="w-full"
             />
           </UFormField>
         </div>
@@ -405,27 +408,25 @@ const getStatusColor = (status: string) => {
   }
 }
 
-const getSessionActions = (session: any) => [
-  [{
-    label: 'View Details',
-    icon: 'heroicons:eye',
-    onSelect: () => viewSessionDetails(session)
-  }],
-  [{
-    label: session.status === 'pending' ? 'Confirm' : 'Edit',
-    icon: session.status === 'pending' ? 'heroicons:check' : 'heroicons:pencil',
-    onSelect: () => {
-      if (session.status === 'pending') {
-        updateSessionStatus(session.id, 'confirmed')
-      }
-    }
-  }],
-  [{
-    label: 'Cancel Session',
-    icon: 'heroicons:x-mark',
-    onSelect: () => updateSessionStatus(session.id, 'cancelled')
-  }]
-]
+const getSessionActions = (session: any) => {
+  const actions = [
+    [{
+      label: 'View Details',
+      icon: 'heroicons:eye',
+      onSelect: () => viewSessionDetails(session)
+    }]
+  ]
+
+  if (session.status === 'pending') {
+    actions.push([{
+      label: 'Confirm',
+      icon: 'heroicons:check',
+      onSelect: () => updateSessionStatus(session.id, 'confirmed')
+    }])
+  }
+
+  return actions
+}
 
 const exportSessions = () => {
   if (sessions.value.length === 0) {

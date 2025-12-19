@@ -105,20 +105,40 @@ export const useAdminPayments = () => {
 
     const processRefund = async (paymentId: string) => {
         try {
-            // TODO: Implement API call to process refund
-            // await $fetch(`/api/admin/payments/${paymentId}/refund`, { method: 'POST' })
+            await $fetch(`/api/admin/payments/${paymentId}/refund`, { method: 'POST' })
 
-            // Optimistic update
+            // Update local state
             const payment = payments.value.find(p => p.id === paymentId)
             if (payment) {
                 payment.status = 'refunded'
             }
 
-            showDetailsModal.value = false
             console.log(`Payment ${paymentId} refunded`)
         } catch (e: any) {
-            error.value = e.data?.message || 'Failed to process refund'
+            const msg = e.data?.message || 'Failed to process refund'
+            error.value = msg
             console.error('[useAdminPayments] Error processing refund:', e)
+            throw new Error(msg)
+        }
+    }
+
+    const downloadReceiptPdf = async (paymentId: string, transactionId: string) => {
+        try {
+            const response = await $fetch(`/api/admin/payments/${paymentId}/receipt`, {
+                responseType: 'blob'
+            })
+
+            const url = window.URL.createObjectURL(response as Blob)
+            const link = document.createElement('a')
+            link.href = url
+            link.setAttribute('download', `receipt-${transactionId}.pdf`)
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+            window.URL.revokeObjectURL(url)
+        } catch (e: any) {
+            console.error('[useAdminPayments] Error downloading receipt:', e)
+            throw new Error(e.data?.message || 'Failed to download receipt')
         }
     }
 
@@ -232,6 +252,7 @@ export const useAdminPayments = () => {
         fetchPayments,
         viewPaymentDetails,
         processRefund,
+        downloadReceiptPdf,
         previousPage,
         nextPage,
         goToPage,

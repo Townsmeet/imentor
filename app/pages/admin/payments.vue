@@ -329,9 +329,38 @@
             v-if="selectedPayment?.status === 'succeeded'"
             color="error"
             variant="outline"
-            @click="handleProcessRefund(selectedPayment.id)"
+            @click="confirmRefund"
           >
             Process Refund
+          </UButton>
+        </div>
+      </template>
+    </UModal>
+
+    <!-- Refund Confirmation Modal -->
+    <UModal v-model:open="showRefundModal" title="Confirm Refund">
+      <template #body>
+        <div class="flex items-start space-x-3">
+          <div class="flex-shrink-0">
+            <Icon name="heroicons:exclamation-triangle" class="h-6 w-6 text-red-600" />
+          </div>
+          <div>
+            <p class="text-sm text-gray-900 dark:text-white font-medium">Are you sure you want to process a refund?</p>
+            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              This will refund <strong>${{ selectedPayment?.amount.toFixed(2) }}</strong> for the session "<strong>{{ selectedPayment?.sessionTitle }}</strong>". This action cannot be undone.
+            </p>
+          </div>
+        </div>
+      </template>
+      <template #footer="{ close }">
+        <div class="flex justify-end space-x-3">
+          <UButton variant="ghost" @click="close">Cancel</UButton>
+          <UButton
+            color="error"
+            @click="executeRefund"
+            :loading="isRefunding"
+          >
+            Confirm Refund
           </UButton>
         </div>
       </template>
@@ -367,9 +396,13 @@ const {
   fetchPayments,
   viewPaymentDetails,
   processRefund,
+  downloadReceiptPdf,
   previousPage,
   nextPage,
 } = useAdminPayments()
+
+const showRefundModal = ref(false)
+const isRefunding = ref(false)
 
 // Methods
 const formatDate = (date: string | Date) => {
@@ -409,45 +442,56 @@ const getPaymentActions = (payment: any) => [
   }]] : [])
 ]
 
-const downloadReceipt = (payment: any) => {
-  const receiptData = {
-    transactionId: payment.transactionId,
-    sessionTitle: payment.sessionTitle,
-    mentor: payment.mentor.name,
-    mentee: payment.mentee.name,
-    amount: payment.amount,
-    platformFee: payment.platformFee,
-    date: formatDate(payment.createdAt),
-    status: payment.status
+const downloadReceipt = async (payment: any) => {
+  try {
+    await downloadReceiptPdf(payment.id, payment.transactionId)
+    toast.add({
+      title: 'Receipt Downloaded',
+      description: 'Payment receipt has been downloaded',
+      color: 'success'
+    })
+  } catch (e: any) {
+    toast.add({
+      title: 'Download Failed',
+      description: e.message || 'Failed to download receipt',
+      color: 'error'
+    })
   }
-
-  const dataStr = JSON.stringify(receiptData, null, 2)
-  const dataBlob = new Blob([dataStr], { type: 'application/json' })
-  const url = URL.createObjectURL(dataBlob)
-
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `receipt-${payment.transactionId}.json`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
-
-  toast.add({
-    title: 'Receipt Downloaded',
-    description: 'Payment receipt has been downloaded',
-    color: 'success'
-  })
 }
 
 const handleProcessRefund = (paymentId: string) => {
-  if (confirm('Are you sure you want to process a refund for this payment?')) {
-    processRefund(paymentId)
+  const payment = payments.value.find(p => p.id === paymentId)
+  if (payment) {
+    selectedPayment.value = payment
+    showRefundModal.value = true
+  }
+}
+
+const confirmRefund = () => {
+  showRefundModal.value = true
+}
+
+const executeRefund = async () => {
+  if (!selectedPayment.value) return
+  
+  isRefunding.value = true
+  try {
+    await processRefund(selectedPayment.value.id)
+    showRefundModal.value = false
+    showDetailsModal.value = false
     toast.add({
-      title: 'Refund Initiated',
-      description: 'The refund is being processed',
+      title: 'Refund Successful',
+      description: 'The payment has been refunded successfully',
       color: 'success'
     })
+  } catch (e: any) {
+    toast.add({
+      title: 'Refund Failed',
+      description: e.message || 'Failed to process refund',
+      color: 'error'
+    })
+  } finally {
+    isRefunding.value = false
   }
 }
 

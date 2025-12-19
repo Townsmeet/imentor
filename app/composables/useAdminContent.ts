@@ -37,23 +37,27 @@ export const useAdminContent = () => {
   const skills = ref<AdminSkill[]>([])
   const isLoading = ref(false)
   const error = ref<string | null>(null)
-  
+
   // Filters
   const skillSearchQuery = ref('')
-  
+
   // Modals
   const showCategoryModal = ref(false)
   const showSkillModal = ref(false)
   const isSavingCategory = ref(false)
   const isSavingSkill = ref(false)
-  
+
+  // Editing state
+  const editingCategory = ref<AdminCategory | null>(null)
+  const editingSkill = ref<AdminSkill | null>(null)
+
   // Form data
   const newCategory = reactive({
     name: '',
     description: '',
     icon: 'heroicons:folder'
   })
-  
+
   const newSkill = reactive({
     name: '',
     categoryId: ''
@@ -63,7 +67,7 @@ export const useAdminContent = () => {
   const fetchCategories = async () => {
     isLoading.value = true
     error.value = null
-    
+
     try {
       const response = await $fetch<CategoriesResponse>('/api/admin/categories')
       categories.value = response.categories
@@ -78,40 +82,57 @@ export const useAdminContent = () => {
   const createCategory = async (categoryData: typeof newCategory) => {
     isSavingCategory.value = true
     error.value = null
-    
+
     try {
-      const response = await $fetch<{ category: AdminCategory }>('/api/admin/categories', {
-        method: 'POST',
-        body: categoryData
-      })
-      
-      categories.value.push(response.category)
-      
-      // Reset form
-      Object.assign(newCategory, {
-        name: '',
-        description: '',
-        icon: 'heroicons:folder'
-      })
-      
+      if (editingCategory.value) {
+        // Update existing category
+        const response = await $fetch<{ category: AdminCategory }>(`/api/admin/categories/${editingCategory.value.id}`, {
+          method: 'PUT',
+          body: categoryData
+        })
+
+        const index = categories.value.findIndex(cat => cat.id === editingCategory.value?.id)
+        if (index !== -1) {
+          categories.value[index] = response.category
+        }
+      } else {
+        // Create new category
+        const response = await $fetch<{ category: AdminCategory }>('/api/admin/categories', {
+          method: 'POST',
+          body: categoryData
+        })
+        categories.value.push(response.category)
+      }
+
+      // Reset form and close modal
+      resetCategoryForm()
       showCategoryModal.value = false
     } catch (e: any) {
-      error.value = e.data?.message || e.message || 'Failed to create category'
-      console.error('[useAdminContent] Error creating category:', e)
+      error.value = e.data?.message || e.message || 'Failed to save category'
+      console.error('[useAdminContent] Error saving category:', e)
     } finally {
       isSavingCategory.value = false
     }
   }
 
+  const resetCategoryForm = () => {
+    Object.assign(newCategory, {
+      name: '',
+      description: '',
+      icon: 'heroicons:folder'
+    })
+    editingCategory.value = null
+  }
+
   const updateCategory = async (categoryId: string, categoryData: Partial<AdminCategory>) => {
     error.value = null
-    
+
     try {
       const response = await $fetch<{ category: AdminCategory }>(`/api/admin/categories/${categoryId}`, {
         method: 'PUT',
         body: categoryData
       })
-      
+
       const index = categories.value.findIndex(cat => cat.id === categoryId)
       if (index !== -1) {
         categories.value[index] = response.category
@@ -124,12 +145,12 @@ export const useAdminContent = () => {
 
   const deleteCategory = async (categoryId: string) => {
     error.value = null
-    
+
     try {
       await $fetch(`/api/admin/categories/${categoryId}`, {
         method: 'DELETE'
       })
-      
+
       categories.value = categories.value.filter(cat => cat.id !== categoryId)
     } catch (e: any) {
       error.value = e.data?.message || e.message || 'Failed to delete category'
@@ -145,7 +166,7 @@ export const useAdminContent = () => {
   const fetchSkills = async () => {
     isLoading.value = true
     error.value = null
-    
+
     try {
       const response = await $fetch<SkillsResponse>('/api/admin/skills', {
         query: {
@@ -164,39 +185,56 @@ export const useAdminContent = () => {
   const createSkill = async (skillData: typeof newSkill) => {
     isSavingSkill.value = true
     error.value = null
-    
+
     try {
-      const response = await $fetch<{ skill: AdminSkill }>('/api/admin/skills', {
-        method: 'POST',
-        body: skillData
-      })
-      
-      skills.value.push(response.skill)
-      
-      // Reset form
-      Object.assign(newSkill, {
-        name: '',
-        categoryId: ''
-      })
-      
+      if (editingSkill.value) {
+        // Update existing skill
+        const response = await $fetch<{ skill: AdminSkill }>(`/api/admin/skills/${editingSkill.value.id}`, {
+          method: 'PUT',
+          body: skillData
+        })
+
+        const index = skills.value.findIndex(skill => skill.id === editingSkill.value?.id)
+        if (index !== -1) {
+          skills.value[index] = response.skill
+        }
+      } else {
+        // Create new skill
+        const response = await $fetch<{ skill: AdminSkill }>('/api/admin/skills', {
+          method: 'POST',
+          body: skillData
+        })
+        skills.value.push(response.skill)
+      }
+
+      // Reset form and close modal
+      resetSkillForm()
       showSkillModal.value = false
     } catch (e: any) {
-      error.value = e.data?.message || e.message || 'Failed to create skill'
-      console.error('[useAdminContent] Error creating skill:', e)
+      error.value = e.data?.message || e.message || 'Failed to save skill'
+      console.error('[useAdminContent] Error saving skill:', e)
     } finally {
       isSavingSkill.value = false
     }
   }
 
+  const resetSkillForm = () => {
+    Object.assign(newSkill, {
+      name: '',
+      categoryId: ''
+    })
+    editingSkill.value = null
+  }
+
   const updateSkill = async (skillId: string, skillData: Partial<AdminSkill>) => {
     error.value = null
-    
+
     try {
       const response = await $fetch<{ skill: AdminSkill }>(`/api/admin/skills/${skillId}`, {
         method: 'PUT',
         body: skillData
       })
-      
+
       const index = skills.value.findIndex(skill => skill.id === skillId)
       if (index !== -1) {
         skills.value[index] = response.skill
@@ -209,12 +247,12 @@ export const useAdminContent = () => {
 
   const deleteSkill = async (skillId: string) => {
     error.value = null
-    
+
     try {
       await $fetch(`/api/admin/skills/${skillId}`, {
         method: 'DELETE'
       })
-      
+
       skills.value = skills.value.filter(skill => skill.id !== skillId)
     } catch (e: any) {
       error.value = e.data?.message || e.message || 'Failed to delete skill'
@@ -225,7 +263,7 @@ export const useAdminContent = () => {
   // Computed properties
   const filteredSkills = computed(() => {
     if (!skillSearchQuery.value) return skills.value
-    
+
     const query = skillSearchQuery.value.toLowerCase()
     return skills.value.filter(skill =>
       skill.name.toLowerCase().includes(query)
@@ -242,7 +280,7 @@ export const useAdminContent = () => {
 
   // Watch for search changes
   let searchTimeout: ReturnType<typeof setTimeout> | null = null
-  
+
   watch(skillSearchQuery, () => {
     if (searchTimeout) clearTimeout(searchTimeout)
     searchTimeout = setTimeout(() => {
@@ -269,6 +307,9 @@ export const useAdminContent = () => {
     // Forms
     newCategory,
     newSkill,
+    // Editing state
+    editingCategory,
+    editingSkill,
     // Options
     categoryOptions,
     // Category methods
@@ -277,10 +318,12 @@ export const useAdminContent = () => {
     updateCategory,
     deleteCategory,
     toggleCategory,
+    resetCategoryForm,
     // Skill methods
     fetchSkills,
     createSkill,
     updateSkill,
     deleteSkill,
+    resetSkillForm,
   }
 }
