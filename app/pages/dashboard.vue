@@ -236,7 +236,7 @@
         <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
           <div class="text-center">
             <UAvatar
-              :src="currentUser?.avatar"
+              :src="currentUser?.avatar || undefined"
               :alt="`${currentUser?.firstName} ${currentUser?.lastName}`"
               size="xl"
               class="mx-auto mb-4"
@@ -248,7 +248,7 @@
               {{ currentUser?.role }}
             </p>
             
-            <div v-if="currentUser && currentUser.role === 'mentor'" class="mb-4">
+            <div v-if="currentUser && currentUser.role === 'mentor' && dashboardStats?.stats" class="mb-4">
               <div class="flex items-center justify-center space-x-1 mb-2">
                 <Icon
                   v-for="i in 5"
@@ -256,12 +256,12 @@
                   name="heroicons:star"
                   :class="[
                     'w-4 h-4',
-                    i <= mockMentorRating ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600'
+                    i <= (dashboardStats.stats.averageRating || 0) ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600'
                   ]"
                 />
               </div>
               <p class="text-sm text-gray-600 dark:text-gray-400">
-                {{ mockMentorRating }}/5 • {{ mockTotalSessions }} sessions
+                {{ dashboardStats.stats.averageRating || 0 }}/5 • {{ dashboardStats.stats.totalSessions || 0 }} sessions
               </p>
             </div>
             
@@ -347,16 +347,22 @@
     </div>
 
     <!-- Notifications Modal -->
-    <UModal v-model:open="showNotifications" title="Notifications">
+    <UModal v-model:open="notificationsOpen" title="Notifications">
       <template #body>
-        <div class="space-y-4">
+        <div v-if="notifications.length === 0" class="text-center py-12">
+          <Icon name="heroicons:bell-slash" class="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <p class="text-gray-500 dark:text-gray-400 font-medium">No notifications</p>
+          <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">You're all caught up!</p>
+        </div>
+        <div v-else class="space-y-4">
           <div
             v-for="notification in notifications"
             :key="notification.id"
-            class="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+            class="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer"
+            @click="onClickNotification(notification)"
           >
             <Icon
-              :name="notification.icon"
+              :name="notification.icon || 'heroicons:information-circle'"
               :class="[
                 'w-5 h-5 mt-0.5',
                 notification.type === 'warning' ? 'text-yellow-500' : 
@@ -383,31 +389,17 @@
 
 <script setup lang="ts">
 import type { User, UserRole } from '~/types'
+import { navigateTo } from '#app'
+import { useNotifications } from '~/composables/useNotifications'
 
 definePageMeta({
   middleware: ['auth', 'onboarding']
 })
 
-const { user } = useAuth()
+const { user: currentUser } = useAuth()
 const { stats: dashboardStats, isLoading: dashboardLoading, fetchDashboardStats } = useDashboard()
 const { bookings, isLoading: bookingsLoading, fetchBookings, getUpcomingBookings } = useBookings()
 const { fetchRecentActivity } = useDashboard()
-
-// Type guard to ensure proper role typing
-const isRole = (role: string): role is UserRole => {
-  return ['mentee', 'mentor', 'admin'].includes(role)
-}
-
-const currentUser = computed(() => {
-  const u = user.value
-  if (!u) return null
-  
-  // Ensure role is properly typed
-  return {
-    ...u,
-    role: isRole(u.role) ? u.role : 'mentee' as UserRole
-  } as User
-})
 
 // Fetch dashboard data on mount
 onMounted(async () => {
@@ -462,44 +454,21 @@ const recentActivity = computed(() => {
 })
 
 // Notifications (keeping existing mock for now)
-type NotificationType = 'info' | 'warning' | 'error'
-interface NotificationItem {
-  id: string
-  type: NotificationType
-  icon: string
-  title: string
-  message: string
-  timestamp: Date
-}
+const notificationsOpen = useState<boolean>('notifications-open', () => false)
+const { notifications, fetchNotifications, markAllAsRead } = useNotifications()
 
-const showNotifications = useState<boolean>('notifications-open', () => false)
-const notificationCount = ref(3)
-const notifications = ref<NotificationItem[]>([
-  {
-    id: '1',
-    type: 'info',
-    icon: 'heroicons:information-circle',
-    title: 'Welcome to your dashboard',
-    message: 'Check out the latest updates and sessions',
-    timestamp: new Date(Date.now() - 60 * 60 * 1000)
-  },
-  {
-    id: '2',
-    type: 'warning',
-    icon: 'heroicons:exclamation-triangle',
-    title: 'Payment method expiring soon',
-    message: 'Update your payment method to avoid interruptions',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000)
-  },
-  {
-    id: '3',
-    type: 'error',
-    icon: 'heroicons:x-circle',
-    title: 'Failed to process booking',
-    message: 'There was an error processing your recent booking',
-    timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000)
-  }
-])
+onMounted(() => {
+  fetchNotifications(20)
+})
+
+watch(() => notificationsOpen.value, (open) => {
+  if (open) markAllAsRead()
+})
+
+const onClickNotification = (n: any) => {
+  if (n?.actionUrl) navigateTo(n.actionUrl)
+  notificationsOpen.value = false
+}
 
 const formatDate = (date: Date) => {
   return new Intl.DateTimeFormat('en-US', {

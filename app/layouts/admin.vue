@@ -65,8 +65,8 @@
               <UButton
                 variant="ghost"
                 icon="heroicons:bell"
-                :badge="notificationCount"
-                @click="showNotifications = true"
+                :badge="unreadCount"
+                @click="notificationsOpen = true"
               />
               
               <!-- User Menu -->
@@ -91,16 +91,22 @@
     </div>
 
     <!-- Notifications Modal -->
-    <UModal v-model:open="showNotifications" title="Notifications">
+    <UModal v-model:open="notificationsOpen" title="Notifications">
       <template #body>
-        <div class="space-y-4">
+        <div v-if="notifications.length === 0" class="text-center py-12">
+          <Icon name="heroicons:bell-slash" class="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <p class="text-gray-500 dark:text-gray-400 font-medium">No notifications</p>
+          <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">You're all caught up!</p>
+        </div>
+        <div v-else class="space-y-4">
           <div
             v-for="notification in notifications"
             :key="notification.id"
-            class="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+            class="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer"
+            @click="onClickNotification(notification)"
           >
             <Icon
-              :name="notification.icon"
+              :name="notification.icon || 'heroicons:information-circle'"
               :class="[
                 'w-5 h-5 mt-0.5',
                 notification.type === 'warning' ? 'text-yellow-500' : 
@@ -126,6 +132,8 @@
 </template>
 
 <script setup lang="ts">
+import { navigateTo } from '#app'
+import { useNotifications } from '~/composables/useNotifications'
 const { user, logout } = useAuth()
 
 const navigation = [
@@ -138,35 +146,21 @@ const navigation = [
   { name: 'Content', href: '/admin/content', icon: 'heroicons:document-text' },
 ]
 
-const showNotifications = ref(false)
-const notificationCount = ref(3)
+const notificationsOpen = useState<boolean>('notifications-open', () => false)
+const { notifications, unreadCount, fetchNotifications, markAllAsRead } = useNotifications()
 
-const notifications = ref([
-  {
-    id: '1',
-    type: 'info',
-    icon: 'heroicons:information-circle',
-    title: 'New mentor application',
-    message: 'Sarah Johnson has applied to become a mentor',
-    timestamp: new Date(Date.now() - 30 * 60 * 1000)
-  },
-  {
-    id: '2',
-    type: 'warning',
-    icon: 'heroicons:exclamation-triangle',
-    title: 'Payment issue',
-    message: 'Failed payment for booking #1234',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000)
-  },
-  {
-    id: '3',
-    type: 'info',
-    icon: 'heroicons:user-plus',
-    title: 'New user registration',
-    message: '5 new users registered today',
-    timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000)
-  }
-])
+onMounted(() => {
+  fetchNotifications(20)
+})
+
+watch(() => notificationsOpen.value, (open) => {
+  if (open) markAllAsRead()
+})
+
+const onClickNotification = (n: any) => {
+  if (n?.actionUrl) navigateTo(n.actionUrl)
+  notificationsOpen.value = false
+}
 
 const userMenuItems = [
   [{

@@ -14,6 +14,10 @@ interface AuthUser {
   onboardingCompletedAt?: Date | null
   createdAt: Date
   updatedAt: Date
+  // Computed properties for convenience
+  firstName?: string
+  lastName?: string
+  avatar?: string | null
 }
 
 export const useAuth = () => {
@@ -31,6 +35,18 @@ export const useAuth = () => {
   const hasCompletedOnboarding = computed(() => user.value?.hasCompletedOnboarding ?? false)
   const currentOnboardingStep = computed(() => user.value?.onboardingStep ?? 'verification')
   const userRole = computed(() => user.value?.role ?? 'mentee')
+  
+  // Parse firstName and lastName from name, and alias image as avatar
+  const enrichedUser = computed(() => {
+    if (!user.value) return null
+    const nameParts = (user.value.name || '').split(' ')
+    return {
+      ...user.value,
+      firstName: nameParts[0] || '',
+      lastName: nameParts.slice(1).join(' ') || '',
+      avatar: user.value.image
+    }
+  })
 
   // Initialize auth state
   const init = async (forceRefresh = false) => {
@@ -99,13 +115,12 @@ export const useAuth = () => {
     isLoading.value = true
 
     try {
-      const name = [userData.firstName, userData.lastName].filter(Boolean).join(' ') || userData.email.split('@')[0]
+      const name = [userData.firstName, userData.lastName].filter(Boolean).join(' ') || userData.email.split('@')[0] || 'User'
 
       const { error } = await authClient.signUp.email({
         email: userData.email,
         password: userData.password,
         name,
-        role: userData.role,
         callbackURL: '/auth/verify-callback',
       })
 
@@ -143,7 +158,8 @@ export const useAuth = () => {
     isLoading.value = true
 
     try {
-      const { error } = await authClient.forgetPassword({
+      // Use type assertion since forgetPassword may not be in the type definition
+      const { error } = await (authClient as any).forgetPassword({
         email,
         redirectTo: '/auth/reset-password',
       })
@@ -217,7 +233,7 @@ export const useAuth = () => {
   }
 
   return {
-    user,
+    user: enrichedUser,
     isAuthenticated,
     isLoading,
     hasCompletedOnboarding,

@@ -4,6 +4,8 @@ import { relations } from 'drizzle-orm'
 // Enums
 export const userRoleEnum = pgEnum('user_role', ['mentor', 'mentee', 'admin'])
 export const onboardingStepEnum = pgEnum('onboarding_step', ['verification', 'profile', 'role_setup', 'preferences', 'complete'])
+export const notificationTypeEnum = pgEnum('notification_type', ['info', 'warning', 'error'])
+export const aiMatchStatusEnum = pgEnum('ai_match_status', ['in_progress', 'completed', 'abandoned'])
 
 // ==================== Better Auth Tables ====================
 
@@ -264,6 +266,66 @@ export const message = pgTable('message', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
+// ==================== Notification Tables ====================
+
+export const notification = pgTable('notification', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  type: notificationTypeEnum('type').notNull().default('info'),
+  title: text('title').notNull(),
+  message: text('message').notNull(),
+  icon: text('icon'),
+  actionUrl: text('action_url'),
+  readAt: timestamp('read_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+// ==================== AI Matching Tables ====================
+
+export const aiMatchingSession = pgTable('ai_matching_session', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  status: aiMatchStatusEnum('status').notNull().default('in_progress'),
+  conversationHistory: text('conversation_history').notNull().default('[]'), // JSON array of messages
+  extractedPreferences: text('extracted_preferences'), // JSON object of structured preferences
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  completedAt: timestamp('completed_at'),
+})
+
+export const aiMatchResult = pgTable('ai_match_result', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  sessionId: text('session_id')
+    .notNull()
+    .references(() => aiMatchingSession.id, { onDelete: 'cascade' }),
+  mentorId: text('mentor_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  score: decimal('score', { precision: 5, scale: 2 }).notNull(), // 0-100
+  reasoning: text('reasoning').notNull(), // AI-generated explanation
+  rank: integer('rank').notNull(), // 1, 2, 3, etc.
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+export const aiMatchFeedback = pgTable('ai_match_feedback', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  resultId: text('result_id')
+    .notNull()
+    .references(() => aiMatchResult.id, { onDelete: 'cascade' }),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  helpful: boolean('helpful'), // true/false/null
+  selectedMentor: boolean('selected_mentor').notNull().default(false), // Did they book this mentor?
+  notes: text('notes'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
 // ==================== Relations ====================
 
 export const userRelations = relations(user, ({ one, many }) => ({
@@ -288,6 +350,9 @@ export const userRelations = relations(user, ({ one, many }) => ({
   reviewsAsMentee: many(review, { relationName: 'mentee' }),
   conversationParticipants: many(conversationParticipant),
   messages: many(message),
+  notifications: many(notification),
+  aiMatchingSessions: many(aiMatchingSession),
+  aiMatchFeedbacks: many(aiMatchFeedback),
 }))
 
 export const mentorProfileRelations = relations(mentorProfile, ({ one }) => ({
@@ -379,6 +444,44 @@ export const messageRelations = relations(message, ({ one }) => ({
   }),
   sender: one(user, {
     fields: [message.senderId],
+    references: [user.id],
+  }),
+}))
+
+export const notificationRelations = relations(notification, ({ one }) => ({
+  user: one(user, {
+    fields: [notification.userId],
+    references: [user.id],
+  }),
+}))
+
+export const aiMatchingSessionRelations = relations(aiMatchingSession, ({ one, many }) => ({
+  user: one(user, {
+    fields: [aiMatchingSession.userId],
+    references: [user.id],
+  }),
+  results: many(aiMatchResult),
+}))
+
+export const aiMatchResultRelations = relations(aiMatchResult, ({ one, many }) => ({
+  session: one(aiMatchingSession, {
+    fields: [aiMatchResult.sessionId],
+    references: [aiMatchingSession.id],
+  }),
+  mentor: one(user, {
+    fields: [aiMatchResult.mentorId],
+    references: [user.id],
+  }),
+  feedbacks: many(aiMatchFeedback),
+}))
+
+export const aiMatchFeedbackRelations = relations(aiMatchFeedback, ({ one }) => ({
+  result: one(aiMatchResult, {
+    fields: [aiMatchFeedback.resultId],
+    references: [aiMatchResult.id],
+  }),
+  user: one(user, {
+    fields: [aiMatchFeedback.userId],
     references: [user.id],
   }),
 }))

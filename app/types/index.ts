@@ -139,8 +139,8 @@ export interface Booking {
   notes?: string
   createdAt: Date
   updatedAt: Date
-  mentor?: MentorProfile | { id: string; name: string; image?: string | null }
-  mentee?: MenteeProfile | { id: string; name: string; image?: string | null }
+  mentor?: { id: string; name: string; image?: string | null; email?: string; role?: string }
+  mentee?: { id: string; name: string; image?: string | null; email?: string; role?: string }
   paymentIntentId?: string
   paymentStatus?: 'pending' | 'succeeded' | 'failed' | 'refunded'
 }

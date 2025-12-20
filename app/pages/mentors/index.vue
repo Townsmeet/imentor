@@ -2,13 +2,31 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Header -->
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-        Find Your Perfect Mentor
-      </h1>
-      <p class="text-gray-600 dark:text-gray-400">
-        Connect with industry experts who can accelerate your career growth
-      </p>
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            Find Your Perfect Mentor
+          </h1>
+          <p class="text-gray-600 dark:text-gray-400">
+            Connect with industry experts who can accelerate your career growth
+          </p>
+        </div>
+        <UButton
+          size="lg"
+          icon="heroicons:sparkles"
+          @click="showAIMatcher = true"
+        >
+          Find with AI
+        </UButton>
+      </div>
     </div>
+
+    <!-- AI Match Results -->
+    <AIMatchResults
+      v-if="aiMatches.length > 0"
+      :matches="aiMatches"
+      @clear="clearAIMatches"
+    />
 
     <!-- Search and Filters -->
     <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-8">
@@ -217,6 +235,12 @@
         </div>
       </div>
     </div>
+
+    <!-- AI Matcher Modal -->
+    <AIMentorMatcher
+      v-model:open="showAIMatcher"
+      @matches-found="handleMatchesFound"
+    />
   </div>
 </template>
 
@@ -237,6 +261,20 @@ const {
   getAllCategories,
   getAllSkills
 } = useMentors()
+
+// AI Matching state
+const showAIMatcher = ref(false)
+const aiMatches = ref<any[]>([])
+
+const handleMatchesFound = (matches: any[]) => {
+  aiMatches.value = matches
+  // Scroll to top to show results
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+const clearAIMatches = () => {
+  aiMatches.value = []
+}
 
 const sortBy = ref('rating')
 

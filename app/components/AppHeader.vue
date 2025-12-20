@@ -58,7 +58,7 @@
             class="relative"
             @click="notificationsOpen = true"
           >
-            <span v-if="notificationCount > 0" class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            <span v-if="unreadCount > 0" class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
           </UButton>
 
           <!-- User Menu (Dropdown) -->
@@ -132,9 +132,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { navigateTo } from '#app'
 import { UDropdownMenu } from '#components'
+import { useNotifications } from '~/composables/useNotifications'
 
 const { user, logout } = useAuth()
 const isMobileMenuOpen = ref(false)
@@ -142,9 +143,16 @@ const isMobileMenuOpen = ref(false)
 // Shared notifications modal state across pages
 const notificationsOpen = useState<boolean>('notifications-open', () => false)
 
-// Mock data - replace with actual data later
-const unreadCount = ref(2)
-const notificationCount = ref(3)
+// Real notifications
+const { unreadCount, fetchNotifications, markAllAsRead } = useNotifications()
+
+onMounted(() => {
+  fetchNotifications(20)
+})
+
+watch(() => notificationsOpen.value, (open) => {
+  if (open) markAllAsRead()
+})
 
 // Define user menu items
 const userMenuItems = [

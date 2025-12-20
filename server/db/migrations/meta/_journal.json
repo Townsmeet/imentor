@@ -43,6 +43,13 @@
       "when": 1765513338047,
       "tag": "0005_lush_living_mummy",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1766115552615,
+      "tag": "0006_handy_fabian_cortez",
+      "breakpoints": true
     }
   ]
 }
