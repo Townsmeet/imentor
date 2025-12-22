@@ -6,7 +6,7 @@ export const authClient = createAuthClient({
   plugins: [
     inferAdditionalFields({
       user: {
-        role: { type: 'string', input: false },
+        role: { type: 'string', input: true },
         hasCompletedOnboarding: { type: 'boolean', input: false },
         onboardingStep: { type: 'string', input: false },
         onboardingCompletedAt: { type: 'date', input: false },

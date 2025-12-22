@@ -22,10 +22,18 @@ interface AuthUser {
 
 export const useAuth = () => {
   // Use cookie for persistent user data
-  const user = useCookie<AuthUser | null>('auth_user', {
+  const userCookie = useCookie<AuthUser | null>('auth_user', {
     default: () => null,
     maxAge: 60 * 60 * 24 * 30, // 30 days
   })
+
+  // Use useState for global reactive state
+  const user = useState<AuthUser | null>('auth_user_state', () => userCookie.value)
+
+  // Sync state to cookie when it changes
+  watch(user, (newUser) => {
+    userCookie.value = newUser
+  }, { deep: true })
 
   const isAuthenticated = computed(() => !!user.value)
   const isLoading = useState<boolean>('auth_loading', () => false)
@@ -122,6 +130,8 @@ export const useAuth = () => {
         password: userData.password,
         name,
         callbackURL: '/auth/verify-callback',
+        // @ts-ignore - role is an additional field
+        role: userData.role,
       })
 
       if (error) {
@@ -234,6 +244,7 @@ export const useAuth = () => {
 
   return {
     user: enrichedUser,
+    authUser: user,
     isAuthenticated,
     isLoading,
     hasCompletedOnboarding,

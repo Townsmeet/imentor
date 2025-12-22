@@ -387,7 +387,8 @@ definePageMeta({
   layout: false
 })
 
-const { user, refreshSession, userRole, logout } = useAuth()
+const { user, authUser, refreshSession, userRole, logout } = useAuth()
+const { categoryOptions, fetchCategories } = useCategories()
 const toast = useToast()
 
 const currentStep = ref(1)
@@ -445,18 +446,6 @@ const experienceOptions = [
   { label: 'Expert Level (10+ years)', value: '10+ years' }
 ]
 
-const categoryOptions = [
-  'Software Development',
-  'Product Management',
-  'Design',
-  'Marketing',
-  'Sales',
-  'Leadership',
-  'Career Growth',
-  'Entrepreneurship',
-  'Data Science',
-  'Finance'
-]
 
 const timezoneOptions = [
   { label: 'Eastern Time (ET)', value: 'America/New_York' },
@@ -581,9 +570,9 @@ const completeOnboardingFlow = async () => {
     
     // Directly update the user state to ensure middleware doesn't redirect back
     // This is a fallback in case refreshSession doesn't return fresh data
-    if (user.value) {
-      user.value = {
-        ...user.value,
+    if (authUser.value) {
+      authUser.value = {
+        ...authUser.value,
         hasCompletedOnboarding: true,
         onboardingStep: 'complete',
         onboardingCompletedAt: new Date()
@@ -620,7 +609,10 @@ const completeOnboardingFlow = async () => {
 }
 
 // Initialize form with user data
-onMounted(() => {
+onMounted(async () => {
+  // Fetch categories for the selects
+  await fetchCategories()
+
   if (user.value?.name) {
     const parts = user.value.name.split(' ')
     profileForm.firstName = parts[0] || ''

@@ -140,6 +140,25 @@ export const useAdminMentors = () => {
         await updateMentorStatus(mentor.id, newStatus)
     }
 
+    const deleteMentor = async (mentorId: string) => {
+        try {
+            const headers = useRequestHeaders(['cookie']) as Record<string, string>
+            await $fetch(`/api/admin/mentors/${mentorId}`, {
+                method: 'DELETE',
+                headers
+            })
+
+            // Refetch to ensure list is in sync
+            await fetchMentors(currentPage.value)
+
+            return true
+        } catch (e: any) {
+            error.value = e.data?.message || 'Failed to delete mentor'
+            console.error('[useAdminMentors] Error deleting mentor:', e)
+            throw e
+        }
+    }
+
     // Computed properties
     const verifiedMentors = computed(() => mentors.value.filter(m => m.status === 'verified').length)
     const pendingMentors = computed(() => mentors.value.filter(m => m.status === 'pending').length)
@@ -239,6 +258,7 @@ export const useAdminMentors = () => {
         viewMentorDetails,
         updateMentorStatus,
         toggleMentorStatus,
+        deleteMentor,
         previousPage,
         nextPage,
         goToPage,

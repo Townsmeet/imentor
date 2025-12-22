@@ -307,6 +307,27 @@
         </div>
       </template>
     </UModal>
+
+    <!-- Delete Confirmation Modal -->
+    <UModal v-model:open="showDeleteConfirmModal" title="Delete Mentor">
+      <template #body>
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          Are you sure you want to delete <strong>{{ selectedMentor?.name }}</strong>? This action cannot be undone and will remove all associated data.
+        </p>
+      </template>
+      <template #footer="{ close }">
+        <div class="flex justify-end space-x-3">
+          <UButton variant="ghost" @click="close">Cancel</UButton>
+          <UButton
+            color="error"
+            @click="handleDeleteMentor"
+            :loading="isDeleting"
+          >
+            Delete Mentor
+          </UButton>
+        </div>
+      </template>
+    </UModal>
   </NuxtLayout>
 </template>
 
@@ -343,12 +364,15 @@ const {
   pendingMentors,
   fetchMentors,
   updateMentorStatus,
+  deleteMentor,
 } = useAdminMentors()
 
 const selectedMentor = ref<any>(null)
 const showStatusConfirmModal = ref(false)
+const showDeleteConfirmModal = ref(false)
 const pendingStatus = ref<'verified' | 'suspended' | 'pending'>('pending')
 const isUpdating = ref(false)
+const isDeleting = ref(false)
 
 // Computed
 const averageRating = computed(() => {
@@ -426,6 +450,16 @@ const getMentorActions = (mentor: any) => {
     actions.push(statusActions)
   }
 
+  actions.push([{
+    label: 'Delete Mentor',
+    icon: 'heroicons:trash',
+    color: 'error' as any,
+    onSelect: () => {
+      selectedMentor.value = mentor
+      showDeleteConfirmModal.value = true
+    }
+  }])
+
   return actions
 }
 
@@ -448,6 +482,28 @@ const handleStatusUpdate = async () => {
     })
   } finally {
     isUpdating.value = false
+  }
+}
+
+const handleDeleteMentor = async () => {
+  if (!selectedMentor.value) return
+  isDeleting.value = true
+  try {
+    await deleteMentor(selectedMentor.value.id)
+    showDeleteConfirmModal.value = false
+    toast.add({
+      title: 'Mentor Deleted',
+      description: 'The mentor has been successfully deleted.',
+      color: 'success'
+    })
+  } catch (e: any) {
+    toast.add({
+      title: 'Error',
+      description: e.message || 'Failed to delete mentor',
+      color: 'error'
+    })
+  } finally {
+    isDeleting.value = false
   }
 }
 
