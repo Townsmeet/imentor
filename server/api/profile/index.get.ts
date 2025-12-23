@@ -53,6 +53,8 @@ export default defineEventHandler(async (event) => {
                     categories: mentorData.categories ? JSON.parse(mentorData.categories) : [],
                     languages: mentorData.languages ? JSON.parse(mentorData.languages) : [],
                     timezone: mentorData.timezone || '',
+                    dateOfBirth: mentorData.dateOfBirth || null,
+                    expertiseDocument: mentorData.expertiseDocument || '',
                 }
             }
         } else if (userRole === 'mentee') {

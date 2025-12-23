@@ -34,6 +34,8 @@ export interface MentorProfile extends User {
   totalSessions: number
   languages: string[]
   timezone: string
+  dateOfBirth?: Date
+  expertiseDocument?: string
 }
 
 export interface MenteeProfile extends User {

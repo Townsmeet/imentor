@@ -16,6 +16,8 @@ interface OnboardingData {
     hourlyRate?: number
     skills?: string[]
     categories?: string[]
+    dateOfBirth?: string
+    expertiseDocument?: string
     // Mentee fields
     interests?: string[]
     goals?: string[]
@@ -85,6 +87,8 @@ export default defineEventHandler(async (event) => {
           categories: JSON.stringify(body.roleData.categories || []),
           languages: JSON.stringify(body.preferences.languages),
           timezone: body.preferences.timezone,
+          dateOfBirth: body.roleData.dateOfBirth ? new Date(body.roleData.dateOfBirth) : null,
+          expertiseDocument: body.roleData.expertiseDocument,
         })
         .onConflictDoUpdate({
           target: mentorProfile.userId,
@@ -97,6 +101,8 @@ export default defineEventHandler(async (event) => {
             categories: JSON.stringify(body.roleData.categories || []),
             languages: JSON.stringify(body.preferences.languages),
             timezone: body.preferences.timezone,
+            dateOfBirth: body.roleData.dateOfBirth ? new Date(body.roleData.dateOfBirth) : null,
+            expertiseDocument: body.roleData.expertiseDocument,
             updatedAt: new Date(),
           },
         })

@@ -187,6 +187,19 @@
                   <span v-if="!mentor.languages || mentor.languages.length === 0" class="text-sm text-gray-900 dark:text-white">Not specified</span>
                 </div>
               </div>
+              <div v-if="mentor.dateOfBirth">
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date of Birth</p>
+                <p class="mt-1 text-sm text-gray-900 dark:text-white">{{ formatDate(mentor.dateOfBirth) }}</p>
+              </div>
+              <div v-if="mentor.expertiseDocument">
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Expertise Document</p>
+                <p class="mt-1 text-sm">
+                  <a :href="mentor.expertiseDocument" target="_blank" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 flex items-center">
+                    <Icon name="heroicons:document-text" class="h-4 w-4 mr-1" />
+                    View Document
+                  </a>
+                </p>
+              </div>
             </div>
           </div>
 

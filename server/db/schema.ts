@@ -85,6 +85,8 @@ export const mentorProfile = pgTable('mentor_profile', {
   rating: decimal('rating', { precision: 3, scale: 2 }).default('0'),
   totalSessions: integer('total_sessions').default(0),
   isAvailable: boolean('is_available').default(true),
+  dateOfBirth: timestamp('date_of_birth'),
+  expertiseDocument: text('expertise_document'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })

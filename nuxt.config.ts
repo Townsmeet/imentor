@@ -18,6 +18,11 @@ export default defineNuxtConfig({
     brevoApiKey: process.env.NUXT_BREVO_API_KEY,
     betterAuthSecret: process.env.NUXT_BETTER_AUTH_SECRET,
     openrouterApiKey: process.env.NUXT_OPENROUTER_API_KEY,
+    awsRegion: process.env.NUXT_AWS_REGION,
+    awsAccessKeyId: process.env.NUXT_AWS_ACCESS_KEY_ID,
+    awsSecretAccessKey: process.env.NUXT_AWS_SECRET_ACCESS_KEY,
+    awsS3Bucket: process.env.NUXT_AWS_S3_BUCKET,
+    awsEndpointUrl: process.env.AWS_ENDPOINT_URL,
     public: {
       betterAuthUrl: process.env.NUXT_BETTER_AUTH_URL || 'http://localhost:3000',
       stripePublishableKey: process.env.NUXT_STRIPE_PUBLISHABLE_KEY,

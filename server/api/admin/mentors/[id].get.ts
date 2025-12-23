@@ -98,7 +98,9 @@ export default defineEventHandler(async (event) => {
             isAvailable: p?.isAvailable ?? true,
             location: p?.location,
             languages: parseJsonArray(p?.languages),
-            timezone: p?.timezone
+            dateOfBirth: p?.dateOfBirth,
+            expertiseDocument: p?.expertiseDocument,
+            timezone: p?.timezone,
         }
     } catch (error: any) {
         console.error(`[Admin Mentor Detail API] Error for ${id}:`, error)

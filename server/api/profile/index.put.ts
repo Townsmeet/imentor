@@ -13,6 +13,8 @@ interface ProfileUpdateData {
     experience?: string
     skills?: string[]
     categories?: string[]
+    dateOfBirth?: string
+    expertiseDocument?: string
     // Mentee-specific
     interests?: string[]
     goals?: string[]
@@ -74,6 +76,8 @@ export default defineEventHandler(async (event) => {
                     categories: body.categories ? JSON.stringify(body.categories) : null,
                     languages: body.languages ? JSON.stringify(body.languages) : null,
                     timezone: body.timezone || null,
+                    dateOfBirth: body.dateOfBirth ? new Date(body.dateOfBirth) : null,
+                    expertiseDocument: body.expertiseDocument || null,
                 })
                 .onConflictDoUpdate({
                     target: mentorProfile.userId,
@@ -86,6 +90,8 @@ export default defineEventHandler(async (event) => {
                         categories: body.categories ? JSON.stringify(body.categories) : null,
                         languages: body.languages ? JSON.stringify(body.languages) : null,
                         timezone: body.timezone || null,
+                        dateOfBirth: body.dateOfBirth ? new Date(body.dateOfBirth) : null,
+                        expertiseDocument: body.expertiseDocument || null,
                         updatedAt: new Date(),
                     },
                 })

@@ -150,6 +150,40 @@
                 </UFormField>
               </div>
 
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <UFormField label="Date of Birth" name="dateOfBirth" required>
+                  <UInput
+                    v-model="mentorForm.dateOfBirth"
+                    type="date"
+                    size="lg"
+                    icon="heroicons:calendar"
+                    class="w-full"
+                  />
+                </UFormField>
+
+                <UFormField label="Expertise Document" name="expertiseDocument" required help="Upload a portfolio, certificate, or CV that proves your expertise (PDF, Word, or Image).">
+                  <div class="flex items-center space-x-3 w-full">
+                    <UInput
+                      type="file"
+                      size="lg"
+                      icon="heroicons:document-text"
+                      class="flex-1"
+                      accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp"
+                      @change="handleFileUpload"
+                    />
+                    <div v-if="isUploading" class="flex items-center">
+                      <UIcon name="heroicons:arrow-path" class="animate-spin w-5 h-5 text-blue-600" />
+                    </div>
+                    <div v-else-if="mentorForm.expertiseDocument" class="flex items-center">
+                      <UIcon name="heroicons:check-circle" class="w-5 h-5 text-green-600" />
+                    </div>
+                  </div>
+                  <p v-if="mentorForm.expertiseDocument" class="text-xs text-gray-500 mt-1 truncate max-w-xs">
+                    Uploaded: {{ mentorForm.expertiseDocument.split('/').pop() }}
+                  </p>
+                </UFormField>
+              </div>
+
               <UFormField label="Skills & Expertise" name="skills" required>
                 <div class="space-y-3">
                   <UInput
@@ -394,6 +428,7 @@ const toast = useToast()
 const currentStep = ref(1)
 const totalSteps = 5
 const isCompleting = ref(false)
+const isUploading = ref(false)
 
 // Parse user name into first/last
 const parsedName = computed(() => {
@@ -417,7 +452,9 @@ const mentorForm = reactive({
   experience: 'Entry Level (0-2 years)',
   hourlyRate: 75,
   skills: [] as string[],
-  categories: [] as string[]
+  categories: [] as string[],
+  dateOfBirth: '',
+  expertiseDocument: ''
 })
 
 const menteeForm = reactive({
@@ -476,7 +513,8 @@ const canProceed = computed(() => {
     case 3:
       if (userRole.value === 'mentor') {
         return mentorForm.experience && mentorForm.hourlyRate && 
-               mentorForm.skills.length > 0 && mentorForm.categories.length > 0
+               mentorForm.skills.length > 0 && mentorForm.categories.length > 0 &&
+               mentorForm.dateOfBirth && mentorForm.expertiseDocument
       } else {
         return menteeForm.experience && menteeForm.interests.length > 0 && 
                menteeForm.goals.length > 0
@@ -498,6 +536,37 @@ const nextStep = () => {
 const previousStep = () => {
   if (currentStep.value > 1) {
     currentStep.value--
+  }
+}
+
+const handleFileUpload = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  if (!input.files?.length) return
+
+  const file = input.files[0]
+  const formData = new FormData()
+  formData.append('file', file)
+
+  isUploading.value = true
+  try {
+    const response = await $fetch<{ url: string }>('/api/uploads', {
+      method: 'POST',
+      body: formData
+    })
+    mentorForm.expertiseDocument = response.url
+    toast.add({
+      title: 'Success',
+      description: 'Document uploaded successfully',
+      color: 'success'
+    })
+  } catch (error: any) {
+    toast.add({
+      title: 'Upload Failed',
+      description: error.data?.message || 'Failed to upload document',
+      color: 'error'
+    })
+  } finally {
+    isUploading.value = false
   }
 }
 
@@ -549,6 +618,8 @@ const completeOnboardingFlow = async () => {
               hourlyRate: mentorForm.hourlyRate,
               skills: mentorForm.skills,
               categories: mentorForm.categories,
+              dateOfBirth: mentorForm.dateOfBirth,
+              expertiseDocument: mentorForm.expertiseDocument,
             }
           : {
               experience: menteeForm.experience,

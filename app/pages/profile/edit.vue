@@ -158,6 +158,45 @@
                   class="w-full"
                 />
               </UFormField>
+
+              <UFormField label="Date of Birth" name="dateOfBirth">
+                <UInput
+                  v-model="profileForm.dateOfBirth"
+                  type="date"
+                  class="w-full"
+                />
+              </UFormField>
+
+              <UFormField label="Expertise Document" name="expertiseDocument" help="Upload a portfolio, certificate, or CV that proves your expertise (PDF, Word, or Image).">
+                <div class="flex items-center space-x-3 w-full">
+                  <UInput
+                    type="file"
+                    class="flex-1"
+                    accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp"
+                    @change="handleFileUpload"
+                  />
+                  <div v-if="isUploading" class="flex items-center">
+                    <UIcon name="heroicons:arrow-path" class="animate-spin w-5 h-5 text-blue-600" />
+                  </div>
+                  <div v-else-if="profileForm.expertiseDocument" class="flex items-center">
+                    <UIcon name="heroicons:check-circle" class="w-5 h-5 text-green-600" />
+                  </div>
+                </div>
+                <div v-if="profileForm.expertiseDocument" class="mt-2 flex items-center space-x-2">
+                  <p class="text-xs text-gray-500 truncate max-w-xs">
+                    Current: {{ profileForm.expertiseDocument.split('/').pop() }}
+                  </p>
+                  <UButton
+                    :href="profileForm.expertiseDocument"
+                    target="_blank"
+                    size="xs"
+                    variant="ghost"
+                    icon="heroicons:eye"
+                  >
+                    View
+                  </UButton>
+                </div>
+              </UFormField>
             </div>
           </UCard>
 
@@ -324,6 +363,7 @@ const toast = useToast()
 
 const isLoading = ref(true)
 const isSaving = ref(false)
+const isUploading = ref(false)
 
 const profileSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -336,6 +376,8 @@ const profileSchema = z.object({
   skills: z.array(z.string()).optional(),
   languages: z.array(z.string()).optional(),
   timezone: z.string().optional(),
+  dateOfBirth: z.string().optional(),
+  expertiseDocument: z.string().optional(),
   interests: z.array(z.string()).optional(),
   goalsText: z.string().optional()
 })
@@ -351,6 +393,8 @@ const profileForm = reactive({
   skills: [] as string[],
   languages: [] as string[],
   timezone: '',
+  dateOfBirth: '',
+  expertiseDocument: '',
   interests: [] as string[],
   goalsText: ''
 })
@@ -374,6 +418,8 @@ onMounted(async () => {
       profileForm.hourlyRate = data.profile.hourlyRate || 0
       profileForm.skills = data.profile.skills || []
       profileForm.categories = data.profile.categories || []
+      profileForm.dateOfBirth = data.profile.dateOfBirth ? new Date(data.profile.dateOfBirth).toISOString().split('T')[0] : ''
+      profileForm.expertiseDocument = data.profile.expertiseDocument || ''
     } else {
       profileForm.interests = data.profile.interests || []
       // Convert goals array to text if needed
@@ -391,6 +437,37 @@ onMounted(async () => {
     isLoading.value = false
   }
 })
+
+const handleFileUpload = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  if (!input.files?.length) return
+
+  const file = input.files[0]
+  const formData = new FormData()
+  formData.append('file', file)
+
+  isUploading.value = true
+  try {
+    const response = await $fetch<{ url: string }>('/api/uploads', {
+      method: 'POST',
+      body: formData
+    })
+    profileForm.expertiseDocument = response.url
+    toast.add({
+      title: 'Success',
+      description: 'Document uploaded successfully',
+      color: 'success'
+    })
+  } catch (error: any) {
+    toast.add({
+      title: 'Upload Failed',
+      description: error.data?.message || 'Failed to upload document',
+      color: 'error'
+    })
+  } finally {
+    isUploading.value = false
+  }
+}
 
 const experienceOptions = [
   '0-2 years',
@@ -461,12 +538,14 @@ const profileCompleteness = computed(() => {
   if (profileForm.bio) completed++
 
   if (user.value?.role === 'mentor') {
-    total += 5
+    total += 7
     if (profileForm.hourlyRate) completed++
     if (profileForm.experience) completed++
     if (profileForm.categories.length > 0) completed++
     if (profileForm.skills.length > 0) completed++
     if (profileForm.languages.length > 0) completed++
+    if (profileForm.dateOfBirth) completed++
+    if (profileForm.expertiseDocument) completed++
   } else {
     total += 3
     if (profileForm.interests.length > 0) completed++
@@ -488,7 +567,9 @@ const completenessItems = computed(() => {
       { label: 'Hourly rate', completed: !!profileForm.hourlyRate },
       { label: 'Experience', completed: !!profileForm.experience },
       { label: 'Categories', completed: profileForm.categories.length > 0 },
-      { label: 'Skills', completed: profileForm.skills.length > 0 }
+      { label: 'Skills', completed: profileForm.skills.length > 0 },
+      { label: 'Date of Birth', completed: !!profileForm.dateOfBirth },
+      { label: 'Expertise Document', completed: !!profileForm.expertiseDocument }
     )
   } else {
     items.push(
@@ -519,6 +600,8 @@ const saveProfile = async () => {
       updateData.hourlyRate = profileForm.hourlyRate
       updateData.skills = profileForm.skills
       updateData.categories = profileForm.categories
+      updateData.dateOfBirth = profileForm.dateOfBirth
+      updateData.expertiseDocument = profileForm.expertiseDocument
     } else {
       updateData.interests = profileForm.interests
       // Convert goals text to array
