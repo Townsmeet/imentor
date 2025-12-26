@@ -5,18 +5,27 @@ import { google } from 'googleapis'
 
 const GOOGLE_CLIENT_EMAIL = process.env.NUXT_GOOGLE_CLIENT_EMAIL
 const GOOGLE_PRIVATE_KEY = process.env.NUXT_GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n')
+// Calendar ID should be a real Workspace user's email, or 'primary' when impersonating
 const GOOGLE_CALENDAR_ID = process.env.NUXT_GOOGLE_CALENDAR_ID || 'primary'
+// The Workspace user email to impersonate (must have Google Meet enabled)
+const GOOGLE_IMPERSONATE_USER = process.env.NUXT_GOOGLE_IMPERSONATE_USER
 
 let calendarClient: ReturnType<typeof google.calendar> | null = null
 
 /**
  * Initialize Google Calendar API client with service account credentials
+ * Uses domain-wide delegation to impersonate a Workspace user if configured
  */
 function getCalendarClient() {
     if (calendarClient) return calendarClient
 
     if (!GOOGLE_CLIENT_EMAIL || !GOOGLE_PRIVATE_KEY) {
         console.warn('[Google Meet] Missing NUXT_GOOGLE_CLIENT_EMAIL or NUXT_GOOGLE_PRIVATE_KEY')
+        return null
+    }
+
+    if (!GOOGLE_IMPERSONATE_USER) {
+        console.warn('[Google Meet] Missing NUXT_GOOGLE_IMPERSONATE_USER - cannot create Meet links without impersonating a Workspace user')
         return null
     }
 
@@ -28,9 +37,11 @@ function getCalendarClient() {
                 'https://www.googleapis.com/auth/calendar',
                 'https://www.googleapis.com/auth/calendar.events',
             ],
+            subject: GOOGLE_IMPERSONATE_USER, // Impersonate this Workspace user
         })
 
         calendarClient = google.calendar({ version: 'v3', auth })
+        console.log('[Google Meet] Calendar client initialized, impersonating:', GOOGLE_IMPERSONATE_USER)
         return calendarClient
     } catch (error) {
         console.error('[Google Meet] Failed to initialize calendar client:', error)
@@ -48,6 +59,14 @@ export interface MeetingDetails {
 
 /**
  * Create a Google Meet link via Google Calendar API
+ * 
+ * Note: Service accounts cannot create Google Meet links without:
+ * 1. Being part of a Google Workspace organization (paid plan)
+ * 2. Having domain-wide delegation enabled
+ * 3. Proper Calendar and Meet API scopes granted
+ * 
+ * For most use cases, the Jitsi Meet fallback is recommended as it requires
+ * no additional setup and works reliably out of the box.
  */
 export async function createGoogleMeetLink(params: {
     title: string
@@ -66,6 +85,9 @@ export async function createGoogleMeetLink(params: {
 
     const endTime = new Date(params.startTime.getTime() + params.durationMinutes * 60 * 1000)
 
+    console.log('[Google Meet] Creating event with Workspace account')
+    console.log('[Google Meet] Calendar ID:', GOOGLE_CALENDAR_ID)
+
     try {
         const event = await calendar.events.insert({
             calendarId: GOOGLE_CALENDAR_ID,
@@ -81,15 +103,13 @@ export async function createGoogleMeetLink(params: {
                     dateTime: endTime.toISOString(),
                     timeZone: 'UTC',
                 },
-                // attendees: [
-                //     ...(params.mentorEmail ? [{ email: params.mentorEmail }] : []),
-                //     ...(params.menteeEmail ? [{ email: params.menteeEmail }] : []),
-                // ],
+                // Attendees require Domain-Wide Delegation, so omitting them
                 conferenceData: {
                     createRequest: {
                         requestId: `imentor-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
                     },
                 },
+                guestsCanModify: true,
                 reminders: {
                     useDefault: false,
                     overrides: [
@@ -100,12 +120,25 @@ export async function createGoogleMeetLink(params: {
             },
         })
 
+        console.log('[Google Meet] Event response:', {
+            id: event.data.id,
+            status: event.data.status,
+            hangoutLink: event.data.hangoutLink,
+            hasConferenceData: !!event.data.conferenceData,
+            conferenceEntryPoints: event.data.conferenceData?.entryPoints?.length || 0
+        })
+
         const meetLink = event.data.hangoutLink || event.data.conferenceData?.entryPoints?.[0]?.uri
 
         if (!meetLink) {
-            console.error('[Google Meet] No meeting link in response')
+            // Service accounts typically cannot create Google Meet links without Google Workspace
+            // domain-wide delegation. The fallback Jitsi link will be used instead.
+            console.error('[Google Meet] No meeting link in response despite Workspace account')
+            console.error('[Google Meet] Full conferenceData:', JSON.stringify(event.data.conferenceData, null, 2))
             return null
         }
+
+        console.log('[Google Meet] Successfully created Meet link:', meetLink)
 
         return {
             meetingLink: meetLink,
@@ -115,8 +148,10 @@ export async function createGoogleMeetLink(params: {
             title: params.title,
         }
     } catch (error: any) {
-        console.error('[Google Meet] Failed to create meeting:', error)
-        console.error('[Google Meet] Error details:', error.response?.data)
+        console.error('[Google Meet] Failed to create meeting:', error.message)
+        if (error.code) {
+            console.error('[Google Meet] Error code:', error.code)
+        }
         return null
     }
 }
@@ -140,7 +175,8 @@ function generateFallbackMeetingLink(): string {
     const code = segments.join('-')
 
     // Use Jitsi Meet as fallback (free, no API needed)
-    return `https://meet.jit.si/imentor-${code}`
+    // Disable lobby, prejoin, and authentication requirements for seamless joining
+    return `https://meet.jit.si/imentor-${code}#config.startWithVideoMuted=false&config.prejoinPageEnabled=false&config.requireDisplayName=false&config.enableLobbyChat=false&userInfo.displayName=iMentor%20User`
 }
 
 /**

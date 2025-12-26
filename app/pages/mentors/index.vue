@@ -44,7 +44,7 @@
         <!-- Category Filter -->
         <USelectMenu
           v-model="selectedCategories"
-          :options="getAllCategories"
+          :items="getAllCategories"
           placeholder="Categories"
           multiple
           searchable
@@ -54,7 +54,7 @@
         <!-- Skills Filter -->
         <USelectMenu
           v-model="selectedSkills"
-          :options="getAllSkills"
+          :items="getAllSkills"
           placeholder="Skills"
           multiple
           searchable
@@ -142,7 +142,7 @@
         
         <USelectMenu
           v-model="sortBy"
-          :options="sortOptions"
+          :items="sortOptions"
           size="sm"
         />
       </div>

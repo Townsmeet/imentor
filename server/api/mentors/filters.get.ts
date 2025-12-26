@@ -1,14 +1,30 @@
 import { eq, and } from 'drizzle-orm'
 import { db } from '../../utils/drizzle'
-import { user, mentorProfile } from '../../db/schema'
+import { user, mentorProfile, category, skill } from '../../db/schema'
 
 export default defineEventHandler(async () => {
   try {
-    // Get all mentor profiles for verified, onboarded mentors
+    // Get active categories from category table
+    const categories = await db
+      .select({
+        name: category.name,
+      })
+      .from(category)
+      .where(eq(category.active, true))
+      .orderBy(category.name)
+
+    // Get active skills from skill table
+    const skills = await db
+      .select({
+        name: skill.name,
+      })
+      .from(skill)
+      .where(eq(skill.active, true))
+      .orderBy(skill.name)
+
+    // Get price range from mentor profiles
     const mentors = await db
       .select({
-        skills: mentorProfile.skills,
-        categories: mentorProfile.categories,
         hourlyRate: mentorProfile.hourlyRate,
       })
       .from(user)
@@ -21,22 +37,10 @@ export default defineEventHandler(async () => {
         )
       )
 
-    // Collect unique values
-    const categoriesSet = new Set<string>()
-    const skillsSet = new Set<string>()
     let minPrice = Infinity
     let maxPrice = 0
 
     for (const mentor of mentors) {
-      // Parse categories
-      const categories = parseJsonArray(mentor.categories)
-      categories.forEach(c => categoriesSet.add(c))
-
-      // Parse skills
-      const skills = parseJsonArray(mentor.skills)
-      skills.forEach(s => skillsSet.add(s))
-
-      // Track price range
       if (mentor.hourlyRate) {
         const rate = parseFloat(mentor.hourlyRate)
         if (rate < minPrice) minPrice = rate
@@ -45,8 +49,8 @@ export default defineEventHandler(async () => {
     }
 
     return {
-      categories: Array.from(categoriesSet).sort(),
-      skills: Array.from(skillsSet).sort(),
+      categories: categories.map(c => c.name),
+      skills: skills.map(s => s.name),
       priceRange: {
         min: minPrice === Infinity ? 0 : minPrice,
         max: maxPrice,
@@ -60,13 +64,3 @@ export default defineEventHandler(async () => {
     })
   }
 })
-
-function parseJsonArray(value: string | null): string[] {
-  if (!value) return []
-  try {
-    const parsed = JSON.parse(value)
-    return Array.isArray(parsed) ? parsed : []
-  } catch {
-    return []
-  }
-}
