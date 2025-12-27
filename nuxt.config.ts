@@ -23,6 +23,7 @@ export default defineNuxtConfig({
     awsSecretAccessKey: process.env.NUXT_AWS_SECRET_ACCESS_KEY,
     awsS3Bucket: process.env.NUXT_AWS_S3_BUCKET,
     awsEndpointUrl: process.env.AWS_ENDPOINT_URL,
+    googleMapsApiKey: process.env.NUXT_GOOGLE_MAPS_API_KEY,
     public: {
       betterAuthUrl: process.env.NUXT_BETTER_AUTH_URL || 'http://localhost:3000',
       stripePublishableKey: process.env.NUXT_STRIPE_PUBLISHABLE_KEY,

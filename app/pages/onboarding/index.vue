@@ -107,12 +107,11 @@
             </UFormField>
 
             <UFormField label="Location (Optional)" name="location">
-              <UInput
+              <GooglePlacesAutocomplete
                 v-model="profileForm.location"
-                placeholder="City, Country"
+                placeholder="Search for your city"
                 size="lg"
                 icon="heroicons:map-pin"
-                class="w-full"
               />
             </UFormField>
           </UForm>
