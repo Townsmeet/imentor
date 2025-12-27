@@ -107,10 +107,10 @@
               @click="copyPreviousWeek"
               variant="outline"
               block
-              icon="heroicons:document-duplicate"
+              icon="heroicons:arrow-path"
               :loading="isCopying"
             >
-              Copy Last Week
+              Restore Schedule
             </UButton>
             <UButton
               @click="clearAllAvailability"
@@ -164,14 +164,14 @@
       v-model:open="showQuickAdd"
       title="Add New Time Slot"
       description="Define a specific time slot for your availability."
-      :ui="{ footer: 'justify-end' }"
     >
       <template #body>
-        <UForm :state="newSlot" :schema="newSlotSchema" @submit="addSlot" class="space-y-4 p-4">
+        <div class="space-y-4 p-4">
           <UFormField label="Day of Week" name="dayOfWeek">
             <USelect
               v-model="newSlot.dayOfWeek"
               :items="dayOptions"
+              value-attribute="value"
               option-attribute="label"
               class="w-full"
             />
@@ -186,13 +186,15 @@
               <UInput v-model="newSlot.endTime" type="time" class="w-full" />
             </UFormField>
           </div>
-        </UForm>
+          
+          <p v-if="slotValidationError" class="text-sm text-red-500">{{ slotValidationError }}</p>
+        </div>
       </template>
 
       <template #footer>
         <div class="flex justify-end space-x-3">
           <UButton @click="showQuickAdd = false" variant="ghost">Cancel</UButton>
-          <UButton type="submit" :loading="isAddingSlot">Add Slot</UButton>
+          <UButton @click="addSlot" :loading="isAddingSlot" :disabled="!!slotValidationError">Add Slot</UButton>
         </div>
       </template>
     </UModal>
@@ -200,12 +202,16 @@
 </template>
 
 <script setup lang="ts">
-import { z } from 'zod'
 import type { TimeSlot } from '~/types'
 import AvailabilityCalendar from '~/components/AvailabilityCalendar.vue'
 import QuickAvailabilitySetup from '~/components/QuickAvailabilitySetup.vue'
 
+definePageMeta({
+  middleware: ['auth', 'onboarding']
+})
+
 const { user } = useAuth()
+const toast = useToast()
 const { 
   slots,
   isLoading: availabilityLoading,
@@ -257,13 +263,12 @@ const newSlot = ref<Omit<TimeSlot, 'id' | 'isAvailable'>>({
   endTime: '17:00',
 })
 
-const newSlotSchema = z.object({
-  dayOfWeek: z.number().min(0).max(6),
-  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format (HH:MM)'),
-  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format (HH:MM)'),
-}).refine(data => data.startTime < data.endTime, {
-  message: 'End time must be after start time',
-  path: ['endTime'],
+// Computed validation error
+const slotValidationError = computed(() => {
+  if (newSlot.value.startTime >= newSlot.value.endTime) {
+    return 'End time must be after start time'
+  }
+  return null
 })
 
 const getDayName = (dayOfWeek: number) => {
@@ -285,6 +290,8 @@ const fetchMentorData = async () => {
 }
 
 const addSlot = async () => {
+  if (slotValidationError.value) return
+  
   isAddingSlot.value = true
   try {
     const result = await apiAddSlot({
@@ -293,13 +300,26 @@ const addSlot = async () => {
     })
     
     if (result.success) {
+      toast.add({
+        title: 'Slot Added',
+        description: `Availability slot for ${getDayName(newSlot.value.dayOfWeek)} added successfully`,
+        color: 'success'
+      })
       newSlot.value = { dayOfWeek: 0, startTime: '09:00', endTime: '17:00' }
       showQuickAdd.value = false
     } else {
-      console.error('Error adding slot:', result.error)
+      toast.add({
+        title: 'Error',
+        description: result.error || 'Failed to add slot',
+        color: 'error'
+      })
     }
   } catch (error) {
-    console.error('Error adding slot:', error)
+    toast.add({
+      title: 'Error',
+      description: 'An unexpected error occurred',
+      color: 'error'
+    })
   } finally {
     isAddingSlot.value = false
   }
@@ -308,11 +328,25 @@ const addSlot = async () => {
 const removeSlot = async (slotId: string) => {
   try {
     const result = await apiRemoveSlot(slotId)
-    if (!result.success) {
-      console.error('Error removing slot:', result.error)
+    if (result.success) {
+      toast.add({
+        title: 'Slot Removed',
+        description: 'Availability slot removed successfully',
+        color: 'success'
+      })
+    } else {
+      toast.add({
+        title: 'Error',
+        description: result.error || 'Failed to remove slot',
+        color: 'error'
+      })
     }
   } catch (error) {
-    console.error('Error removing slot:', error)
+    toast.add({
+      title: 'Error',
+      description: 'An unexpected error occurred',
+      color: 'error'
+    })
   }
 }
 
@@ -326,11 +360,25 @@ const updateAvailability = async (availability: TimeSlot[]) => {
       isAvailable: slot.isAvailable,
     }))
     const result = await bulkSetSlots(slotsToSet, true)
-    if (!result.success) {
-      console.error('Error updating availability:', result.error)
+    if (result.success) {
+      toast.add({
+        title: 'Availability Updated',
+        description: 'Your availability has been saved',
+        color: 'success'
+      })
+    } else {
+      toast.add({
+        title: 'Error',
+        description: result.error || 'Failed to update availability',
+        color: 'error'
+      })
     }
   } catch (error) {
-    console.error('Error updating availability:', error)
+    toast.add({
+      title: 'Error',
+      description: 'An unexpected error occurred',
+      color: 'error'
+    })
   }
 }
 
@@ -342,16 +390,39 @@ const handleDateSelect = (date: Date) => {
 const handleQuickSetup = async (availability: TimeSlot[]) => {
   await updateAvailability(availability)
   showQuickSetup.value = false
+  toast.add({
+    title: 'Quick Setup Complete',
+    description: 'Your weekly availability has been configured',
+    color: 'success'
+  })
 }
 
 const copyPreviousWeek = async () => {
+  // Since slots are recurring by dayOfWeek, "Copy Last Week" restores from saved schedule
+  if (slots.value.length === 0) {
+    toast.add({
+      title: 'No Saved Schedule',
+      description: 'You don\'t have any saved availability to restore. Use Quick Setup to create one.',
+      color: 'warning'
+    })
+    return
+  }
+  
   isCopying.value = true
   try {
-    // Mock implementation - in real app, would copy from previous week
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    console.log('Copying previous week availability...')
+    // Re-fetch from database to restore any unsaved changes
+    await fetchAvailability()
+    toast.add({
+      title: 'Schedule Restored',
+      description: 'Your availability has been restored from your saved schedule',
+      color: 'success'
+    })
   } catch (error) {
-    console.error('Error copying previous week:', error)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to restore schedule',
+      color: 'error'
+    })
   } finally {
     isCopying.value = false
   }
@@ -360,10 +431,25 @@ const copyPreviousWeek = async () => {
 const clearAllAvailability = async () => {
   try {
     const result = await clearAllSlots()
-    if (!result.success) {
-      console.error('Error clearing availability:', result.error)
+    if (result.success) {
+      toast.add({
+        title: 'Availability Cleared',
+        description: 'All availability slots have been removed',
+        color: 'success'
+      })
+    } else {
+      toast.add({
+        title: 'Error',
+        description: result.error || 'Failed to clear availability',
+        color: 'error'
+      })
     }
   } catch (error) {
+    toast.add({
+      title: 'Error',
+      description: 'An unexpected error occurred',
+      color: 'error'
+    })
     console.error('Error clearing availability:', error)
   }
 }

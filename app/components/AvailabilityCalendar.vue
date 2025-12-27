@@ -209,12 +209,7 @@ const getSlotClass = (dayIndex: number, hour: number): string => {
     return 'bg-gray-100 dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'
   }
   
-  // Mock booking status - in real app, would check actual bookings
-  const isBooked = Math.random() > 0.8
-  
-  if (isBooked) {
-    return 'bg-red-200 dark:bg-red-800 border-red-300 dark:border-red-700 text-red-800 dark:text-red-200'
-  } else if (slot.isAvailable) {
+  if (slot.isAvailable) {
     return 'bg-green-200 dark:bg-green-800 border-green-300 dark:border-green-700 text-green-800 dark:text-green-200 hover:bg-green-300 dark:hover:bg-green-700'
   } else {
     return 'bg-yellow-200 dark:bg-yellow-800 border-yellow-300 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200'
