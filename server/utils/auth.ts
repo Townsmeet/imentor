@@ -10,6 +10,16 @@ export const auth = betterAuth({
     provider: 'pg',
     schema,
   }),
+  socialProviders: {
+    google: {
+      clientId: process.env.NUXT_GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.NUXT_GOOGLE_CLIENT_SECRET!,
+    },
+    linkedin: {
+      clientId: process.env.NUXT_LINKEDIN_CLIENT_ID!,
+      clientSecret: process.env.NUXT_LINKEDIN_CLIENT_SECRET!,
+    },
+  },
   user: {
     additionalFields: {
       role: {

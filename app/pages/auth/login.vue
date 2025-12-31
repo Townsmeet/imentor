@@ -16,6 +16,43 @@
       </p>
     </div>
 
+    <!-- Social Login -->
+    <div class="space-y-4 mb-8">
+      <div class="grid grid-cols-2 gap-4">
+        <UButton
+          label="Google"
+          icon="i-simple-icons-google"
+          color="neutral"
+          variant="outline"
+          size="lg"
+          block
+          :loading="socialLoading === 'google'"
+          :disabled="socialLoading !== null"
+          @click="handleSocialLogin('google')"
+        />
+        <UButton
+          label="LinkedIn"
+          icon="i-simple-icons-linkedin"
+          color="neutral"
+          variant="outline"
+          size="lg"
+          block
+          :loading="socialLoading === 'linkedin'"
+          :disabled="socialLoading !== null"
+          @click="handleSocialLogin('linkedin')"
+        />
+      </div>
+
+      <div class="relative">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-gray-300 dark:border-gray-700"></div>
+        </div>
+        <div class="relative flex justify-center text-sm">
+          <span class="px-2 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400">Or continue with email</span>
+        </div>
+      </div>
+    </div>
+
     <UForm
       :schema="loginSchema"
       :state="loginForm"
@@ -94,6 +131,7 @@
 
 <script setup lang="ts">
 import { z } from 'zod'
+import { authClient } from '~/utils/auth-client'
 
 definePageMeta({
   layout: 'auth'
@@ -104,6 +142,7 @@ const toast = useToast()
 
 const isLoading = ref(false)
 const showPassword = ref(false)
+const socialLoading = ref<'google' | 'linkedin' | null>(null)
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -161,6 +200,23 @@ const handleLogin = async () => {
     })
   } finally {
     isLoading.value = false
+  }
+}
+
+const handleSocialLogin = async (provider: 'google' | 'linkedin') => {
+  socialLoading.value = provider
+  try {
+    await authClient.signIn.social({
+      provider,
+      callbackURL: '/auth/oauth-callback'
+    })
+  } catch (error) {
+    socialLoading.value = null
+    toast.add({
+      title: 'Error',
+      description: 'Failed to connect with ' + provider,
+      color: 'error'
+    })
   }
 }
 </script>

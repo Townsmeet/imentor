@@ -242,6 +242,19 @@ export const useAuth = () => {
     }
   }
 
+  // Sign in with social provider (Google, LinkedIn)
+  const signInWithSocial = async (provider: 'google' | 'linkedin', callbackURL = '/auth/oauth-callback') => {
+    try {
+      await authClient.signIn.social({
+        provider,
+        callbackURL
+      })
+      return { success: true }
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Failed to sign in with ' + provider }
+    }
+  }
+
   return {
     user: enrichedUser,
     authUser: user,
@@ -258,5 +271,6 @@ export const useAuth = () => {
     resetPassword,
     sendVerificationEmail,
     refreshSession,
+    signInWithSocial,
   }
 }
