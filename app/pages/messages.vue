@@ -96,9 +96,9 @@
             </div>
           </div>
 
-          <div v-else class="flex-1 flex flex-col">
+          <div v-else class="flex-1 flex flex-col min-h-0">
             <!-- Chat Header -->
-            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
               <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
                   <UAvatar
@@ -123,7 +123,7 @@
             </div>
 
             <!-- Messages -->
-            <div class="flex-1 overflow-y-auto p-4 space-y-4" ref="messagesContainer">
+            <div class="flex-1 overflow-y-auto p-4 space-y-4 min-h-0" ref="messagesContainer">
               <div
                 v-for="message in selectedConversationMessages"
                 :key="message.id"
@@ -149,7 +149,7 @@
                         : 'text-gray-500 dark:text-gray-400'
                     ]"
                   >
-                    {{ formatMessageTime(message.timestamp) }}
+                    {{ formatMessageTime(message.createdAt) }}
                   </p>
                 </div>
               </div>
@@ -166,7 +166,7 @@
             </div>
 
             <!-- Message Input -->
-            <div class="p-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
               <form @submit.prevent="sendMessage" class="flex space-x-2">
                 <UInput
                   v-model="newMessage"
@@ -321,8 +321,8 @@ const filteredConversations = computed(() => {
 
 const selectedConversationMessages = computed(() => {
   if (!messages.value) return []
-  // API returns newest first, but UI needs oldest first
-  return [...messages.value].reverse()
+  // API returns oldest first (chronological order)
+  return messages.value
 })
 
 const scrollToBottom = () => {
@@ -364,7 +364,7 @@ const sendMessage = async () => {
     
     // Add to local messages immediately
     if (messages.value) {
-      messages.value.unshift(message) // Add to start because we reverse it for display
+      messages.value.push(message) // Add to end (messages are in chronological order)
     }
     
     // Update conversation last message
@@ -381,10 +381,10 @@ const sendMessage = async () => {
     
     scrollToBottom()
     
-  } catch (error) {
+  } catch (error: any) {
     toast.add({
       title: 'Error',
-      description: 'Failed to send message. Please try again.',
+      description: error.data?.message || 'Failed to send message. Please try again.',
       color: 'error'
     })
   } finally {
@@ -444,13 +444,16 @@ const formatMessageTime = (timestamp: string | Date | undefined) => {
   const date = new Date(timestamp)
   const now = new Date()
   const diff = now.getTime() - date.getTime()
-  const hours = Math.floor(diff / (1000 * 60 * 60))
+  const minutes = Math.floor(diff / (1000 * 60))
+  const hours = Math.floor(minutes / 60)
   const days = Math.floor(hours / 24)
   
   if (days > 0) {
     return `${days}d ago`
   } else if (hours > 0) {
     return `${hours}h ago`
+  } else if (minutes > 0) {
+    return `${minutes}m ago`
   } else {
     return 'Just now'
   }

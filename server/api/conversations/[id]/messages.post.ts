@@ -2,6 +2,42 @@ import { eq, and } from 'drizzle-orm'
 import { message, conversation, conversationParticipant } from '~~/server/db/schema'
 import { z } from 'zod'
 
+// Patterns to detect personal contact information
+const EMAIL_PATTERN = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/gi
+const PHONE_PATTERN = /(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{2,4}[-.\s]?\d{2,4}[-.\s]?\d{0,4}/g
+// Also catch obfuscated attempts like "email me at john dot smith at gmail dot com"
+const OBFUSCATED_EMAIL_PATTERN = /\b[a-zA-Z0-9._%+-]+\s*(?:\[at\]|at|\(at\)|\{at\})\s*[a-zA-Z0-9.-]+\s*(?:\[dot\]|dot|\(dot\)|\{dot\})\s*[a-zA-Z]{2,}\b/gi
+
+function containsContactInfo(text: string): { blocked: boolean; reason: string } {
+    // Remove common false positives (like prices, dates, times)
+    const cleanedText = text
+        .replace(/\$\d+/g, '') // Remove prices
+        .replace(/\d{1,2}:\d{2}/g, '') // Remove times
+        .replace(/\d{1,2}\/\d{1,2}\/\d{2,4}/g, '') // Remove dates
+
+    if (EMAIL_PATTERN.test(cleanedText)) {
+        return { blocked: true, reason: 'Sharing email addresses is not allowed. Please keep communication within the platform.' }
+    }
+
+    if (OBFUSCATED_EMAIL_PATTERN.test(cleanedText)) {
+        return { blocked: true, reason: 'Sharing email addresses is not allowed. Please keep communication within the platform.' }
+    }
+
+    // Check for phone numbers (at least 7 digits in sequence, accounting for separators)
+    const phoneMatches = cleanedText.match(PHONE_PATTERN)
+    if (phoneMatches) {
+        for (const match of phoneMatches) {
+            // Count actual digits
+            const digitCount = (match.match(/\d/g) || []).length
+            if (digitCount >= 7) {
+                return { blocked: true, reason: 'Sharing phone numbers is not allowed. Please keep communication within the platform.' }
+            }
+        }
+    }
+
+    return { blocked: false, reason: '' }
+}
+
 const sendMessageSchema = z.object({
     content: z.string().min(1, 'Message cannot be empty'),
 })
@@ -35,6 +71,15 @@ export default defineEventHandler(async (event) => {
         throw createError({
             statusCode: 403,
             message: 'You are not a participant in this conversation',
+        })
+    }
+
+    // Check for personal contact information
+    const contactCheck = containsContactInfo(body.content)
+    if (contactCheck.blocked) {
+        throw createError({
+            statusCode: 400,
+            message: contactCheck.reason,
         })
     }
 
