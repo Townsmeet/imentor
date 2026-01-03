@@ -355,7 +355,7 @@ interface BookingModalExposedLocal {
 }
 
 definePageMeta({
-  middleware: 'auth'
+  middleware: ['auth', 'mentee-only']
 })
 
 const route = useRoute()

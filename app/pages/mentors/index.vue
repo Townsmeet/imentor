@@ -246,7 +246,7 @@
 
 <script setup lang="ts">
 definePageMeta({
-  middleware: 'auth'
+  middleware: ['auth', 'mentee-only']
 })
 
 const {
