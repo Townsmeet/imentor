@@ -266,12 +266,35 @@
           </template>
 
           <div class="text-center">
-            <UAvatar
-              :src="user?.avatar"
-              :alt="`${profileForm.firstName} ${profileForm.lastName}`"
-              size="xl"
-              class="mx-auto mb-4"
-            />
+            <!-- Profile Image Upload -->
+            <div class="relative group inline-block mb-4">
+              <UAvatar
+                :src="profileForm.profileImage || user?.avatar"
+                :alt="`${profileForm.firstName} ${profileForm.lastName}`"
+                size="xl"
+                class="border-4 border-gray-200 dark:border-gray-600"
+              />
+              <label 
+                v-if="user?.role === 'mentor'"
+                class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+              >
+                <input 
+                  type="file" 
+                  class="hidden" 
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
+                  @change="handleProfileImageUpload"
+                />
+                <div v-if="isUploadingImage" class="text-white">
+                  <UIcon name="heroicons:arrow-path" class="animate-spin w-6 h-6" />
+                </div>
+                <div v-else class="text-center text-white">
+                  <UIcon name="heroicons:camera" class="w-6 h-6" />
+                </div>
+              </label>
+            </div>
+            <p v-if="user?.role === 'mentor'" class="text-xs text-gray-500 dark:text-gray-400 mb-4">
+              Hover to change photo
+            </p>
             
             <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">
               {{ profileForm.firstName }} {{ profileForm.lastName }}
@@ -364,6 +387,7 @@ const toast = useToast()
 const isLoading = ref(true)
 const isSaving = ref(false)
 const isUploading = ref(false)
+const isUploadingImage = ref(false)
 
 const profileSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -378,6 +402,7 @@ const profileSchema = z.object({
   timezone: z.string().optional(),
   dateOfBirth: z.string().optional(),
   expertiseDocument: z.string().optional(),
+  profileImage: z.string().optional(),
   interests: z.array(z.string()).optional(),
   goalsText: z.string().optional()
 })
@@ -395,6 +420,7 @@ const profileForm = reactive({
   timezone: '',
   dateOfBirth: '',
   expertiseDocument: '',
+  profileImage: '',
   interests: [] as string[],
   goalsText: ''
 })
@@ -412,6 +438,7 @@ onMounted(async () => {
     profileForm.experience = data.profile.experience || ''
     profileForm.languages = data.profile.languages || []
     profileForm.timezone = data.profile.timezone || ''
+    profileForm.profileImage = data.user.image || ''
     
     // Role-specific fields
     if (user.value?.role === 'mentor') {
@@ -437,6 +464,39 @@ onMounted(async () => {
     isLoading.value = false
   }
 })
+
+const handleProfileImageUpload = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  if (!input.files?.length) return
+
+  const file = input.files[0]
+  const formData = new FormData()
+  formData.append('file', file)
+
+  isUploadingImage.value = true
+  try {
+    const response = await $fetch<{ url: string }>('/api/profile/image', {
+      method: 'POST',
+      body: formData
+    })
+    profileForm.profileImage = response.url
+    // Refresh session to update user data in auth state
+    await refreshSession()
+    toast.add({
+      title: 'Success',
+      description: 'Profile photo updated successfully',
+      color: 'success'
+    })
+  } catch (error: any) {
+    toast.add({
+      title: 'Upload Failed',
+      description: error.data?.message || 'Failed to upload profile photo',
+      color: 'error'
+    })
+  } finally {
+    isUploadingImage.value = false
+  }
+}
 
 const handleFileUpload = async (event: Event) => {
   const input = event.target as HTMLInputElement
@@ -538,7 +598,8 @@ const profileCompleteness = computed(() => {
   if (profileForm.bio) completed++
 
   if (user.value?.role === 'mentor') {
-    total += 7
+    total += 8
+    if (profileForm.profileImage) completed++
     if (profileForm.hourlyRate) completed++
     if (profileForm.experience) completed++
     if (profileForm.categories.length > 0) completed++
@@ -564,6 +625,7 @@ const completenessItems = computed(() => {
 
   if (user.value?.role === 'mentor') {
     items.push(
+      { label: 'Profile photo', completed: !!profileForm.profileImage },
       { label: 'Hourly rate', completed: !!profileForm.hourlyRate },
       { label: 'Experience', completed: !!profileForm.experience },
       { label: 'Categories', completed: profileForm.categories.length > 0 },

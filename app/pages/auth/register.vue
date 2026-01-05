@@ -250,9 +250,12 @@ const handleSignup = async () => {
 const handleSocialSignup = async (provider: 'google' | 'linkedin') => {
   socialLoading.value = provider
   try {
+    // Store the selected role in sessionStorage so we can retrieve it after OAuth
+    sessionStorage.setItem('pendingOAuthRole', selectedRole)
+    
     await authClient.signIn.social({
       provider,
-      callbackURL: '/auth/oauth-callback'
+      callbackURL: `/auth/oauth-callback?role=${selectedRole}`
     })
   } catch (error) {
     socialLoading.value = null

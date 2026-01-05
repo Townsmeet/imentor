@@ -74,6 +74,38 @@
           </h2>
           
           <UForm :state="profileForm" class="space-y-6">
+            <!-- Profile Photo Upload -->
+            <div class="flex flex-col items-center mb-6">
+              <div class="relative group">
+                <UAvatar
+                  :src="profileForm.profileImage"
+                  :alt="`${profileForm.firstName} ${profileForm.lastName}`"
+                  size="3xl"
+                  class="border-4 border-gray-200 dark:border-gray-600"
+                />
+                <label 
+                  class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                >
+                  <input 
+                    type="file" 
+                    class="hidden" 
+                    accept="image/png,image/jpeg,image/jpg,image/webp"
+                    @change="handleProfileImageUpload"
+                  />
+                  <div v-if="isUploadingImage" class="text-white">
+                    <UIcon name="heroicons:arrow-path" class="animate-spin w-8 h-8" />
+                  </div>
+                  <div v-else class="text-center text-white">
+                    <UIcon name="heroicons:camera" class="w-8 h-8 mb-1" />
+                    <p class="text-xs">Upload Photo</p>
+                  </div>
+                </label>
+              </div>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-3">
+                {{ userRole === 'mentor' ? 'Add a professional photo to help mentees connect with you' : 'Add a profile photo (optional)' }}
+              </p>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <UFormField label="First Name" name="firstName" required>
                 <UInput
@@ -428,6 +460,7 @@ const currentStep = ref(1)
 const totalSteps = 5
 const isCompleting = ref(false)
 const isUploading = ref(false)
+const isUploadingImage = ref(false)
 
 // Parse user name into first/last
 const parsedName = computed(() => {
@@ -444,7 +477,8 @@ const profileForm = reactive({
   firstName: parsedName.value.firstName,
   lastName: parsedName.value.lastName,
   bio: '',
-  location: ''
+  location: '',
+  profileImage: ''
 })
 
 const mentorForm = reactive({
@@ -566,6 +600,37 @@ const handleFileUpload = async (event: Event) => {
     })
   } finally {
     isUploading.value = false
+  }
+}
+
+const handleProfileImageUpload = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  if (!input.files?.length) return
+
+  const file = input.files[0]
+  const formData = new FormData()
+  formData.append('file', file)
+
+  isUploadingImage.value = true
+  try {
+    const response = await $fetch<{ url: string }>('/api/profile/image', {
+      method: 'POST',
+      body: formData
+    })
+    profileForm.profileImage = response.url
+    toast.add({
+      title: 'Success',
+      description: 'Profile photo uploaded successfully',
+      color: 'success'
+    })
+  } catch (error: any) {
+    toast.add({
+      title: 'Upload Failed',
+      description: error.data?.message || 'Failed to upload profile photo',
+      color: 'error'
+    })
+  } finally {
+    isUploadingImage.value = false
   }
 }
 

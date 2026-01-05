@@ -5,6 +5,7 @@ definePageMeta({
 
 const { user, refreshSession, hasCompletedOnboarding } = useAuth()
 const toast = useToast()
+const route = useRoute()
 
 // Handle OAuth redirect
 onMounted(async () => {
@@ -25,6 +26,29 @@ onMounted(async () => {
     })
     navigateTo('/auth/login')
     return
+  }
+
+  // Get the role from query param or sessionStorage (set before OAuth redirect)
+  const roleFromQuery = route.query.role as string
+  const roleFromStorage = sessionStorage.getItem('pendingOAuthRole')
+  const pendingRole = roleFromQuery || roleFromStorage
+  
+  // Clear the stored role
+  sessionStorage.removeItem('pendingOAuthRole')
+
+  // If this is a new user (hasn't completed onboarding) and we have a pending role, update it
+  if (!hasCompletedOnboarding.value && pendingRole && ['mentor', 'mentee'].includes(pendingRole)) {
+    try {
+      // Update the user's role via API
+      await $fetch('/api/auth/update-role', {
+        method: 'POST',
+        body: { role: pendingRole }
+      })
+      // Refresh session to get updated role
+      await refreshSession()
+    } catch (error) {
+      console.error('Failed to update role:', error)
+    }
   }
 
   // Show success message
