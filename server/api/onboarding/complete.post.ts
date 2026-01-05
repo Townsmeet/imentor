@@ -18,6 +18,7 @@ interface OnboardingData {
     categories?: string[]
     dateOfBirth?: string
     expertiseDocument?: string
+    idDocument?: string
     // Mentee fields
     interests?: string[]
     goals?: string[]
@@ -89,6 +90,7 @@ export default defineEventHandler(async (event) => {
           timezone: body.preferences.timezone,
           dateOfBirth: body.roleData.dateOfBirth ? new Date(body.roleData.dateOfBirth) : null,
           expertiseDocument: body.roleData.expertiseDocument,
+          idDocument: body.roleData.idDocument,
         })
         .onConflictDoUpdate({
           target: mentorProfile.userId,
@@ -103,6 +105,7 @@ export default defineEventHandler(async (event) => {
             timezone: body.preferences.timezone,
             dateOfBirth: body.roleData.dateOfBirth ? new Date(body.roleData.dateOfBirth) : null,
             expertiseDocument: body.roleData.expertiseDocument,
+            idDocument: body.roleData.idDocument,
             updatedAt: new Date(),
           },
         })

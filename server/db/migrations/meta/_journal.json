@@ -57,6 +57,13 @@
       "when": 1766500257034,
       "tag": "0007_stiff_justice",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1767621255100,
+      "tag": "0008_oval_valeria_richards",
+      "breakpoints": true
     }
   ]
 }

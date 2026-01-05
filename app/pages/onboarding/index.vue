@@ -215,6 +215,33 @@
                 </UFormField>
               </div>
 
+              <!-- ID Document Upload -->
+              <UFormField label="ID Document" name="idDocument" required help="Upload a government-issued ID (Passport, National ID, or Driver's License) for identity verification.">
+                <div class="flex items-center space-x-3 w-full">
+                  <UInput
+                    type="file"
+                    size="lg"
+                    icon="heroicons:identification"
+                    class="flex-1"
+                    accept=".pdf,.png,.jpg,.jpeg,.webp"
+                    @change="handleIdDocumentUpload"
+                  />
+                  <div v-if="isUploadingId" class="flex items-center">
+                    <UIcon name="heroicons:arrow-path" class="animate-spin w-5 h-5 text-blue-600" />
+                  </div>
+                  <div v-else-if="mentorForm.idDocument" class="flex items-center">
+                    <UIcon name="heroicons:check-circle" class="w-5 h-5 text-green-600" />
+                  </div>
+                </div>
+                <p v-if="mentorForm.idDocument" class="text-xs text-gray-500 mt-1 truncate max-w-xs">
+                  Uploaded: {{ mentorForm.idDocument.split('/').pop() }}
+                </p>
+                <p class="text-xs text-gray-400 mt-2">
+                  <UIcon name="heroicons:lock-closed" class="w-3 h-3 inline" />
+                  Your ID is securely stored and only used for verification purposes.
+                </p>
+              </UFormField>
+
               <UFormField label="Skills & Expertise" name="skills" required>
                 <div class="space-y-3">
                   <UInput
@@ -461,6 +488,7 @@ const totalSteps = 5
 const isCompleting = ref(false)
 const isUploading = ref(false)
 const isUploadingImage = ref(false)
+const isUploadingId = ref(false)
 
 // Parse user name into first/last
 const parsedName = computed(() => {
@@ -487,7 +515,8 @@ const mentorForm = reactive({
   skills: [] as string[],
   categories: [] as string[],
   dateOfBirth: '',
-  expertiseDocument: ''
+  expertiseDocument: '',
+  idDocument: ''
 })
 
 const menteeForm = reactive({
@@ -547,7 +576,7 @@ const canProceed = computed(() => {
       if (userRole.value === 'mentor') {
         return mentorForm.experience && mentorForm.hourlyRate && 
                mentorForm.skills.length > 0 && mentorForm.categories.length > 0 &&
-               mentorForm.dateOfBirth && mentorForm.expertiseDocument
+               mentorForm.dateOfBirth && mentorForm.expertiseDocument && mentorForm.idDocument
       } else {
         return menteeForm.experience && menteeForm.interests.length > 0 && 
                menteeForm.goals.length > 0
@@ -634,6 +663,37 @@ const handleProfileImageUpload = async (event: Event) => {
   }
 }
 
+const handleIdDocumentUpload = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  if (!input.files?.length) return
+
+  const file = input.files[0]
+  const formData = new FormData()
+  formData.append('file', file)
+
+  isUploadingId.value = true
+  try {
+    const response = await $fetch<{ url: string }>('/api/uploads', {
+      method: 'POST',
+      body: formData
+    })
+    mentorForm.idDocument = response.url
+    toast.add({
+      title: 'Success',
+      description: 'ID document uploaded successfully',
+      color: 'success'
+    })
+  } catch (error: any) {
+    toast.add({
+      title: 'Upload Failed',
+      description: error.data?.message || 'Failed to upload ID document',
+      color: 'error'
+    })
+  } finally {
+    isUploadingId.value = false
+  }
+}
+
 const addSkill = () => {
   if (skillInput.value.trim() && !mentorForm.skills.includes(skillInput.value.trim())) {
     mentorForm.skills.push(skillInput.value.trim())
@@ -684,6 +744,7 @@ const completeOnboardingFlow = async () => {
               categories: mentorForm.categories,
               dateOfBirth: mentorForm.dateOfBirth,
               expertiseDocument: mentorForm.expertiseDocument,
+              idDocument: mentorForm.idDocument,
             }
           : {
               experience: menteeForm.experience,

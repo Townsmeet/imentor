@@ -100,6 +100,7 @@ export default defineEventHandler(async (event) => {
             languages: parseJsonArray(p?.languages),
             dateOfBirth: p?.dateOfBirth,
             expertiseDocument: p?.expertiseDocument,
+            idDocument: p?.idDocument,
             timezone: p?.timezone,
         }
     } catch (error: any) {

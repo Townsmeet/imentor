@@ -200,6 +200,15 @@
                   </a>
                 </p>
               </div>
+              <div v-if="mentor.idDocument">
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID Document</p>
+                <p class="mt-1 text-sm">
+                  <a :href="mentor.idDocument" target="_blank" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 flex items-center">
+                    <Icon name="heroicons:identification" class="h-4 w-4 mr-1" />
+                    View ID Document
+                  </a>
+                </p>
+              </div>
             </div>
           </div>
 
