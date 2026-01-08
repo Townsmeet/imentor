@@ -3,6 +3,8 @@ import { db } from '../../utils/drizzle'
 import { review, booking, mentorProfile, user } from '../../db/schema'
 import { auth } from '../../utils/auth'
 import { sql } from 'drizzle-orm'
+import { notifyUser } from '../../utils/notifications'
+import { createReviewReceivedEmail } from '../../email-templates'
 
 export default defineEventHandler(async (event) => {
     const session = await auth.api.getSession({ headers: event.headers })
@@ -86,6 +88,38 @@ export default defineEventHandler(async (event) => {
                 })
                 .where(eq(mentorProfile.userId, existingBooking.mentorId))
         }
+
+        // Get mentor and mentee names for notifications
+        const mentorUser = await db.query.user.findFirst({
+            where: eq(user.id, existingBooking.mentorId),
+            columns: { name: true, email: true }
+        })
+
+        const menteeUser = await db.query.user.findFirst({
+            where: eq(user.id, existingBooking.menteeId),
+            columns: { name: true }
+        })
+
+        // Prepare email content
+        const reviewEmail = createReviewReceivedEmail({
+            mentorName: mentorUser?.name || 'Mentor',
+            menteeName: menteeUser?.name || 'A mentee',
+            sessionTitle: existingBooking.title,
+            rating: body.rating,
+            comment: body.comment
+        })
+
+        // Send in-app and email notification to mentor
+        await notifyUser(existingBooking.mentorId, {
+            inApp: {
+                userId: existingBooking.mentorId,
+                type: 'info',
+                title: 'New Review Received',
+                message: `${menteeUser?.name || 'A mentee'} left you a ${body.rating}-star review${body.comment ? `: "${body.comment.substring(0, 50)}${body.comment.length > 50 ? '...' : ''}"` : ''}`,
+                actionUrl: '/profile'
+            },
+            email: reviewEmail
+        })
 
         return {
             review: {

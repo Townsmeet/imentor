@@ -1,7 +1,9 @@
 import { eq } from 'drizzle-orm'
 import { db } from '../../../utils/drizzle'
-import { booking } from '../../../db/schema'
+import { booking, user } from '../../../db/schema'
 import { auth } from '../../../utils/auth'
+import { notifyUser } from '../../../utils/notifications'
+import { createBookingCancelledMentorEmail, createBookingCancelledMenteeEmail } from '../../../email-templates'
 
 export default defineEventHandler(async (event) => {
     const session = await auth.api.getSession({ headers: event.headers })
@@ -64,6 +66,61 @@ export default defineEventHandler(async (event) => {
             })
             .where(eq(booking.id, bookingId))
             .returning()
+
+        // Get mentor and mentee details for notifications
+        const mentorUser = await db.query.user.findFirst({
+            where: eq(user.id, existingBooking.mentorId),
+            columns: { name: true, email: true }
+        })
+
+        const menteeUser = await db.query.user.findFirst({
+            where: eq(user.id, existingBooking.menteeId),
+            columns: { name: true, email: true }
+        })
+
+        const cancelledBy = userId === existingBooking.mentorId ? mentorUser : menteeUser
+        const otherPartyId = userId === existingBooking.mentorId ? existingBooking.menteeId : existingBooking.mentorId
+
+        // Prepare booking details for notifications
+        const bookingDetails = {
+            mentorName: mentorUser?.name || 'Mentor',
+            menteeName: menteeUser?.name || 'Mentee',
+            sessionTitle: existingBooking.title,
+            scheduledDate: existingBooking.scheduledDate,
+            duration: existingBooking.duration,
+            price: existingBooking.price?.toString() || '0',
+            bookingId: bookingId
+        }
+
+        const cancelledByRole: 'mentor' | 'mentee' = userId === existingBooking.mentorId ? 'mentor' : 'mentee'
+
+        // Prepare email content
+        const mentorEmail = createBookingCancelledMentorEmail(bookingDetails, cancelledByRole)
+        const menteeEmail = createBookingCancelledMenteeEmail(bookingDetails, cancelledByRole)
+
+        // Send in-app and email notifications
+        await Promise.all([
+            notifyUser(userId, {
+                inApp: {
+                    userId: userId,
+                    type: 'warning',
+                    title: 'Booking Cancelled',
+                    message: `You cancelled "${existingBooking.title}"`,
+                    actionUrl: `/bookings?id=${bookingId}`
+                },
+                email: cancelledByRole === 'mentor' ? mentorEmail : menteeEmail
+            }),
+            notifyUser(otherPartyId, {
+                inApp: {
+                    userId: otherPartyId,
+                    type: 'warning',
+                    title: 'Booking Cancelled',
+                    message: `${cancelledBy?.name || 'The other party'} cancelled "${existingBooking.title}"`,
+                    actionUrl: `/bookings?id=${bookingId}`
+                },
+                email: cancelledByRole === 'mentor' ? menteeEmail : mentorEmail
+            })
+        ])
 
         return {
             success: true,

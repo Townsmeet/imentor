@@ -4,6 +4,8 @@ import { booking, user } from '../../../db/schema'
 import { auth } from '../../../utils/auth'
 import { generateMeetingLink } from '../../../utils/meeting'
 import { getPaymentIntent, isPaymentSuccessful } from '../../../utils/stripe'
+import { notifyUser } from '../../../utils/notifications'
+import { createBookingConfirmedMentorEmail, createBookingConfirmedMenteeEmail } from '../../../email-templates'
 
 interface ConfirmBookingBody {
     paymentIntentId?: string
@@ -112,6 +114,57 @@ export default defineEventHandler(async (event) => {
             })
             .where(eq(booking.id, bookingId))
             .returning()
+
+        // Get mentor and mentee details for notifications
+        const mentorUser = await db.query.user.findFirst({
+            where: eq(user.id, existingBooking.mentorId),
+            columns: { name: true, email: true }
+        })
+
+        const menteeUser = await db.query.user.findFirst({
+            where: eq(user.id, existingBooking.menteeId),
+            columns: { name: true, email: true }
+        })
+
+        // Prepare booking details for notifications
+        const bookingDetails = {
+            mentorName: mentorUser?.name || 'Mentor',
+            menteeName: menteeUser?.name || 'Mentee',
+            sessionTitle: existingBooking.title,
+            scheduledDate: existingBooking.scheduledDate,
+            duration: existingBooking.duration,
+            price: existingBooking.price?.toString() || '0',
+            bookingId: bookingId,
+            meetingLink
+        }
+
+        // Prepare email content
+        const mentorEmailContent = createBookingConfirmedMentorEmail(bookingDetails)
+        const menteeEmailContent = createBookingConfirmedMenteeEmail(bookingDetails)
+
+        // Send in-app and email notifications
+        await Promise.all([
+            notifyUser(existingBooking.mentorId, {
+                inApp: {
+                    userId: existingBooking.mentorId,
+                    type: 'info',
+                    title: 'Session Confirmed',
+                    message: `Your session "${existingBooking.title}" with ${menteeUser?.name || 'a mentee'} has been confirmed!`,
+                    actionUrl: `/bookings?id=${bookingId}`
+                },
+                email: mentorEmailContent
+            }),
+            notifyUser(existingBooking.menteeId, {
+                inApp: {
+                    userId: existingBooking.menteeId,
+                    type: 'info',
+                    title: 'Payment Successful',
+                    message: `Your booking "${existingBooking.title}" is confirmed! Check your email for the meeting link.`,
+                    actionUrl: `/bookings?id=${bookingId}`
+                },
+                email: menteeEmailContent
+            })
+        ])
 
         return {
             success: true,

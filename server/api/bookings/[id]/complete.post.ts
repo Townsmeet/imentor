@@ -1,7 +1,9 @@
 import { eq } from 'drizzle-orm'
 import { db } from '../../../utils/drizzle'
-import { booking, mentorProfile } from '../../../db/schema'
+import { booking, mentorProfile, user } from '../../../db/schema'
 import { auth } from '../../../utils/auth'
+import { notifyUser } from '../../../utils/notifications'
+import { createSessionCompletedMentorEmail, createSessionCompletedMenteeEmail } from '../../../email-templates'
 
 export default defineEventHandler(async (event) => {
     const session = await auth.api.getSession({ headers: event.headers })
@@ -61,6 +63,56 @@ export default defineEventHandler(async (event) => {
                 updatedAt: new Date(),
             })
             .where(eq(mentorProfile.userId, existingBooking.mentorId))
+
+        // Get mentor and mentee details for notifications
+        const mentorUser = await db.query.user.findFirst({
+            where: eq(user.id, existingBooking.mentorId),
+            columns: { name: true, email: true }
+        })
+
+        const menteeUser = await db.query.user.findFirst({
+            where: eq(user.id, existingBooking.menteeId),
+            columns: { name: true, email: true }
+        })
+
+        // Prepare booking details for notifications
+        const bookingDetails = {
+            mentorName: mentorUser?.name || 'Mentor',
+            menteeName: menteeUser?.name || 'Mentee',
+            sessionTitle: existingBooking.title,
+            scheduledDate: existingBooking.scheduledDate,
+            duration: existingBooking.duration,
+            price: existingBooking.price?.toString() || '0',
+            bookingId: bookingId
+        }
+
+        // Prepare email content
+        const mentorEmail = createSessionCompletedMentorEmail(bookingDetails)
+        const menteeEmail = createSessionCompletedMenteeEmail(bookingDetails)
+
+        // Send in-app and email notifications
+        await Promise.all([
+            notifyUser(existingBooking.mentorId, {
+                inApp: {
+                    userId: existingBooking.mentorId,
+                    type: 'info',
+                    title: 'Session Completed',
+                    message: `You marked "${existingBooking.title}" as completed. Great work!`,
+                    actionUrl: `/bookings?id=${bookingId}`
+                },
+                email: mentorEmail
+            }),
+            notifyUser(existingBooking.menteeId, {
+                inApp: {
+                    userId: existingBooking.menteeId,
+                    type: 'info',
+                    title: 'Session Completed',
+                    message: `Your session "${existingBooking.title}" is complete. Please leave a review!`,
+                    actionUrl: `/bookings?id=${bookingId}`
+                },
+                email: menteeEmail
+            })
+        ])
 
         return {
             success: true,

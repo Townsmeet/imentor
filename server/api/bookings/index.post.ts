@@ -1,8 +1,10 @@
 import { eq, and } from 'drizzle-orm'
 import { db } from '../../utils/drizzle'
-import { booking, availabilitySlot, mentorProfile } from '../../db/schema'
+import { booking, availabilitySlot, mentorProfile, user } from '../../db/schema'
 import { auth } from '../../utils/auth'
 import { createPaymentIntent } from '../../utils/stripe'
+import { notifyUser } from '../../utils/notifications'
+import { createNewBookingMentorEmail, createNewBookingMenteeEmail } from '../../email-templates'
 
 interface CreateBookingBody {
     mentorId: string
@@ -167,6 +169,56 @@ export default defineEventHandler(async (event) => {
             .update(booking)
             .set({ stripePaymentIntentId: paymentIntent.id })
             .where(eq(booking.id, newBooking.id))
+
+        // Get mentor and mentee details for notifications
+        const mentorUser = await db.query.user.findFirst({
+            where: eq(user.id, body.mentorId),
+            columns: { name: true, email: true }
+        })
+
+        const menteeUser = await db.query.user.findFirst({
+            where: eq(user.id, menteeId),
+            columns: { name: true, email: true }
+        })
+
+        // Prepare booking details for notifications
+        const bookingDetails = {
+            mentorName: mentorUser?.name || 'Mentor',
+            menteeName: menteeUser?.name || 'Mentee',
+            sessionTitle: body.title,
+            scheduledDate,
+            duration: body.duration,
+            price: price.toString(),
+            bookingId: newBooking.id
+        }
+
+        // Prepare email content
+        const mentorEmail = createNewBookingMentorEmail(bookingDetails)
+        const menteeEmail = createNewBookingMenteeEmail(bookingDetails)
+
+        // Send in-app and email notifications
+        await Promise.all([
+            notifyUser(body.mentorId, {
+                inApp: {
+                    userId: body.mentorId,
+                    type: 'info',
+                    title: 'New Booking Request',
+                    message: `${menteeUser?.name || 'A mentee'} has requested a session: "${body.title}"`,
+                    actionUrl: `/bookings?id=${newBooking.id}`
+                },
+                email: mentorEmail
+            }),
+            notifyUser(menteeId, {
+                inApp: {
+                    userId: menteeId,
+                    type: 'info',
+                    title: 'Booking Created',
+                    message: `Your booking request "${body.title}" has been created. Please complete payment.`,
+                    actionUrl: `/bookings?id=${newBooking.id}`
+                },
+                email: menteeEmail
+            })
+        ])
 
         return {
             booking: {
