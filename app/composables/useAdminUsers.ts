@@ -173,6 +173,18 @@ export const useAdminUsers = () => {
     fetchUsers(currentPage.value)
   })
 
+  const previousPage = () => {
+    if (currentPage.value > 1) {
+      currentPage.value--
+    }
+  }
+
+  const nextPage = () => {
+    if (currentPage.value < totalPages.value) {
+      currentPage.value++
+    }
+  }
+
   return {
     users: readonly(users),
     isLoading: readonly(isLoading),
@@ -188,5 +200,7 @@ export const useAdminUsers = () => {
     getUserById,
     toggleUserStatus,
     deleteUser,
+    previousPage,
+    nextPage,
   }
 }

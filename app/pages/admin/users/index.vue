@@ -141,27 +141,30 @@
       </div>
       
       <!-- Pagination -->
-      <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+      <div v-if="users.length > 0" class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
         <div class="flex items-center justify-between">
           <div class="text-sm text-gray-700 dark:text-gray-300">
-            Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, totalUsers) }} of {{ totalUsers }} results
+            Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, totalUsers) }} of {{ totalUsers }} users
           </div>
-          <div class="flex items-center space-x-2">
+          <div class="flex space-x-2">
             <UButton
-              variant="ghost"
-              icon="heroicons:chevron-left"
+              @click="previousPage"
               :disabled="currentPage === 1"
-              @click="currentPage--"
-            />
-            <span class="text-sm text-gray-700 dark:text-gray-300">
-              Page {{ currentPage }} of {{ totalPages }}
-            </span>
+              variant="outline"
+              size="sm"
+              icon="heroicons:chevron-left"
+            >
+              Previous
+            </UButton>
             <UButton
-              variant="ghost"
+              @click="nextPage"
+              :disabled="currentPage >= totalPages"
+              variant="outline"
+              size="sm"
               icon="heroicons:chevron-right"
-              :disabled="currentPage === totalPages"
-              @click="currentPage++"
-            />
+            >
+              Next
+            </UButton>
           </div>
         </div>
       </div>
@@ -346,7 +349,9 @@ const {
   fetchUsers,
   getUserById,
   toggleUserStatus,
-  deleteUser
+  deleteUser,
+  previousPage,
+  nextPage
 } = useAdminUsers()
 
 // Local state for modals

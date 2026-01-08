@@ -96,7 +96,7 @@
                 Upcoming Sessions
               </h2>
               <UButton
-                to="/sessions"
+                to="/bookings"
                 variant="ghost"
                 size="sm"
                 icon="heroicons:arrow-right"
@@ -303,7 +303,7 @@
             </UButton>
             
             <UButton
-              to="/sessions"
+              to="/bookings"
               variant="outline"
               block
               icon="heroicons:calendar-days"
