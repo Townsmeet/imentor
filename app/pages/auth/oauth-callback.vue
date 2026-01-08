@@ -28,13 +28,15 @@ onMounted(async () => {
     return
   }
 
-  // Get the role from query param or sessionStorage (set before OAuth redirect)
+  // Get the role from localStorage (set before OAuth redirect) or query param as fallback
+  // Prioritize localStorage as query params may not survive OAuth redirects
+  const roleFromStorage = localStorage.getItem('pendingOAuthRole')
   const roleFromQuery = route.query.role as string
-  const roleFromStorage = sessionStorage.getItem('pendingOAuthRole')
-  const pendingRole = roleFromQuery || roleFromStorage
+  const pendingRole = roleFromStorage || roleFromQuery
   
-  // Clear the stored role
-  sessionStorage.removeItem('pendingOAuthRole')
+  // Clear the stored role from both storage locations
+  localStorage.removeItem('pendingOAuthRole')
+  sessionStorage.removeItem('pendingOAuthRole') // Clean up legacy storage
 
   // If this is a new user (hasn't completed onboarding) and we have a pending role, update it
   if (!hasCompletedOnboarding.value && pendingRole && ['mentor', 'mentee'].includes(pendingRole)) {
