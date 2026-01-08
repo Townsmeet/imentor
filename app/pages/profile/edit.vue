@@ -576,14 +576,60 @@ const languageOptions = [
 ]
 
 const timezoneOptions = [
-  'PST',
-  'MST',
-  'CST',
-  'EST',
-  'GMT',
-  'CET',
-  'JST',
-  'AEST'
+  // Americas
+  { label: 'Pacific Time (PT) - Los Angeles', value: 'America/Los_Angeles' },
+  { label: 'Mountain Time (MT) - Denver', value: 'America/Denver' },
+  { label: 'Central Time (CT) - Chicago', value: 'America/Chicago' },
+  { label: 'Eastern Time (ET) - New York', value: 'America/New_York' },
+  { label: 'Atlantic Time (AT) - Halifax', value: 'America/Halifax' },
+  { label: 'Argentina - Buenos Aires', value: 'America/Argentina/Buenos_Aires' },
+  { label: 'Brazil - São Paulo', value: 'America/Sao_Paulo' },
+  { label: 'Mexico - Mexico City', value: 'America/Mexico_City' },
+  { label: 'Canada - Toronto', value: 'America/Toronto' },
+  { label: 'Canada - Vancouver', value: 'America/Vancouver' },
+  // Europe
+  { label: 'GMT/UTC - London', value: 'Europe/London' },
+  { label: 'Central European Time (CET) - Paris', value: 'Europe/Paris' },
+  { label: 'Central European Time (CET) - Berlin', value: 'Europe/Berlin' },
+  { label: 'Central European Time (CET) - Amsterdam', value: 'Europe/Amsterdam' },
+  { label: 'Central European Time (CET) - Rome', value: 'Europe/Rome' },
+  { label: 'Central European Time (CET) - Madrid', value: 'Europe/Madrid' },
+  { label: 'Eastern European Time (EET) - Athens', value: 'Europe/Athens' },
+  { label: 'Moscow Time (MSK) - Moscow', value: 'Europe/Moscow' },
+  { label: 'Western European Time (WET) - Lisbon', value: 'Europe/Lisbon' },
+  // Africa
+  { label: 'West Africa Time (WAT) - Lagos', value: 'Africa/Lagos' },
+  { label: 'Central Africa Time (CAT) - Johannesburg', value: 'Africa/Johannesburg' },
+  { label: 'East Africa Time (EAT) - Nairobi', value: 'Africa/Nairobi' },
+  { label: 'Egypt - Cairo', value: 'Africa/Cairo' },
+  // Middle East
+  { label: 'Gulf Standard Time (GST) - Dubai', value: 'Asia/Dubai' },
+  { label: 'Israel - Tel Aviv', value: 'Asia/Tel_Aviv' },
+  { label: 'Turkey - Istanbul', value: 'Europe/Istanbul' },
+  { label: 'Saudi Arabia - Riyadh', value: 'Asia/Riyadh' },
+  // Asia
+  { label: 'India Standard Time (IST) - Mumbai', value: 'Asia/Kolkata' },
+  { label: 'Pakistan - Karachi', value: 'Asia/Karachi' },
+  { label: 'Bangladesh - Dhaka', value: 'Asia/Dhaka' },
+  { label: 'Thailand - Bangkok', value: 'Asia/Bangkok' },
+  { label: 'Vietnam - Ho Chi Minh', value: 'Asia/Ho_Chi_Minh' },
+  { label: 'Singapore Time (SGT)', value: 'Asia/Singapore' },
+  { label: 'Malaysia - Kuala Lumpur', value: 'Asia/Kuala_Lumpur' },
+  { label: 'Philippines - Manila', value: 'Asia/Manila' },
+  { label: 'Indonesia - Jakarta', value: 'Asia/Jakarta' },
+  { label: 'China Standard Time (CST) - Shanghai', value: 'Asia/Shanghai' },
+  { label: 'Hong Kong Time (HKT)', value: 'Asia/Hong_Kong' },
+  { label: 'Taiwan - Taipei', value: 'Asia/Taipei' },
+  { label: 'Korea Standard Time (KST) - Seoul', value: 'Asia/Seoul' },
+  { label: 'Japan Standard Time (JST) - Tokyo', value: 'Asia/Tokyo' },
+  // Oceania
+  { label: 'Australian Western Time (AWST) - Perth', value: 'Australia/Perth' },
+  { label: 'Australian Central Time (ACST) - Adelaide', value: 'Australia/Adelaide' },
+  { label: 'Australian Eastern Time (AEST) - Sydney', value: 'Australia/Sydney' },
+  { label: 'Australian Eastern Time (AEST) - Melbourne', value: 'Australia/Melbourne' },
+  { label: 'New Zealand Time (NZT) - Auckland', value: 'Pacific/Auckland' },
+  // UTC
+  { label: 'UTC (Coordinated Universal Time)', value: 'UTC' }
 ]
 
 const profileCompleteness = computed(() => {

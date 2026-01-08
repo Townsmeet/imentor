@@ -65,11 +65,12 @@ export default defineEventHandler(async (event) => {
             )
             const activeMentees = activeMenteeIds.size
 
-            // Get mentor profile for rating
+            // Get mentor profile for rating and profile views
             const mentorProfileData = await db
                 .select({
                     rating: mentorProfile.rating,
                     totalSessions: mentorProfile.totalSessions,
+                    profileViews: mentorProfile.profileViews,
                 })
                 .from(mentorProfile)
                 .where(eq(mentorProfile.userId, userId))
@@ -78,6 +79,8 @@ export default defineEventHandler(async (event) => {
             const averageRating = mentorProfileData[0]?.rating 
                 ? parseFloat(mentorProfileData[0].rating) 
                 : 0
+            
+            const profileViews = mentorProfileData[0]?.profileViews ?? 0
 
             // Calculate profile performance metrics (simplified - can be enhanced later)
             const totalBookings = allBookings.length
@@ -118,7 +121,7 @@ export default defineEventHandler(async (event) => {
                     averageRating: Math.round(averageRating * 10) / 10, // Round to 1 decimal
                     totalEarnings: Math.round(totalEarnings),
                     totalSessions,
-                    profileViews: 0, // Placeholder - would need tracking table
+                    profileViews,
                     bookingRate,
                     responseTime: '2h', // Placeholder - would need message tracking
                     completionRate,

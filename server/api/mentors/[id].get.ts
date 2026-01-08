@@ -1,4 +1,4 @@
-import { eq, and } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
 import { db } from '../../utils/drizzle'
 import { user, mentorProfile } from '../../db/schema'
 
@@ -50,6 +50,15 @@ export default defineEventHandler(async (event) => {
         message: 'Mentor not found',
       })
     }
+
+    // Increment profile view count (fire and forget - don't block the response)
+    db.update(mentorProfile)
+      .set({ 
+        profileViews: sql`COALESCE(${mentorProfile.profileViews}, 0) + 1` 
+      })
+      .where(eq(mentorProfile.userId, id))
+      .execute()
+      .catch(err => console.error('[Mentors API] Error incrementing profile views:', err))
 
     const mentor = result[0]
 

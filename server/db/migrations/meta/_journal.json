@@ -64,6 +64,13 @@
       "when": 1767621255100,
       "tag": "0008_oval_valeria_richards",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1767889422805,
+      "tag": "0009_add-profile-views",
+      "breakpoints": true
     }
   ]
 }
