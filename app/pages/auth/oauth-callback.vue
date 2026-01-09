@@ -61,7 +61,11 @@ onMounted(async () => {
   })
 
   // Check onboarding status and redirect accordingly
-  if (!hasCompletedOnboarding.value) {
+  const redirect = route.query.redirect as string
+  
+  if (redirect) {
+    navigateTo(redirect)
+  } else if (!hasCompletedOnboarding.value) {
     // New user or incomplete onboarding -> start/continue onboarding
     // OAuth users have verified emails, so they might skip email verification step
     navigateTo('/onboarding')

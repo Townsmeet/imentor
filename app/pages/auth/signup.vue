@@ -72,10 +72,17 @@ definePageMeta({
   layout: 'auth'
 })
 
+const route = useRoute()
+
 const selectRole = (role: UserRole) => {
+  const query: any = { role }
+  if (route.query.redirect) {
+    query.redirect = route.query.redirect
+  }
+  
   navigateTo({
     path: '/auth/register',
-    query: { role }
+    query
   })
 }
 </script>

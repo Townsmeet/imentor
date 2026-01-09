@@ -14,9 +14,6 @@
       <p class="text-gray-600 dark:text-gray-400">
         You're joining as a <span class="font-semibold text-blue-600 dark:text-blue-400">{{ roleLabel }}</span>
       </p>
-      <NuxtLink to="/auth/signup" class="text-xs text-gray-500 hover:text-blue-600 mt-2 inline-block">
-        Change role
-      </NuxtLink>
     </div>
 
     <!-- Social Signup -->
@@ -228,7 +225,11 @@ const handleSignup = async () => {
       })
       
       // Redirect to verification pending page
-      await navigateTo(`/auth/verify-email?email=${encodeURIComponent(signupForm.email)}`)
+      const redirect = route.query.redirect as string
+      const dest = redirect 
+        ? `/auth/verify-email?email=${encodeURIComponent(signupForm.email)}&redirect=${encodeURIComponent(redirect)}`
+        : `/auth/verify-email?email=${encodeURIComponent(signupForm.email)}`
+      await navigateTo(dest)
     } else {
       toast.add({
         title: 'Registration failed',
@@ -254,9 +255,14 @@ const handleSocialSignup = async (provider: 'google' | 'linkedin') => {
     // (sessionStorage may not persist across OAuth redirects in all browsers)
     localStorage.setItem('pendingOAuthRole', selectedRole)
     
+    const redirect = route.query.redirect as string
+    const callbackURL = redirect
+      ? `/auth/oauth-callback?role=${selectedRole}&redirect=${encodeURIComponent(redirect)}`
+      : `/auth/oauth-callback?role=${selectedRole}`
+      
     await authClient.signIn.social({
       provider,
-      callbackURL: `/auth/oauth-callback?role=${selectedRole}`
+      callbackURL
     })
   } catch (error) {
     socialLoading.value = null

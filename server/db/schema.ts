@@ -292,7 +292,6 @@ export const notification = pgTable('notification', {
 export const aiMatchingSession = pgTable('ai_matching_session', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   userId: text('user_id')
-    .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
   status: aiMatchStatusEnum('status').notNull().default('in_progress'),
   conversationHistory: text('conversation_history').notNull().default('[]'), // JSON array of messages
@@ -322,7 +321,6 @@ export const aiMatchFeedback = pgTable('ai_match_feedback', {
     .notNull()
     .references(() => aiMatchResult.id, { onDelete: 'cascade' }),
   userId: text('user_id')
-    .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
   helpful: boolean('helpful'), // true/false/null
   selectedMentor: boolean('selected_mentor').notNull().default(false), // Did they book this mentor?

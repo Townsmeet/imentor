@@ -5,14 +5,13 @@ import { auth } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
     const session = await auth.api.getSession({ headers: event.headers })
-
-    if (!session?.user) {
-        throw createError({ statusCode: 401, message: 'Unauthorized' })
-    }
-
     const query = getQuery(event)
     const mentorId = query.mentorId as string | undefined
     const bookingId = query.bookingId as string | undefined
+
+    if (!session?.user && !mentorId && !bookingId) {
+        throw createError({ statusCode: 401, message: 'Unauthorized' })
+    }
     const limit = parseInt((query.limit as string) || '10')
     const offset = parseInt((query.offset as string) || '0')
 
@@ -54,7 +53,7 @@ export default defineEventHandler(async (event) => {
             .select({ count: sql<number>`count(*)::int` })
             .from(review)
             .where(whereClause)
-        
+
         const totalCount = totalCountResult[0]?.count || 0
 
         return {

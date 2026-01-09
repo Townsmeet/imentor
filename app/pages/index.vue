@@ -21,9 +21,6 @@
             <NuxtLink to="/auth/login">
               <UButton variant="ghost" color="neutral">Log in</UButton>
             </NuxtLink>
-            <NuxtLink to="/auth/signup">
-              <UButton>Get Started</UButton>
-            </NuxtLink>
           </div>
         </div>
       </div>
@@ -49,13 +46,13 @@
             </p>
             
             <div class="flex flex-col sm:flex-row gap-4 mb-8">
-              <NuxtLink to="/auth/signup?role=mentee">
+              <NuxtLink to="/discover">
                 <UButton size="xl" class="w-full sm:w-auto">
                   <Icon name="heroicons:rocket-launch" class="w-5 h-5 mr-2" />
                   Find a Mentor
                 </UButton>
               </NuxtLink>
-              <NuxtLink to="/auth/signup?role=mentor">
+              <NuxtLink to="/auth/register?role=mentor">
                 <UButton size="xl" variant="outline" class="w-full sm:w-auto">
                   <Icon name="heroicons:academic-cap" class="w-5 h-5 mr-2" />
                   Become a Mentor
@@ -415,7 +412,7 @@
         </p>
 
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <NuxtLink to="/auth/signup">
+          <NuxtLink to="/discover">
             <UButton size="xl">
               <Icon name="heroicons:rocket-launch" class="w-5 h-5 mr-2" />
               Get Started for Free

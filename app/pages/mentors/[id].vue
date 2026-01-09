@@ -112,7 +112,7 @@
               <UButton
                 size="lg"
                 icon="heroicons:calendar-days"
-                @click="showBookingModal = true"
+                @click="handleBookClick"
               >
                 Book Session
               </UButton>
@@ -160,7 +160,7 @@
           v-if="mentorSlots.length > 0"
           variant="ghost"
           size="sm"
-          @click="showBookingModal = true"
+          @click="handleBookClick"
         >
           View Full Calendar
         </UButton>
@@ -323,6 +323,49 @@
         </div>
       </template>
     </UModal>
+
+    <!-- Login Modal -->
+    <UModal v-model:open="showLoginModal">
+      <template #content>
+        <div class="p-6">
+          <div class="text-center mb-6">
+            <div class="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Icon name="heroicons:user-circle" class="w-8 h-8 text-white" />
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              Sign in to Book
+            </h2>
+            <p class="text-gray-600 dark:text-gray-400">
+              You need an account to book a session with {{ mentor.firstName }}
+            </p>
+          </div>
+
+          <div class="space-y-3">
+            <UButton
+              @click="goToLogin"
+              size="lg"
+              class="w-full justify-center"
+            >
+              <Icon name="heroicons:arrow-right-end-on-rectangle" class="w-5 h-5 mr-2" />
+              Sign In
+            </UButton>
+            
+            <UButton
+              @click="goToSignup"
+              variant="outline"
+              size="lg"
+              class="w-full justify-center"
+            >
+              Create an Account
+            </UButton>
+          </div>
+
+          <p class="text-center text-xs text-gray-500 dark:text-gray-400 mt-4">
+            It only takes a minute to get started
+          </p>
+        </div>
+      </template>
+    </UModal>
   </div>
 
   <div v-else class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -354,10 +397,7 @@ interface BookingModalExposedLocal {
   isProcessingPayment: boolean;
 }
 
-definePageMeta({
-  middleware: ['auth', 'mentee-only']
-})
-
+const { user } = useAuth()
 const route = useRoute()
 const toast = useToast()
 const { getMentorById } = useMentors()
@@ -367,20 +407,48 @@ const { reviews, fetchReviewsByMentor, isLoading: reviewsLoading } = useReviews(
 const mentorId = route.params.id as string
 const mentor = ref<MentorProfile | null>(null)
 const isLoadingMentor = ref(true)
+const showLoginModal = ref(false)
 
 // Fetch mentor, availability, and reviews on mount
 onMounted(async () => {
   isLoadingMentor.value = true
-  const [mentorData] = await Promise.all([
-    getMentorById(mentorId),
-    fetchAvailability(mentorId),
-    fetchReviewsByMentor(mentorId, 10, 0)
-  ])
-  mentor.value = mentorData
-  isLoadingMentor.value = false
+  try {
+    const [mentorData] = await Promise.all([
+      getMentorById(mentorId),
+      fetchAvailability(mentorId).catch(err => {
+        console.error('[Mentor Detail] Error fetching availability:', err)
+        return null
+      }),
+      fetchReviewsByMentor(mentorId, 10, 0).catch(err => {
+        console.error('[Mentor Detail] Error fetching reviews:', err)
+        return null
+      })
+    ])
+    mentor.value = mentorData
+  } catch (err) {
+    console.error('[Mentor Detail] Error loading mentor data:', err)
+  } finally {
+    isLoadingMentor.value = false
+  }
 })
 
 const showBookingModal = ref(false)
+
+const handleBookClick = () => {
+  if (!user.value) {
+    showLoginModal.value = true
+  } else {
+    showBookingModal.value = true
+  }
+}
+
+const goToLogin = () => {
+  navigateTo(`/auth/login?redirect=${encodeURIComponent(route.fullPath)}`)
+}
+
+const goToSignup = () => {
+  navigateTo(`/auth/register?role=mentee&redirect=${encodeURIComponent(route.fullPath)}`)
+}
 const isBooking = ref(false)
 
 const bookingModalRef = ref<BookingModalExposedLocal | null>(null)
@@ -423,7 +491,11 @@ const getAvailableSlots = (dayIndex: number) => {
 }
 
 const sendMessage = () => {
-  navigateTo(`/messages?mentor=${mentor.value?.id}`)
+  if (!user.value) {
+    showLoginModal.value = true
+  } else {
+    navigateTo(`/messages?mentor=${mentor.value?.id}`)
+  }
 }
 
 const handleBookingConfirmed = (booking: any) => {

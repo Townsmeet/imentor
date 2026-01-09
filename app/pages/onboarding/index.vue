@@ -31,31 +31,25 @@
               Welcome to iMentorsPro, {{ parsedName.firstName || 'there' }}!
             </h2>
             <p class="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Let's set up your profile so you can get the most out of your {{ userRole === 'mentor' ? 'mentoring' : 'learning' }} journey.
+              Let's set up your profile so you can get the most out of your mentoring journey.
             </p>
           </div>
 
           <div class="max-w-md mx-auto">
             <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6 mb-6">
               <div class="flex items-center space-x-4">
-                <div :class="[
-                  'w-12 h-12 rounded-xl flex items-center justify-center',
-                  userRole === 'mentor' ? 'bg-purple-100 dark:bg-purple-900/20' : 'bg-blue-100 dark:bg-blue-900/20'
-                ]">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-purple-100 dark:bg-purple-900/20">
                   <Icon 
-                    :name="userRole === 'mentor' ? 'heroicons:academic-cap' : 'heroicons:user'"
-                    :class="[
-                      'w-6 h-6',
-                      userRole === 'mentor' ? 'text-purple-600 dark:text-purple-400' : 'text-blue-600 dark:text-blue-400'
-                    ]"
+                    name="heroicons:academic-cap"
+                    class="w-6 h-6 text-purple-600 dark:text-purple-400"
                   />
                 </div>
                 <div>
                   <p class="font-semibold text-gray-900 dark:text-white capitalize">
-                    {{ userRole }}
+                    Mentor
                   </p>
                   <p class="text-sm text-gray-600 dark:text-gray-400">
-                    {{ userRole === 'mentor' ? 'Share your expertise and guide others' : 'Learn from experienced professionals' }}
+                    Share your expertise and guide others
                   </p>
                 </div>
               </div>
@@ -102,7 +96,7 @@
                 </label>
               </div>
               <p class="text-sm text-gray-600 dark:text-gray-400 mt-3">
-                {{ userRole === 'mentor' ? 'Add a professional photo to help mentees connect with you' : 'Add a profile photo (optional)' }}
+                Add a professional photo to help mentees connect with you
               </p>
             </div>
 
@@ -129,9 +123,7 @@
             <UFormField label="Bio" name="bio" required>
               <UTextarea
                 v-model="profileForm.bio"
-                :placeholder="userRole === 'mentor' 
-                  ? 'Describe your experience and what you can help with...' 
-                  : 'Tell us about your background and what you want to learn...'"
+                placeholder="Describe your experience and what you can help with..."
                 :rows="4"
                 resize
                 class="w-full"
@@ -149,206 +141,140 @@
           </UForm>
         </div>
 
-        <!-- Step 3: Role-specific Setup -->
+        <!-- Step 3: Mentor Expertise -->
         <div v-else-if="currentStep === 3" class="p-8">
-          <!-- Mentor Setup -->
-          <div v-if="userRole === 'mentor'">
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-              Your Expertise
-            </h2>
-            
-            <div class="space-y-6">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <UFormField label="Years of Experience" name="experience" required>
-                  <USelect
-                    v-model="mentorForm.experience"
-                    :items="experienceOptions"
-                    placeholder="Select your experience level"
-                    size="lg"
-                    class="w-full"
-                  />
-                </UFormField>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+            Your Expertise
+          </h2>
+          
+          <div class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <UFormField label="Years of Experience" name="experience" required>
+                <USelect
+                  v-model="mentorForm.experience"
+                  :items="experienceOptions"
+                  placeholder="Select your experience level"
+                  size="lg"
+                  class="w-full"
+                />
+              </UFormField>
 
-                <UFormField label="Hourly Rate (USD)" name="hourlyRate" required>
-                  <UInput
-                    v-model="mentorForm.hourlyRate"
-                    type="number"
-                    placeholder="75"
-                    size="lg"
-                    icon="heroicons:currency-dollar"
-                    class="w-full"
-                  />
-                </UFormField>
-              </div>
+              <UFormField label="Hourly Rate (USD)" name="hourlyRate" required>
+                <UInput
+                  v-model="mentorForm.hourlyRate"
+                  type="number"
+                  placeholder="75"
+                  size="lg"
+                  icon="heroicons:currency-dollar"
+                  class="w-full"
+                />
+              </UFormField>
+            </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <UFormField label="Date of Birth" name="dateOfBirth" required>
-                  <UInput
-                    v-model="mentorForm.dateOfBirth"
-                    type="date"
-                    size="lg"
-                    icon="heroicons:calendar"
-                    class="w-full"
-                  />
-                </UFormField>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <UFormField label="Date of Birth" name="dateOfBirth" required>
+                <UInput
+                  v-model="mentorForm.dateOfBirth"
+                  type="date"
+                  size="lg"
+                  icon="heroicons:calendar"
+                  class="w-full"
+                />
+              </UFormField>
 
-                <UFormField label="Expertise Document" name="expertiseDocument" required help="Upload a portfolio, certificate, or CV that proves your expertise (PDF, Word, or Image).">
-                  <div class="flex items-center space-x-3 w-full">
-                    <UInput
-                      type="file"
-                      size="lg"
-                      icon="heroicons:document-text"
-                      class="flex-1"
-                      accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp"
-                      @change="handleFileUpload"
-                    />
-                    <div v-if="isUploading" class="flex items-center">
-                      <UIcon name="heroicons:arrow-path" class="animate-spin w-5 h-5 text-blue-600" />
-                    </div>
-                    <div v-else-if="mentorForm.expertiseDocument" class="flex items-center">
-                      <UIcon name="heroicons:check-circle" class="w-5 h-5 text-green-600" />
-                    </div>
-                  </div>
-                  <p v-if="mentorForm.expertiseDocument" class="text-xs text-gray-500 mt-1 truncate max-w-xs">
-                    Uploaded: {{ mentorForm.expertiseDocument.split('/').pop() }}
-                  </p>
-                </UFormField>
-              </div>
-
-              <!-- ID Document Upload -->
-              <UFormField label="ID Document" name="idDocument" required help="Upload a government-issued ID (Passport, National ID, or Driver's License) for identity verification.">
+              <UFormField label="Expertise Document" name="expertiseDocument" required help="Upload a portfolio, certificate, or CV that proves your expertise (PDF, Word, or Image).">
                 <div class="flex items-center space-x-3 w-full">
                   <UInput
                     type="file"
                     size="lg"
-                    icon="heroicons:identification"
+                    icon="heroicons:document-text"
                     class="flex-1"
-                    accept=".pdf,.png,.jpg,.jpeg,.webp"
-                    @change="handleIdDocumentUpload"
+                    accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp"
+                    @change="handleFileUpload"
                   />
-                  <div v-if="isUploadingId" class="flex items-center">
+                  <div v-if="isUploading" class="flex items-center">
                     <UIcon name="heroicons:arrow-path" class="animate-spin w-5 h-5 text-blue-600" />
                   </div>
-                  <div v-else-if="mentorForm.idDocument" class="flex items-center">
+                  <div v-else-if="mentorForm.expertiseDocument" class="flex items-center">
                     <UIcon name="heroicons:check-circle" class="w-5 h-5 text-green-600" />
                   </div>
                 </div>
-                <p v-if="mentorForm.idDocument" class="text-xs text-gray-500 mt-1 truncate max-w-xs">
-                  Uploaded: {{ mentorForm.idDocument.split('/').pop() }}
-                </p>
-                <p class="text-xs text-gray-400 mt-2">
-                  <UIcon name="heroicons:lock-closed" class="w-3 h-3 inline" />
-                  Your ID is securely stored and only used for verification purposes.
+                <p v-if="mentorForm.expertiseDocument" class="text-xs text-gray-500 mt-1 truncate max-w-xs">
+                  Uploaded: {{ mentorForm.expertiseDocument.split('/').pop() }}
                 </p>
               </UFormField>
-
-              <UFormField label="Skills & Expertise" name="skills" required>
-                <div class="space-y-3">
-                  <UInput
-                    v-model="skillInput"
-                    placeholder="Add a skill (e.g., JavaScript, Leadership)"
-                    size="lg"
-                    @keyup.enter="addSkill"
-                    class="w-full"
-                  >
-                    <template #trailing>
-                      <UButton
-                        @click="addSkill"
-                        size="xs"
-                        variant="ghost"
-                        icon="heroicons:plus"
-                      />
-                    </template>
-                  </UInput>
-                  <div v-if="mentorForm.skills.length > 0" class="flex flex-wrap gap-2">
-                    <UBadge
-                      v-for="skill in mentorForm.skills"
-                      :key="skill"
-                      variant="soft"
-                      class="cursor-pointer"
-                      @click="removeSkill(skill)"
-                    >
-                      {{ skill }}
-                      <Icon name="heroicons:x-mark" class="w-3 h-3 ml-1" />
-                    </UBadge>
-                  </div>
-                </div>
-              </UFormField>
-
-              <UFormField label="Categories" name="categories" required>
-                <USelectMenu
-                  v-model="mentorForm.categories"
-                  :items="categoryOptions"
-                  multiple
-                  placeholder="Select categories you can mentor in"
-                  size="lg"
-                  class="w-full"
-                />
-              </UFormField>
             </div>
-          </div>
 
-          <!-- Mentee Setup -->
-          <div v-else>
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-              Your Learning Goals
-            </h2>
-            
-            <div class="space-y-6">
-              <UFormField label="Experience Level" name="experience" required>
-                <USelect
-                  v-model="menteeForm.experience"
-                  :items="experienceOptions"
-                  placeholder="Select your current level"
+            <!-- ID Document Upload -->
+            <UFormField label="ID Document" name="idDocument" required help="Upload a government-issued ID (Passport, National ID, or Driver's License) for identity verification.">
+              <div class="flex items-center space-x-3 w-full">
+                <UInput
+                  type="file"
                   size="lg"
-                  class="w-full"
+                  icon="heroicons:identification"
+                  class="flex-1"
+                  accept=".pdf,.png,.jpg,.jpeg,.webp"
+                  @change="handleIdDocumentUpload"
                 />
-              </UFormField>
-
-              <UFormField label="Areas of Interest" name="interests" required>
-                <USelectMenu
-                  v-model="menteeForm.interests"
-                  :items="categoryOptions"
-                  multiple
-                  placeholder="What would you like to learn about?"
-                  size="lg"
-                  class="w-full"
-                />
-              </UFormField>
-
-              <UFormField label="Goals" name="goals" required>
-                <div class="space-y-3">
-                  <UInput
-                    v-model="goalInput"
-                    placeholder="Add a goal (e.g., Get promoted, Learn React)"
-                    size="lg"
-                    @keyup.enter="addGoal"
-                    class="w-full"
-                  >
-                    <template #trailing>
-                      <UButton
-                        @click="addGoal"
-                        size="xs"
-                        variant="ghost"
-                        icon="heroicons:plus"
-                      />
-                    </template>
-                  </UInput>
-                  <div v-if="menteeForm.goals.length > 0" class="flex flex-wrap gap-2">
-                    <UBadge
-                      v-for="goal in menteeForm.goals"
-                      :key="goal"
-                      variant="soft"
-                      class="cursor-pointer"
-                      @click="removeGoal(goal)"
-                    >
-                      {{ goal }}
-                      <Icon name="heroicons:x-mark" class="w-3 h-3 ml-1" />
-                    </UBadge>
-                  </div>
+                <div v-if="isUploadingId" class="flex items-center">
+                  <UIcon name="heroicons:arrow-path" class="animate-spin w-5 h-5 text-blue-600" />
                 </div>
-              </UFormField>
-            </div>
+                <div v-else-if="mentorForm.idDocument" class="flex items-center">
+                  <UIcon name="heroicons:check-circle" class="w-5 h-5 text-green-600" />
+                </div>
+              </div>
+              <p v-if="mentorForm.idDocument" class="text-xs text-gray-500 mt-1 truncate max-w-xs">
+                Uploaded: {{ mentorForm.idDocument.split('/').pop() }}
+              </p>
+              <p class="text-xs text-gray-400 mt-2">
+                <UIcon name="heroicons:lock-closed" class="w-3 h-3 inline" />
+                Your ID is securely stored and only used for verification purposes.
+              </p>
+            </UFormField>
+
+            <UFormField label="Skills & Expertise" name="skills" required>
+              <div class="space-y-3">
+                <UInput
+                  v-model="skillInput"
+                  placeholder="Add a skill (e.g., JavaScript, Leadership)"
+                  size="lg"
+                  @keyup.enter="addSkill"
+                  class="w-full"
+                >
+                  <template #trailing>
+                    <UButton
+                      @click="addSkill"
+                      size="xs"
+                      variant="ghost"
+                      icon="heroicons:plus"
+                    />
+                  </template>
+                </UInput>
+                <div v-if="mentorForm.skills.length > 0" class="flex flex-wrap gap-2">
+                  <UBadge
+                    v-for="skill in mentorForm.skills"
+                    :key="skill"
+                    variant="soft"
+                    class="cursor-pointer"
+                    @click="removeSkill(skill)"
+                  >
+                    {{ skill }}
+                    <Icon name="heroicons:x-mark" class="w-3 h-3 ml-1" />
+                  </UBadge>
+                </div>
+              </div>
+            </UFormField>
+
+            <UFormField label="Categories" name="categories" required>
+              <USelectMenu
+                v-model="mentorForm.categories"
+                :items="categoryOptions"
+                multiple
+                placeholder="Select categories you can mentor in"
+                size="lg"
+                class="w-full"
+              />
+            </UFormField>
           </div>
         </div>
 
@@ -414,10 +340,7 @@
           </h2>
           
           <p class="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-            {{ userRole === 'mentor' 
-              ? 'Your mentor profile is complete. Start connecting with mentees and share your expertise!'
-              : 'Your profile is ready! You can now browse mentors and book your first session.'
-            }}
+            Your mentor profile is complete. Start connecting with mentees and share your expertise!
           </p>
 
           <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6 max-w-md mx-auto mb-8">
@@ -425,10 +348,8 @@
               Next Steps:
             </h3>
             <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-2">
-              <li v-if="userRole === 'mentor'">• Set your availability schedule</li>
-              <li v-if="userRole === 'mentor'">• Review your profile and make it shine</li>
-              <li v-if="userRole === 'mentee'">• Browse available mentors</li>
-              <li v-if="userRole === 'mentee'">• Book your first mentoring session</li>
+              <li>• Set your availability schedule</li>
+              <li>• Review your profile and make it shine</li>
               <li>• Complete your profile with a photo</li>
             </ul>
           </div>
@@ -622,14 +543,9 @@ const canProceed = computed(() => {
     case 2:
       return profileForm.firstName && profileForm.lastName && profileForm.bio
     case 3:
-      if (userRole.value === 'mentor') {
-        return mentorForm.experience && mentorForm.hourlyRate && 
-               mentorForm.skills.length > 0 && mentorForm.categories.length > 0 &&
-               mentorForm.dateOfBirth && mentorForm.expertiseDocument && mentorForm.idDocument
-      } else {
-        return menteeForm.experience && menteeForm.interests.length > 0 && 
-               menteeForm.goals.length > 0
-      }
+      return mentorForm.experience && mentorForm.hourlyRate && 
+             mentorForm.skills.length > 0 && mentorForm.categories.length > 0 &&
+             mentorForm.dateOfBirth && mentorForm.expertiseDocument && mentorForm.idDocument
     case 4:
       return preferencesForm.timezone && preferencesForm.languages.length > 0
     default:
@@ -785,21 +701,15 @@ const completeOnboardingFlow = async () => {
           bio: profileForm.bio,
           location: profileForm.location,
         },
-        roleData: userRole.value === 'mentor' 
-          ? {
-              experience: mentorForm.experience,
-              hourlyRate: mentorForm.hourlyRate,
-              skills: mentorForm.skills,
-              categories: mentorForm.categories,
-              dateOfBirth: mentorForm.dateOfBirth,
-              expertiseDocument: mentorForm.expertiseDocument,
-              idDocument: mentorForm.idDocument,
-            }
-          : {
-              experience: menteeForm.experience,
-              interests: menteeForm.interests,
-              goals: menteeForm.goals,
-            },
+        roleData: {
+          experience: mentorForm.experience,
+          hourlyRate: mentorForm.hourlyRate,
+          skills: mentorForm.skills,
+          categories: mentorForm.categories,
+          dateOfBirth: mentorForm.dateOfBirth,
+          expertiseDocument: mentorForm.expertiseDocument,
+          idDocument: mentorForm.idDocument,
+        },
         preferences: {
           timezone: preferencesForm.timezone,
           languages: preferencesForm.languages,
@@ -862,6 +772,11 @@ onMounted(async () => {
     const parts = user.value.name.split(' ')
     profileForm.firstName = parts[0] || ''
     profileForm.lastName = parts.slice(1).join(' ') || ''
+  }
+
+  // Redirect mentees away from onboarding
+  if (userRole.value === 'mentee') {
+    await navigateTo('/dashboard')
   }
 })
 </script>

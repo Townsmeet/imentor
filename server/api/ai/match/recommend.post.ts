@@ -1,7 +1,7 @@
 import { eq, and, sql } from 'drizzle-orm'
 import { db } from '../../../utils/drizzle'
 import { aiMatchingSession, aiMatchResult, mentorProfile, user } from '../../../db/schema'
-import { requireUserSession } from '../../../utils/session'
+import { getUserSession } from '../../../utils/session'
 import { chatCompletion, FREE_MODELS } from '../../../utils/openrouter'
 
 interface RecommendBody {
@@ -18,8 +18,8 @@ interface ExtractedPreferences {
 }
 
 export default defineEventHandler(async (event) => {
-  const session = await requireUserSession(event)
-  const userId = session.user.id
+  const session = await getUserSession(event)
+  const userId = session?.user?.id || null
   const body = await readBody<RecommendBody>(event)
 
   if (!body.sessionId) {
@@ -36,7 +36,7 @@ export default defineEventHandler(async (event) => {
     .where(eq(aiMatchingSession.id, body.sessionId))
     .limit(1)
 
-  if (!matchSession || matchSession.userId !== userId) {
+  if (!matchSession || (matchSession.userId && matchSession.userId !== userId)) {
     throw createError({
       statusCode: 404,
       message: 'Session not found',
@@ -167,7 +167,7 @@ Return an array of these objects, sorted by score (highest first). Return ONLY t
   for (let i = 0; i < topMatches.length; i++) {
     const match = topMatches[i]
     const mentor = normalizedMentors[match.mentorIndex]
-    
+
     if (!mentor) continue
 
     const [result] = await db

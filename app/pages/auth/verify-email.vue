@@ -42,7 +42,7 @@
       </UButton>
 
       <UButton
-        to="/auth/login"
+        :to="route.query.redirect ? `/auth/login?redirect=${encodeURIComponent(route.query.redirect as string)}` : '/auth/login'"
         variant="ghost"
         block
         size="lg"

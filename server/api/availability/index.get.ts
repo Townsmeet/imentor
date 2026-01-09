@@ -5,14 +5,12 @@ import { auth } from '../../utils/auth'
 
 export default defineEventHandler(async (event) => {
   const session = await auth.api.getSession({ headers: event.headers })
+  const query = getQuery(event)
+  const mentorId = (query.mentorId as string) || session?.user?.id
 
-  if (!session?.user) {
+  if (!mentorId) {
     throw createError({ statusCode: 401, message: 'Unauthorized' })
   }
-
-  // Get mentor ID from query or use current user
-  const query = getQuery(event)
-  const mentorId = (query.mentorId as string) || session.user.id
 
   try {
     const [slots, bookings] = await Promise.all([

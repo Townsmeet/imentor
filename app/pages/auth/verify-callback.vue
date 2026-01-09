@@ -73,7 +73,11 @@ onMounted(async () => {
     
     // Redirect after a short delay
     setTimeout(async () => {
-      if (!hasCompletedOnboarding.value) {
+      const redirect = route.query.redirect as string
+      
+      if (redirect) {
+        await navigateTo(redirect)
+      } else if (!hasCompletedOnboarding.value) {
         await navigateTo('/onboarding')
       } else if (user.value?.role === 'admin') {
         await navigateTo('/admin')

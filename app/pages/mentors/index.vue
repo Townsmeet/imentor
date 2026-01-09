@@ -1,5 +1,28 @@
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Personalized Banner (from Discovery Flow) -->
+    <div v-if="isFromDiscovery" class="mb-6">
+      <div class="bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl p-4 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+            <Icon name="heroicons:sparkles" class="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <p class="font-semibold text-white">Personalized for you</p>
+            <p class="text-sm text-blue-100">Based on your preferences</p>
+          </div>
+        </div>
+        <UButton
+          variant="ghost"
+          size="sm"
+          color="neutral"
+          @click="clearDiscoveryFilters"
+        >
+          Clear preferences
+        </UButton>
+      </div>
+    </div>
+
     <!-- Header -->
     <div class="mb-8">
       <div class="flex items-center justify-between">
@@ -29,7 +52,7 @@
     />
 
     <!-- Search and Filters -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-8">
+    <div v-if="aiMatches.length === 0" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-8">
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <!-- Search -->
         <div class="lg:col-span-2">
@@ -44,7 +67,8 @@
         <!-- Category Filter -->
         <USelectMenu
           v-model="selectedCategories"
-          :items="getAllCategories"
+          :items="categoryItems"
+          value-key="value"
           placeholder="Categories"
           multiple
           searchable
@@ -54,7 +78,8 @@
         <!-- Skills Filter -->
         <USelectMenu
           v-model="selectedSkills"
-          :items="getAllSkills"
+          :items="skillItems"
+          value-key="value"
           placeholder="Skills"
           multiple
           searchable
@@ -120,7 +145,7 @@
       </div>
     </div>
 
-    <div v-else-if="filteredMentors.length === 0" class="text-center py-12">
+    <div v-else-if="aiMatches.length === 0 && filteredMentors.length === 0" class="text-center py-12">
       <Icon name="heroicons:magnifying-glass" class="w-16 h-16 text-gray-400 mx-auto mb-4" />
       <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
         No mentors found
@@ -133,7 +158,7 @@
       </UButton>
     </div>
 
-    <div v-else>
+    <div v-else-if="aiMatches.length === 0">
       <!-- Results Count -->
       <div class="flex items-center justify-between mb-6">
         <p class="text-gray-600 dark:text-gray-400">
@@ -143,6 +168,7 @@
         <USelectMenu
           v-model="sortBy"
           :items="sortOptions"
+          value-key="value"
           size="sm"
         />
       </div>
@@ -245,15 +271,15 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({
-  middleware: ['auth', 'mentee-only']
-})
+const route = useRoute()
+const router = useRouter()
 
 const {
   isLoading,
   searchQuery,
   selectedCategories,
   selectedSkills,
+  priceRange,
   filteredMentors,
   totalMentors,
   fetchMentors,
@@ -261,6 +287,25 @@ const {
   getAllCategories,
   getAllSkills
 } = useMentors()
+
+// Transform string arrays to USelectMenu format
+const categoryItems = computed(() => 
+  getAllCategories.value.map(cat => ({ label: cat, value: cat }))
+)
+const skillItems = computed(() => 
+  getAllSkills.value.map(skill => ({ label: skill, value: skill }))
+)
+
+// Check if coming from discovery flow
+const isFromDiscovery = computed(() => route.query.from === 'discovery')
+
+// Clear discovery filters and update URL
+const clearDiscoveryFilters = () => {
+  selectedCategories.value.length = 0
+  selectedSkills.value.length = 0
+  priceRange.value = {}
+  router.replace({ query: {} })
+}
 
 // AI Matching state
 const showAIMatcher = ref(false)
@@ -338,8 +383,31 @@ watch(searchQuery, () => {
   }, 300)
 })
 
+// Apply discovery flow filters from query params
+const applyDiscoveryFilters = () => {
+  const query = route.query
+  
+  // Apply categories
+  if (query.categories && typeof query.categories === 'string') {
+    selectedCategories.value = query.categories.split(',')
+  }
+  
+  // Apply price range
+  if (query.minPrice) {
+    priceRange.value.min = parseFloat(query.minPrice as string)
+  }
+  if (query.maxPrice) {
+    priceRange.value.max = parseFloat(query.maxPrice as string)
+  }
+}
+
 // Fetch mentors and filters on mount
 onMounted(async () => {
+  // Apply discovery filters first if present
+  if (isFromDiscovery.value) {
+    applyDiscoveryFilters()
+  }
+  
   await Promise.all([fetchMentors(), fetchFilters()])
 })
 

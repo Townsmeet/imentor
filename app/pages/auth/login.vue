@@ -139,6 +139,7 @@ definePageMeta({
 
 const { login, user, hasCompletedOnboarding } = useAuth()
 const toast = useToast()
+const route = useRoute()
 
 const isLoading = ref(false)
 const showPassword = ref(false)
@@ -167,8 +168,12 @@ const handleLogin = async () => {
         color: 'success'
       })
       
-      // Redirect based on onboarding status and role
-      if (!hasCompletedOnboarding.value) {
+      // Redirect based on redirect param, onboarding status and role
+      const redirect = route.query.redirect as string
+      
+      if (redirect) {
+        await navigateTo(redirect)
+      } else if (!hasCompletedOnboarding.value) {
         await navigateTo('/onboarding')
       } else if (user.value?.role === 'admin') {
         await navigateTo('/admin')
@@ -206,9 +211,14 @@ const handleLogin = async () => {
 const handleSocialLogin = async (provider: 'google' | 'linkedin') => {
   socialLoading.value = provider
   try {
+    const redirect = route.query.redirect as string
+    const callbackURL = redirect 
+      ? `/auth/oauth-callback?redirect=${encodeURIComponent(redirect)}`
+      : '/auth/oauth-callback'
+      
     await authClient.signIn.social({
       provider,
-      callbackURL: '/auth/oauth-callback'
+      callbackURL
     })
   } catch (error) {
     socialLoading.value = null

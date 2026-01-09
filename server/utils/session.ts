@@ -1,9 +1,13 @@
 import { auth } from './auth'
 
-export const requireUserSession = async (event: any) => {
-    const session = await auth.api.getSession({
+export const getUserSession = async (event: any) => {
+    return await auth.api.getSession({
         headers: event.headers
     })
+}
+
+export const requireUserSession = async (event: any) => {
+    const session = await getUserSession(event)
 
     if (!session) {
         throw createError({

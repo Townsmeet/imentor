@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { db } from '../../../utils/drizzle'
 import { aiMatchingSession } from '../../../db/schema'
-import { requireUserSession } from '../../../utils/session'
+import { getUserSession } from '../../../utils/session'
 import { chatCompletion, FREE_MODELS } from '../../../utils/openrouter'
 
 interface MessageBody {
@@ -10,8 +10,8 @@ interface MessageBody {
 }
 
 export default defineEventHandler(async (event) => {
-  const session = await requireUserSession(event)
-  const userId = session.user.id
+  const session = await getUserSession(event)
+  const userId = session?.user?.id || null
   const body = await readBody<MessageBody>(event)
 
   if (!body.sessionId || !body.message) {
@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
     .where(eq(aiMatchingSession.id, body.sessionId))
     .limit(1)
 
-  if (!matchSession || matchSession.userId !== userId) {
+  if (!matchSession || (matchSession.userId && matchSession.userId !== userId)) {
     throw createError({
       statusCode: 404,
       message: 'Session not found',
@@ -84,7 +84,7 @@ Be conversational, friendly, and concise. Ask one question at a time. After gath
     .where(eq(aiMatchingSession.id, body.sessionId))
 
   // Check if we should extract preferences and generate matches
-  const shouldGenerateMatches = conversationHistory.length >= 8 || 
+  const shouldGenerateMatches = conversationHistory.length >= 8 ||
     aiResponse.content.toLowerCase().includes('ready to find') ||
     aiResponse.content.toLowerCase().includes('show you some matches')
 

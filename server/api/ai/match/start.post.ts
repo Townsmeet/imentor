@@ -1,12 +1,12 @@
 import { eq } from 'drizzle-orm'
 import { db } from '../../../utils/drizzle'
 import { aiMatchingSession } from '../../../db/schema'
-import { requireUserSession } from '../../../utils/session'
+import { getUserSession } from '../../../utils/session'
 import { chatCompletion, FREE_MODELS } from '../../../utils/openrouter'
 
 export default defineEventHandler(async (event) => {
-  const session = await requireUserSession(event)
-  const userId = session.user.id
+  const session = await getUserSession(event)
+  const userId = session?.user?.id || null
 
   // Create new AI matching session
   const [newSession] = await db
