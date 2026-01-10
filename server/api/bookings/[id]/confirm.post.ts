@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm'
 import { db } from '../../../utils/drizzle'
 import { booking, user } from '../../../db/schema'
 import { auth } from '../../../utils/auth'
-import { generateMeetingLink } from '../../../utils/meeting'
+import { createJaaSMeeting, generateMeetingLink } from '../../../utils/meeting'
 import { getPaymentIntent, isPaymentSuccessful } from '../../../utils/stripe'
 import { notifyUser } from '../../../utils/notifications'
 import { createBookingConfirmedMentorEmail, createBookingConfirmedMenteeEmail } from '../../../email-templates'
@@ -26,14 +26,12 @@ export default defineEventHandler(async (event) => {
     }
 
     try {
-        // Get the booking with mentor and mentee emails
+        // Get the booking
         const bookingResult = await db
             .select({
                 booking: booking,
-                mentorEmail: user.email,
             })
             .from(booking)
-            .leftJoin(user, eq(booking.mentorId, user.id))
             .where(eq(booking.id, bookingId))
             .limit(1)
 
@@ -42,16 +40,6 @@ export default defineEventHandler(async (event) => {
         }
 
         const existingBooking = bookingResult[0].booking
-        const mentorEmail = bookingResult[0].mentorEmail
-
-        // Get mentee email
-        const menteeResult = await db
-            .select({ email: user.email })
-            .from(user)
-            .where(eq(user.id, existingBooking.menteeId))
-            .limit(1)
-
-        const menteeEmail = menteeResult[0]?.email
 
         // Only the mentee who created the booking can confirm it
         if (existingBooking.menteeId !== session.user.id) {
@@ -92,15 +80,54 @@ export default defineEventHandler(async (event) => {
             })
         }
 
-        // Generate meeting link with Google Meet (or fallback to Jitsi)
-        const meetingLink = await generateMeetingLink({
+        // Get mentor and mentee details for meeting creation
+        const mentorUser = await db.query.user.findFirst({
+            where: eq(user.id, existingBooking.mentorId),
+            columns: { id: true, name: true, email: true, image: true }
+        })
+
+        const menteeUser = await db.query.user.findFirst({
+            where: eq(user.id, existingBooking.menteeId),
+            columns: { id: true, name: true, email: true, image: true }
+        })
+
+        // Generate meeting links using JaaS (with individual JWTs for each participant)
+        let meetingLink: string
+        let mentorMeetingLink: string | undefined
+        let menteeMeetingLink: string | undefined
+
+        const jaasMeeting = await createJaaSMeeting({
             title: existingBooking.title,
-            description: existingBooking.description || undefined,
             startTime: existingBooking.scheduledDate,
             durationMinutes: existingBooking.duration,
-            mentorEmail: mentorEmail || undefined,
-            menteeEmail: menteeEmail || undefined,
+            mentor: {
+                id: existingBooking.mentorId,
+                name: mentorUser?.name || 'Mentor',
+                email: mentorUser?.email || undefined,
+                avatar: mentorUser?.image || undefined,
+            },
+            mentee: {
+                id: existingBooking.menteeId,
+                name: menteeUser?.name || 'Mentee',
+                email: menteeUser?.email || undefined,
+                avatar: menteeUser?.image || undefined,
+            },
         })
+
+        if (jaasMeeting) {
+            meetingLink = jaasMeeting.menteeMeetingLink // Default link stored in DB
+            mentorMeetingLink = jaasMeeting.mentorMeetingLink
+            menteeMeetingLink = jaasMeeting.menteeMeetingLink
+        } else {
+            // Fallback to simple meeting link
+            meetingLink = await generateMeetingLink({
+                title: existingBooking.title,
+                startTime: existingBooking.scheduledDate,
+                durationMinutes: existingBooking.duration,
+            })
+            mentorMeetingLink = meetingLink
+            menteeMeetingLink = meetingLink
+        }
 
         // Update booking status to confirmed
         const [updatedBooking] = await db
@@ -115,19 +142,8 @@ export default defineEventHandler(async (event) => {
             .where(eq(booking.id, bookingId))
             .returning()
 
-        // Get mentor and mentee details for notifications
-        const mentorUser = await db.query.user.findFirst({
-            where: eq(user.id, existingBooking.mentorId),
-            columns: { name: true, email: true }
-        })
-
-        const menteeUser = await db.query.user.findFirst({
-            where: eq(user.id, existingBooking.menteeId),
-            columns: { name: true, email: true }
-        })
-
-        // Prepare booking details for notifications
-        const bookingDetails = {
+        // Prepare booking details for notifications (with individual links)
+        const mentorBookingDetails = {
             mentorName: mentorUser?.name || 'Mentor',
             menteeName: menteeUser?.name || 'Mentee',
             sessionTitle: existingBooking.title,
@@ -135,12 +151,23 @@ export default defineEventHandler(async (event) => {
             duration: existingBooking.duration,
             price: existingBooking.price?.toString() || '0',
             bookingId: bookingId,
-            meetingLink
+            meetingLink: mentorMeetingLink
         }
 
-        // Prepare email content
-        const mentorEmailContent = createBookingConfirmedMentorEmail(bookingDetails)
-        const menteeEmailContent = createBookingConfirmedMenteeEmail(bookingDetails)
+        const menteeBookingDetails = {
+            mentorName: mentorUser?.name || 'Mentor',
+            menteeName: menteeUser?.name || 'Mentee',
+            sessionTitle: existingBooking.title,
+            scheduledDate: existingBooking.scheduledDate,
+            duration: existingBooking.duration,
+            price: existingBooking.price?.toString() || '0',
+            bookingId: bookingId,
+            meetingLink: menteeMeetingLink
+        }
+
+        // Prepare email content with individual meeting links
+        const mentorEmailContent = createBookingConfirmedMentorEmail(mentorBookingDetails)
+        const menteeEmailContent = createBookingConfirmedMenteeEmail(menteeBookingDetails)
 
         // Send in-app and email notifications
         await Promise.all([

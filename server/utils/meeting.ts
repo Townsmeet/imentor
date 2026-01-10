@@ -1,165 +1,133 @@
-import { google } from 'googleapis'
+import * as jose from 'jose'
 
-// Google Calendar API for creating Meet links
-// Requires: NUXT_GOOGLE_CLIENT_EMAIL and NUXT_GOOGLE_PRIVATE_KEY environment variables
+// JaaS (Jitsi as a Service) Configuration
+// Requires: NUXT_JAAS_APP_ID, NUXT_JAAS_API_KEY, and NUXT_JAAS_KEY_ID environment variables
+const JAAS_APP_ID = process.env.NUXT_JAAS_APP_ID
+const JAAS_API_KEY = process.env.NUXT_JAAS_API_KEY?.replace(/\\n/g, '\n')
+const JAAS_KEY_ID = process.env.NUXT_JAAS_KEY_ID // The Key ID from JaaS dashboard (different from App ID)
 
-const GOOGLE_CLIENT_EMAIL = process.env.NUXT_GOOGLE_CLIENT_EMAIL
-const GOOGLE_PRIVATE_KEY = process.env.NUXT_GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n')
-// Calendar ID should be a real Workspace user's email, or 'primary' when impersonating
-const GOOGLE_CALENDAR_ID = process.env.NUXT_GOOGLE_CALENDAR_ID || 'primary'
-// The Workspace user email to impersonate (must have Google Meet enabled)
-const GOOGLE_IMPERSONATE_USER = process.env.NUXT_GOOGLE_IMPERSONATE_USER
-
-let calendarClient: ReturnType<typeof google.calendar> | null = null
+// Cache the imported private key
+let privateKey: jose.KeyLike | null = null
 
 /**
- * Initialize Google Calendar API client with service account credentials
- * Uses domain-wide delegation to impersonate a Workspace user if configured
+ * Import and cache the JaaS private key
  */
-function getCalendarClient() {
-    if (calendarClient) return calendarClient
+async function getPrivateKey(): Promise<jose.KeyLike | null> {
+    if (privateKey) return privateKey
 
-    if (!GOOGLE_CLIENT_EMAIL || !GOOGLE_PRIVATE_KEY) {
-        console.warn('[Google Meet] Missing NUXT_GOOGLE_CLIENT_EMAIL or NUXT_GOOGLE_PRIVATE_KEY')
-        return null
-    }
-
-    if (!GOOGLE_IMPERSONATE_USER) {
-        console.warn('[Google Meet] Missing NUXT_GOOGLE_IMPERSONATE_USER - cannot create Meet links without impersonating a Workspace user')
+    if (!JAAS_API_KEY) {
+        console.warn('[JaaS] Missing NUXT_JAAS_API_KEY')
         return null
     }
 
     try {
-        const auth = new google.auth.JWT({
-            email: GOOGLE_CLIENT_EMAIL,
-            key: GOOGLE_PRIVATE_KEY,
-            scopes: [
-                'https://www.googleapis.com/auth/calendar',
-                'https://www.googleapis.com/auth/calendar.events',
-            ],
-            subject: GOOGLE_IMPERSONATE_USER, // Impersonate this Workspace user
-        })
-
-        calendarClient = google.calendar({ version: 'v3', auth })
-        console.log('[Google Meet] Calendar client initialized, impersonating:', GOOGLE_IMPERSONATE_USER)
-        return calendarClient
+        privateKey = await jose.importPKCS8(JAAS_API_KEY, 'RS256')
+        return privateKey
     } catch (error) {
-        console.error('[Google Meet] Failed to initialize calendar client:', error)
+        console.error('[JaaS] Failed to import private key:', error)
         return null
     }
 }
 
 export interface MeetingDetails {
     meetingLink: string
-    calendarEventId?: string
+    mentorMeetingLink: string
+    menteeMeetingLink: string
+    roomName: string
     startTime: Date
     endTime: Date
     title: string
 }
 
-/**
- * Create a Google Meet link via Google Calendar API
- * 
- * Note: Service accounts cannot create Google Meet links without:
- * 1. Being part of a Google Workspace organization (paid plan)
- * 2. Having domain-wide delegation enabled
- * 3. Proper Calendar and Meet API scopes granted
- * 
- * For most use cases, the Jitsi Meet fallback is recommended as it requires
- * no additional setup and works reliably out of the box.
- */
-export async function createGoogleMeetLink(params: {
-    title: string
-    description?: string
-    startTime: Date
-    durationMinutes: number
-    mentorEmail?: string
-    menteeEmail?: string
-}): Promise<MeetingDetails | null> {
-    const calendar = getCalendarClient()
+export interface JaaSUserContext {
+    id: string
+    name: string
+    email?: string
+    avatar?: string
+    isModerator: boolean
+}
 
-    if (!calendar) {
-        console.warn('[Google Meet] Calendar client not available, using fallback')
+/**
+ * Generate a JaaS JWT token for a specific user
+ * 
+ * @param roomName - The unique room name for the meeting
+ * @param user - User context (name, email, moderator status)
+ * @param expiresInHours - How long the token should be valid (default 24 hours)
+ */
+export async function generateJaaSToken(
+    roomName: string,
+    user: JaaSUserContext,
+    expiresInHours: number = 24
+): Promise<string | null> {
+    if (!JAAS_APP_ID) {
+        console.warn('[JaaS] Missing NUXT_JAAS_APP_ID')
         return null
     }
 
-    const endTime = new Date(params.startTime.getTime() + params.durationMinutes * 60 * 1000)
+    if (!JAAS_KEY_ID) {
+        console.warn('[JaaS] Missing NUXT_JAAS_KEY_ID - get this from your JaaS API Keys page')
+        return null
+    }
 
-    console.log('[Google Meet] Creating event with Workspace account')
-    console.log('[Google Meet] Calendar ID:', GOOGLE_CALENDAR_ID)
+    const key = await getPrivateKey()
+    if (!key) {
+        return null
+    }
+
+    const now = Math.floor(Date.now() / 1000)
+    const exp = now + (expiresInHours * 60 * 60)
 
     try {
-        const event = await calendar.events.insert({
-            calendarId: GOOGLE_CALENDAR_ID,
-            conferenceDataVersion: 1,
-            requestBody: {
-                summary: params.title,
-                description: params.description || `iMentor Session: ${params.title}`,
-                start: {
-                    dateTime: params.startTime.toISOString(),
-                    timeZone: 'UTC',
+        // JaaS JWT payload structure
+        // See: https://developer.8x8.com/jaas/docs/api-keys-jwt
+        const token = await new jose.SignJWT({
+            aud: 'jitsi',
+            iss: 'chat',
+            sub: JAAS_APP_ID,
+            room: '*', // Allow access to any room under this app
+            context: {
+                user: {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email || '',
+                    avatar: user.avatar || '',
+                    moderator: user.isModerator ? 'true' : 'false',
                 },
-                end: {
-                    dateTime: endTime.toISOString(),
-                    timeZone: 'UTC',
-                },
-                // Attendees require Domain-Wide Delegation, so omitting them
-                conferenceData: {
-                    createRequest: {
-                        requestId: `imentor-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
-                    },
-                },
-                guestsCanModify: true,
-                reminders: {
-                    useDefault: false,
-                    overrides: [
-                        { method: 'email', minutes: 60 },
-                        { method: 'popup', minutes: 15 },
-                    ],
+                features: {
+                    // Disable lobby - users join directly
+                    lobby: false,
+                    // Allow recording (if enabled on your JaaS plan)
+                    recording: true,
+                    // Allow livestreaming (if enabled on your JaaS plan)
+                    livestreaming: false,
+                    // Allow transcription (if enabled on your JaaS plan)
+                    transcription: false,
+                    // Allow outbound calls (if enabled)
+                    'outbound-call': false,
                 },
             },
         })
+            .setProtectedHeader({ 
+                alg: 'RS256',
+                typ: 'JWT',
+                kid: `${JAAS_APP_ID}/${JAAS_KEY_ID}` // Format: appId/keyId
+            })
+            .setIssuedAt(now)
+            .setNotBefore(now)
+            .setExpirationTime(exp)
+            .sign(key)
 
-        console.log('[Google Meet] Event response:', {
-            id: event.data.id,
-            status: event.data.status,
-            hangoutLink: event.data.hangoutLink,
-            hasConferenceData: !!event.data.conferenceData,
-            conferenceEntryPoints: event.data.conferenceData?.entryPoints?.length || 0
-        })
-
-        const meetLink = event.data.hangoutLink || event.data.conferenceData?.entryPoints?.[0]?.uri
-
-        if (!meetLink) {
-            // Service accounts typically cannot create Google Meet links without Google Workspace
-            // domain-wide delegation. The fallback Jitsi link will be used instead.
-            console.error('[Google Meet] No meeting link in response despite Workspace account')
-            console.error('[Google Meet] Full conferenceData:', JSON.stringify(event.data.conferenceData, null, 2))
-            return null
-        }
-
-        console.log('[Google Meet] Successfully created Meet link:', meetLink)
-
-        return {
-            meetingLink: meetLink,
-            calendarEventId: event.data.id || undefined,
-            startTime: params.startTime,
-            endTime,
-            title: params.title,
-        }
-    } catch (error: any) {
-        console.error('[Google Meet] Failed to create meeting:', error.message)
-        if (error.code) {
-            console.error('[Google Meet] Error code:', error.code)
-        }
+        return token
+    } catch (error) {
+        console.error('[JaaS] Failed to generate JWT:', error)
         return null
     }
 }
 
 /**
- * Generate a fallback meeting link (Jitsi Meet) when Google API is not available
+ * Generate a unique room name for a meeting
  */
-function generateFallbackMeetingLink(): string {
+function generateRoomName(): string {
     const chars = 'abcdefghijklmnopqrstuvwxyz'
     const segments = []
 
@@ -172,15 +140,98 @@ function generateFallbackMeetingLink(): string {
         segments.push(segment)
     }
 
-    const code = segments.join('-')
-
-    // Use Jitsi Meet as fallback (free, no API needed)
-    // Disable lobby, prejoin, and authentication requirements for seamless joining
-    return `https://meet.jit.si/imentor-${code}#config.startWithVideoMuted=false&config.prejoinPageEnabled=false&config.requireDisplayName=false&config.enableLobbyChat=false&userInfo.displayName=iMentor%20User`
+    return `imentor-${segments.join('-')}`
 }
 
 /**
- * Generate a meeting link - tries Google Meet first, falls back to Jitsi
+ * Build a JaaS meeting URL with JWT token
+ */
+function buildJaaSUrl(roomName: string, jwt: string): string {
+    // JaaS URL format: https://8x8.vc/{APP_ID}/{roomName}?jwt={token}
+    return `https://8x8.vc/${JAAS_APP_ID}/${roomName}?jwt=${jwt}`
+}
+
+/**
+ * Create meeting links for both mentor and mentee using JaaS
+ * Each participant gets their own JWT with appropriate permissions
+ */
+export async function createJaaSMeeting(params: {
+    title: string
+    startTime: Date
+    durationMinutes: number
+    mentor: {
+        id: string
+        name: string
+        email?: string
+        avatar?: string
+    }
+    mentee: {
+        id: string
+        name: string
+        email?: string
+        avatar?: string
+    }
+}): Promise<MeetingDetails | null> {
+    if (!JAAS_APP_ID || !JAAS_API_KEY) {
+        console.warn('[JaaS] Missing configuration, cannot create meeting')
+        return null
+    }
+
+    const roomName = generateRoomName()
+    const endTime = new Date(params.startTime.getTime() + params.durationMinutes * 60 * 1000)
+
+    // Calculate token expiry - valid from now until 2 hours after meeting end
+    const hoursUntilExpiry = Math.ceil(
+        (endTime.getTime() - Date.now()) / (1000 * 60 * 60)
+    ) + 2
+
+    // Generate JWT for mentor (moderator)
+    const mentorToken = await generateJaaSToken(roomName, {
+        id: params.mentor.id,
+        name: params.mentor.name,
+        email: params.mentor.email,
+        avatar: params.mentor.avatar,
+        isModerator: true,
+    }, hoursUntilExpiry)
+
+    // Generate JWT for mentee (moderator too - both can join directly)
+    const menteeToken = await generateJaaSToken(roomName, {
+        id: params.mentee.id,
+        name: params.mentee.name,
+        email: params.mentee.email,
+        avatar: params.mentee.avatar,
+        isModerator: true, // Both are moderators so no one waits in lobby
+    }, hoursUntilExpiry)
+
+    if (!mentorToken || !menteeToken) {
+        console.error('[JaaS] Failed to generate meeting tokens')
+        return null
+    }
+
+    const mentorMeetingLink = buildJaaSUrl(roomName, mentorToken)
+    const menteeMeetingLink = buildJaaSUrl(roomName, menteeToken)
+
+    console.log('[JaaS] Created meeting:', {
+        roomName,
+        title: params.title,
+        startTime: params.startTime.toISOString(),
+        endTime: endTime.toISOString(),
+    })
+
+    return {
+        meetingLink: menteeMeetingLink, // Default link (for backward compatibility)
+        mentorMeetingLink,
+        menteeMeetingLink,
+        roomName,
+        startTime: params.startTime,
+        endTime,
+        title: params.title,
+    }
+}
+
+/**
+ * Generate a simple meeting link without user-specific JWTs
+ * Falls back to public Jitsi if JaaS is not configured
  */
 export async function generateMeetingLink(params?: {
     title?: string
@@ -189,25 +240,53 @@ export async function generateMeetingLink(params?: {
     durationMinutes?: number
     mentorEmail?: string
     menteeEmail?: string
+    mentor?: {
+        id: string
+        name: string
+        email?: string
+        avatar?: string
+    }
+    mentee?: {
+        id: string
+        name: string
+        email?: string
+        avatar?: string
+    }
 }): Promise<string> {
-    // If params provided, try Google Meet first
-    if (params?.startTime && params?.title) {
-        const googleMeet = await createGoogleMeetLink({
+    // If full participant details provided, use JaaS with individual tokens
+    if (params?.mentor && params?.mentee && params?.startTime && params?.title) {
+        const jaasMeeting = await createJaaSMeeting({
             title: params.title,
-            description: params.description,
             startTime: params.startTime,
             durationMinutes: params.durationMinutes || 60,
-            mentorEmail: params.mentorEmail,
-            menteeEmail: params.menteeEmail,
+            mentor: params.mentor,
+            mentee: params.mentee,
         })
 
-        if (googleMeet) {
-            return googleMeet.meetingLink
+        if (jaasMeeting) {
+            // Return the mentee link as default (mentor link sent separately)
+            return jaasMeeting.meetingLink
         }
     }
 
-    // Fallback to Jitsi Meet
-    return generateFallbackMeetingLink()
+    // Fallback: Generate a simple JaaS link with a generic token
+    if (JAAS_APP_ID && JAAS_API_KEY) {
+        const roomName = generateRoomName()
+        const token = await generateJaaSToken(roomName, {
+            id: 'guest',
+            name: 'iMentor User',
+            isModerator: true,
+        }, 24)
+
+        if (token) {
+            return buildJaaSUrl(roomName, token)
+        }
+    }
+
+    // Final fallback: Public Jitsi (not recommended, lobby issues)
+    console.warn('[JaaS] Falling back to public Jitsi - lobby may be enabled')
+    const roomName = generateRoomName()
+    return `https://meet.jit.si/${roomName}`
 }
 
 /**
