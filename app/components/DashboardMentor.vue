@@ -14,6 +14,14 @@
         
         <div class="flex items-center space-x-3">
           <UButton
+            to="/earnings"
+            icon="heroicons:banknotes"
+            variant="outline"
+            class="hidden sm:flex"
+          >
+            Earnings
+          </UButton>
+          <UButton
             to="/availability"
             icon="heroicons:clock"
             variant="outline"
@@ -46,7 +54,7 @@
       </div>
     </div>
     <div v-else class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-      <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+      <NuxtLink to="/earnings" class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-700 transition-colors cursor-pointer">
         <div class="flex items-center">
           <div class="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
             <Icon name="heroicons:currency-dollar" class="w-6 h-6 text-green-600 dark:text-green-400" />
@@ -56,7 +64,7 @@
             <p class="text-sm text-gray-600 dark:text-gray-400">This Month</p>
           </div>
         </div>
-      </div>
+      </NuxtLink>
 
       <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
         <div class="flex items-center">

@@ -6,6 +6,8 @@ export const userRoleEnum = pgEnum('user_role', ['mentor', 'mentee', 'admin'])
 export const onboardingStepEnum = pgEnum('onboarding_step', ['verification', 'profile', 'role_setup', 'preferences', 'complete'])
 export const notificationTypeEnum = pgEnum('notification_type', ['info', 'warning', 'error'])
 export const aiMatchStatusEnum = pgEnum('ai_match_status', ['in_progress', 'completed', 'abandoned'])
+export const payoutStatusEnum = pgEnum('payout_status', ['pending', 'processing', 'completed', 'failed'])
+export const bankAccountStatusEnum = pgEnum('bank_account_status', ['pending', 'verified', 'failed'])
 
 // ==================== Better Auth Tables ====================
 
@@ -328,6 +330,71 @@ export const aiMatchFeedback = pgTable('ai_match_feedback', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })
 
+// ==================== Payout Tables ====================
+
+export const mentorBankAccount = pgTable('mentor_bank_account', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  mentorId: text('mentor_id')
+    .notNull()
+    .unique()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  // Stripe Connect account ID
+  stripeConnectAccountId: text('stripe_connect_account_id'),
+  stripeConnectOnboarded: boolean('stripe_connect_onboarded').notNull().default(false),
+  // Bank account details (masked for display)
+  bankName: text('bank_name'),
+  accountHolderName: text('account_holder_name'),
+  accountNumberLast4: text('account_number_last4'),
+  routingNumber: text('routing_number'),
+  accountType: text('account_type'), // 'checking' or 'savings'
+  currency: text('currency').notNull().default('usd'),
+  country: text('country').notNull().default('US'),
+  status: bankAccountStatusEnum('status').notNull().default('pending'),
+  isDefault: boolean('is_default').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const mentorEarning = pgTable('mentor_earning', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  mentorId: text('mentor_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  bookingId: text('booking_id')
+    .notNull()
+    .references(() => booking.id, { onDelete: 'cascade' }),
+  grossAmount: decimal('gross_amount', { precision: 10, scale: 2 }).notNull(),
+  platformFee: decimal('platform_fee', { precision: 10, scale: 2 }).notNull(), // Platform's cut (e.g., 15%)
+  netAmount: decimal('net_amount', { precision: 10, scale: 2 }).notNull(), // Amount mentor receives
+  payoutId: text('payout_id')
+    .references(() => mentorPayout.id, { onDelete: 'set null' }), // null until included in a payout
+  status: text('status').notNull().default('pending'), // 'pending', 'available', 'paid'
+  availableAt: timestamp('available_at'), // When funds become available for payout (after session completion)
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const mentorPayout = pgTable('mentor_payout', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  mentorId: text('mentor_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
+  currency: text('currency').notNull().default('usd'),
+  status: payoutStatusEnum('status').notNull().default('pending'),
+  stripeTransferId: text('stripe_transfer_id'),
+  stripePayoutId: text('stripe_payout_id'),
+  bankAccountId: text('bank_account_id')
+    .references(() => mentorBankAccount.id, { onDelete: 'set null' }),
+  periodStart: timestamp('period_start').notNull(), // Start of the payout period
+  periodEnd: timestamp('period_end').notNull(), // End of the payout period
+  processedAt: timestamp('processed_at'),
+  failureReason: text('failure_reason'),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
 // ==================== Relations ====================
 
 export const userRelations = relations(user, ({ one, many }) => ({
@@ -355,6 +422,13 @@ export const userRelations = relations(user, ({ one, many }) => ({
   notifications: many(notification),
   aiMatchingSessions: many(aiMatchingSession),
   aiMatchFeedbacks: many(aiMatchFeedback),
+  // Payout relations
+  bankAccount: one(mentorBankAccount, {
+    fields: [user.id],
+    references: [mentorBankAccount.mentorId],
+  }),
+  earnings: many(mentorEarning),
+  payouts: many(mentorPayout),
 }))
 
 export const mentorProfileRelations = relations(mentorProfile, ({ one }) => ({
@@ -486,4 +560,40 @@ export const aiMatchFeedbackRelations = relations(aiMatchFeedback, ({ one }) => 
     fields: [aiMatchFeedback.userId],
     references: [user.id],
   }),
+}))
+
+// Payout Relations
+export const mentorBankAccountRelations = relations(mentorBankAccount, ({ one, many }) => ({
+  mentor: one(user, {
+    fields: [mentorBankAccount.mentorId],
+    references: [user.id],
+  }),
+  payouts: many(mentorPayout),
+}))
+
+export const mentorEarningRelations = relations(mentorEarning, ({ one }) => ({
+  mentor: one(user, {
+    fields: [mentorEarning.mentorId],
+    references: [user.id],
+  }),
+  booking: one(booking, {
+    fields: [mentorEarning.bookingId],
+    references: [booking.id],
+  }),
+  payout: one(mentorPayout, {
+    fields: [mentorEarning.payoutId],
+    references: [mentorPayout.id],
+  }),
+}))
+
+export const mentorPayoutRelations = relations(mentorPayout, ({ one, many }) => ({
+  mentor: one(user, {
+    fields: [mentorPayout.mentorId],
+    references: [user.id],
+  }),
+  bankAccount: one(mentorBankAccount, {
+    fields: [mentorPayout.bankAccountId],
+    references: [mentorBankAccount.id],
+  }),
+  earnings: many(mentorEarning),
 }))

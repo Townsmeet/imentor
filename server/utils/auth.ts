@@ -87,3 +87,45 @@ export const auth = betterAuth({
     },
   },
 })
+
+/**
+ * Require authentication for an API route
+ * Throws 401 if not authenticated
+ */
+export async function requireAuth(event: any) {
+  const session = await auth.api.getSession({ headers: event.headers })
+  
+  if (!session?.user) {
+    throw createError({ statusCode: 401, message: 'Unauthorized' })
+  }
+  
+  return session
+}
+
+/**
+ * Require admin authentication for an API route
+ * Throws 401 if not authenticated, 403 if not admin
+ */
+export async function requireAdminAuth(event: any) {
+  const session = await requireAuth(event)
+  
+  if (session.user.role !== 'admin') {
+    throw createError({ statusCode: 403, message: 'Admin access required' })
+  }
+  
+  return session
+}
+
+/**
+ * Require mentor authentication for an API route
+ * Throws 401 if not authenticated, 403 if not mentor
+ */
+export async function requireMentorAuth(event: any) {
+  const session = await requireAuth(event)
+  
+  if (session.user.role !== 'mentor') {
+    throw createError({ statusCode: 403, message: 'Mentor access required' })
+  }
+  
+  return session
+}

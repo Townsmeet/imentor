@@ -1,8 +1,9 @@
 import { eq } from 'drizzle-orm'
 import { db } from '../../utils/drizzle'
-import { booking, user } from '../../db/schema'
+import { booking, user, mentorEarning } from '../../db/schema'
 import { notifyUser } from '../../utils/notifications'
 import { createPaymentSuccessEmail, createPaymentFailedEmail } from '../../email-templates'
+import { calculateEarnings } from '../../utils/stripe'
 import Stripe from 'stripe'
 
 export default defineEventHandler(async (event) => {
@@ -96,7 +97,18 @@ export default defineEventHandler(async (event) => {
                     })
                 ])
 
-                console.log('[Payment Webhook] Payment succeeded, notifications sent')
+                // Create mentor earning record (pending until session completed)
+                const earnings = calculateEarnings(amount)
+                await db.insert(mentorEarning).values({
+                    mentorId: bookingResult.mentorId,
+                    bookingId: bookingResult.id,
+                    grossAmount: earnings.grossAmount.toFixed(2),
+                    platformFee: earnings.platformFee.toFixed(2),
+                    netAmount: earnings.netAmount.toFixed(2),
+                    status: 'pending', // Will become 'available' when session completes
+                })
+
+                console.log('[Payment Webhook] Payment succeeded, notifications sent, earning record created')
             }
         }
 

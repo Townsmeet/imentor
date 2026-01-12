@@ -167,3 +167,69 @@ export interface CalendarEvent {
   mentorId?: string
   menteeId?: string
 }
+
+// Payout Types
+export type PayoutStatus = 'pending' | 'processing' | 'completed' | 'failed'
+export type BankAccountStatus = 'pending' | 'verified' | 'failed'
+export type EarningStatus = 'pending' | 'available' | 'paid'
+
+export interface MentorBankAccount {
+  id: string
+  mentorId: string
+  stripeConnectAccountId?: string
+  stripeConnectOnboarded: boolean
+  bankName?: string
+  accountHolderName?: string
+  accountNumberLast4?: string
+  routingNumber?: string
+  accountType?: string
+  currency: string
+  country: string
+  status: BankAccountStatus
+  isDefault: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface MentorEarning {
+  id: string
+  mentorId: string
+  bookingId: string
+  grossAmount: number
+  platformFee: number
+  netAmount: number
+  payoutId?: string
+  status: EarningStatus
+  availableAt?: Date
+  createdAt: Date
+  updatedAt: Date
+  booking?: Booking
+}
+
+export interface MentorPayout {
+  id: string
+  mentorId: string
+  amount: number
+  currency: string
+  status: PayoutStatus
+  stripeTransferId?: string
+  stripePayoutId?: string
+  bankAccountId?: string
+  periodStart: Date
+  periodEnd: Date
+  processedAt?: Date
+  failureReason?: string
+  notes?: string
+  createdAt: Date
+  updatedAt: Date
+  earningsCount?: number
+}
+
+export interface EarningsSummary {
+  totalEarnings: number
+  availableBalance: number
+  pendingBalance: number
+  paidOutTotal: number
+  thisMonthEarnings: number
+  lastMonthEarnings: number
+}

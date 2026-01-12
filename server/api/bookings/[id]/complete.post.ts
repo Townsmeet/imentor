@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { db } from '../../../utils/drizzle'
-import { booking, mentorProfile, user } from '../../../db/schema'
+import { booking, mentorProfile, user, mentorEarning } from '../../../db/schema'
 import { auth } from '../../../utils/auth'
 import { notifyUser } from '../../../utils/notifications'
 import { createSessionCompletedMentorEmail, createSessionCompletedMenteeEmail } from '../../../email-templates'
@@ -63,6 +63,16 @@ export default defineEventHandler(async (event) => {
                 updatedAt: new Date(),
             })
             .where(eq(mentorProfile.userId, existingBooking.mentorId))
+
+        // Update earning status to 'available' for payout
+        await db
+            .update(mentorEarning)
+            .set({
+                status: 'available',
+                availableAt: new Date(),
+                updatedAt: new Date(),
+            })
+            .where(eq(mentorEarning.bookingId, bookingId))
 
         // Get mentor and mentee details for notifications
         const mentorUser = await db.query.user.findFirst({

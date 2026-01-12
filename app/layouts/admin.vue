@@ -142,6 +142,7 @@ const navigation = [
   { name: 'Mentors', href: '/admin/mentors', icon: 'heroicons:academic-cap' },
   { name: 'Sessions', href: '/admin/sessions', icon: 'heroicons:calendar-days' },
   { name: 'Payments', href: '/admin/payments', icon: 'heroicons:credit-card' },
+  { name: 'Payouts', href: '/admin/payouts', icon: 'heroicons:banknotes' },
   { name: 'Analytics', href: '/admin/analytics', icon: 'heroicons:chart-bar' },
   { name: 'Content', href: '/admin/content', icon: 'heroicons:document-text' },
 ]
@@ -179,6 +180,7 @@ const pageTitle = computed(() => {
   if (path.startsWith('/admin/mentors')) return 'Mentor Management'
   if (path.startsWith('/admin/sessions')) return 'Session Management'
   if (path.startsWith('/admin/payments')) return 'Payment Management'
+  if (path.startsWith('/admin/payouts')) return 'Mentor Payouts'
   if (path.startsWith('/admin/analytics')) return 'Analytics'
   if (path.startsWith('/admin/content')) return 'Content Management'
   if (path.startsWith('/admin/settings')) return 'Settings'
@@ -195,6 +197,7 @@ const pageDescription = computed(() => {
   if (path.startsWith('/admin/mentors')) return 'Manage mentor profiles and applications'
   if (path.startsWith('/admin/sessions')) return 'Monitor and manage mentoring sessions'
   if (path.startsWith('/admin/payments')) return 'Track payments and revenue'
+  if (path.startsWith('/admin/payouts')) return 'Process mentor payouts manually'
   if (path.startsWith('/admin/analytics')) return 'Platform analytics and insights'
   if (path.startsWith('/admin/content')) return 'Manage categories, skills, and content'
   if (path.startsWith('/admin/settings')) return 'Platform configuration and settings'
