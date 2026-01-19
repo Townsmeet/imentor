@@ -78,7 +78,15 @@ onMounted(async () => {
       if (redirect) {
         await navigateTo(redirect)
       } else if (!hasCompletedOnboarding.value) {
-        await navigateTo('/onboarding')
+        if (user.value?.role === 'mentee') {
+          await navigateTo('/discover')
+        } else if (user.value?.role === 'mentor') {
+          await navigateTo('/onboarding')
+        } else if (user.value?.role === 'admin') {
+          await navigateTo('/admin')
+        } else {
+          await navigateTo('/dashboard')
+        }
       } else if (user.value?.role === 'admin') {
         await navigateTo('/admin')
       } else {

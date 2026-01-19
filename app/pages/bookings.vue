@@ -53,9 +53,9 @@
           No upcoming sessions
         </h3>
         <p class="text-gray-600 dark:text-gray-400 mb-6">
-          Book a session with a mentor to get started
+          {{ user?.role === 'mentor' ? 'Your upcoming sessions with mentees will appear here' : 'Book a session with a mentor to get started' }}
         </p>
-        <UButton to="/mentors" icon="heroicons:plus">
+        <UButton v-if="user?.role === 'mentee'" to="/mentors" icon="heroicons:plus">
           Browse Mentors
         </UButton>
       </div>
@@ -245,6 +245,7 @@ const {
   isLoading
 } = useBookings()
 
+const { user } = useAuth()
 const { getMentorProfile, fetchMentors } = useMentors()
 const { createReview, fetchReviewByBooking, hasReview } = useReviews()
 const toast = useToast()
@@ -432,8 +433,6 @@ const handleChat = (booking: Booking) => {
   // Actually, let's look at how sessions.vue did it:
   // participantId: user.value?.role === 'mentee' ? booking.mentorId : booking.menteeId
   
-  // Since we don't have user in this scope yet, let's get it.
-  const { user } = useAuth()
   const participantId = user.value?.role === 'mentee' ? booking.mentorId : booking.menteeId
   
   if (participantId) {
