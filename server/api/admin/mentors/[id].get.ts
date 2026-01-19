@@ -69,7 +69,7 @@ export default defineEventHandler(async (event) => {
         let mentorStatus = 'pending'
         if (m.suspended) {
             mentorStatus = 'suspended'
-        } else if (m.emailVerified && m.hasCompletedOnboarding) {
+        } else if (m.isAdminVerified) {
             mentorStatus = 'verified'
         }
 

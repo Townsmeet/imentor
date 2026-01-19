@@ -121,6 +121,7 @@
             Review
           </UButton>
           <UButton
+            v-if="isMentee"
             @click="$emit('book-again', booking)"
             size="sm"
             icon="heroicons:arrow-path"
@@ -138,6 +139,7 @@
             </p>
           </div>
           <UButton
+            v-if="isMentee"
             @click="$emit('book-again', booking)"
             variant="outline"
             size="sm"
@@ -206,6 +208,10 @@ interface Emits {
 
 const props = defineProps<Props>()
 defineEmits<Emits>()
+
+const { user } = useAuth()
+
+const isMentee = computed(() => user.value?.role === 'mentee')
 
 const mentorName = computed(() => {
   if (!props.booking.mentor) return 'Unknown Mentor'

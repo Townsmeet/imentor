@@ -21,7 +21,9 @@ export default defineEventHandler(async (event) => {
     const baseConditions = and(
       eq(user.role, 'mentor'),
       eq(user.emailVerified, true),
-      eq(user.hasCompletedOnboarding, true)
+      eq(user.hasCompletedOnboarding, true),
+      eq(user.suspended, false),
+      eq(user.isAdminVerified, true)
     )
 
     // Get mentors with their profiles

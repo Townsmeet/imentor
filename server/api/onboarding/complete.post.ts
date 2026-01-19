@@ -59,6 +59,24 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // Age validation for mentors
+  if (userRole === 'mentor' && body.roleData.dateOfBirth) {
+    const dob = new Date(body.roleData.dateOfBirth)
+    const today = new Date()
+    let age = today.getFullYear() - dob.getFullYear()
+    const m = today.getMonth() - dob.getMonth()
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+      age--
+    }
+
+    if (age < 18) {
+      throw createError({
+        statusCode: 400,
+        message: 'You must be at least 18 years old to register as a mentor.',
+      })
+    }
+  }
+
   try {
     // Update user name and onboarding status
     const fullName = `${body.profile.firstName} ${body.profile.lastName}`.trim()

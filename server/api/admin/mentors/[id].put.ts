@@ -34,18 +34,25 @@ export default defineEventHandler(async (event) => {
         }
 
         if (body.status === 'suspended') {
-            await db.update(user).set({ suspended: true }).where(eq(user.id, id))
+            await db.update(user).set({
+                suspended: true,
+                isAdminVerified: false
+            }).where(eq(user.id, id))
             // Also set isAvailable to false in profile
             await db.update(mentorProfile).set({ isAvailable: false }).where(eq(mentorProfile.userId, id))
         } else if (body.status === 'verified') {
             await db.update(user).set({
                 suspended: false,
+                isAdminVerified: true,
                 emailVerified: true // Force verify if admin verifies
             }).where(eq(user.id, id))
             // Also set isAvailable to true in profile
             await db.update(mentorProfile).set({ isAvailable: true }).where(eq(mentorProfile.userId, id))
         } else if (body.status === 'pending') {
-            await db.update(user).set({ suspended: false }).where(eq(user.id, id))
+            await db.update(user).set({
+                suspended: false,
+                isAdminVerified: false
+            }).where(eq(user.id, id))
             await db.update(mentorProfile).set({ isAvailable: true }).where(eq(mentorProfile.userId, id))
         }
 

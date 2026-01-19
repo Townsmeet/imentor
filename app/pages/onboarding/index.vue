@@ -179,7 +179,11 @@
                   size="lg"
                   icon="heroicons:calendar"
                   class="w-full"
+                  :color="mentorForm.dateOfBirth && !isOldEnough ? 'error' : undefined"
                 />
+                <p v-if="mentorForm.dateOfBirth && !isOldEnough" class="text-xs text-red-600 mt-1">
+                  You must be at least 18 years old.
+                </p>
               </UFormField>
 
               <UFormField label="Expertise Document" name="expertiseDocument" required help="Upload a portfolio, certificate, or CV that proves your expertise (PDF, Word, or Image).">
@@ -535,6 +539,18 @@ const languageOptions = [
   'Korean'
 ]
 
+const isOldEnough = computed(() => {
+  if (!mentorForm.dateOfBirth) return false
+  const dob = new Date(mentorForm.dateOfBirth)
+  const today = new Date()
+  let age = today.getFullYear() - dob.getFullYear()
+  const m = today.getMonth() - dob.getMonth()
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+    age--
+  }
+  return age >= 18
+})
+
 // Computed
 const canProceed = computed(() => {
   switch (currentStep.value) {
@@ -545,7 +561,8 @@ const canProceed = computed(() => {
     case 3:
       return mentorForm.experience && mentorForm.hourlyRate && 
              mentorForm.skills.length > 0 && mentorForm.categories.length > 0 &&
-             mentorForm.dateOfBirth && mentorForm.expertiseDocument && mentorForm.idDocument
+             mentorForm.dateOfBirth && isOldEnough.value && 
+             mentorForm.expertiseDocument && mentorForm.idDocument
     case 4:
       return preferencesForm.timezone && preferencesForm.languages.length > 0
     default:

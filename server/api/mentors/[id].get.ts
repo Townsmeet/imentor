@@ -39,7 +39,9 @@ export default defineEventHandler(async (event) => {
           eq(user.id, id),
           eq(user.role, 'mentor'),
           eq(user.emailVerified, true),
-          eq(user.hasCompletedOnboarding, true)
+          eq(user.hasCompletedOnboarding, true),
+          eq(user.suspended, false),
+          eq(user.isAdminVerified, true)
         )
       )
       .limit(1)
@@ -53,8 +55,8 @@ export default defineEventHandler(async (event) => {
 
     // Increment profile view count (fire and forget - don't block the response)
     db.update(mentorProfile)
-      .set({ 
-        profileViews: sql`COALESCE(${mentorProfile.profileViews}, 0) + 1` 
+      .set({
+        profileViews: sql`COALESCE(${mentorProfile.profileViews}, 0) + 1`
       })
       .where(eq(mentorProfile.userId, id))
       .execute()
@@ -88,7 +90,7 @@ export default defineEventHandler(async (event) => {
     }
   } catch (error: any) {
     if (error.statusCode) throw error
-    
+
     console.error('[Mentors API] Error fetching mentor:', error)
     throw createError({
       statusCode: 500,

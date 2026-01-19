@@ -23,6 +23,7 @@ export const user = pgTable('user', {
   onboardingStep: onboardingStepEnum('onboarding_step').notNull().default('verification'),
   onboardingCompletedAt: timestamp('onboarding_completed_at'),
   suspended: boolean('suspended').notNull().default(false),
+  isAdminVerified: boolean('is_admin_verified').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })

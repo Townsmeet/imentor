@@ -31,15 +31,9 @@ export default defineEventHandler(async (event) => {
         // Add status filter if provided
         if (status && status !== 'all') {
             if (status === 'verified') {
-                baseConditions.push(eq(user.emailVerified, true))
-                baseConditions.push(eq(user.hasCompletedOnboarding, true))
+                baseConditions.push(eq(user.isAdminVerified, true))
             } else if (status === 'pending') {
-                baseConditions.push(
-                    or(
-                        eq(user.emailVerified, false),
-                        eq(user.hasCompletedOnboarding, false)
-                    )!
-                )
+                baseConditions.push(eq(user.isAdminVerified, false))
             } else if (status === 'suspended') {
                 // For now, we don't have a suspended field, so we'll use isAvailable = false
                 baseConditions.push(eq(mentorProfile.isAvailable, false))
@@ -98,6 +92,7 @@ export default defineEventHandler(async (event) => {
                 image: user.image,
                 emailVerified: user.emailVerified,
                 hasCompletedOnboarding: user.hasCompletedOnboarding,
+                isAdminVerified: user.isAdminVerified,
                 createdAt: user.createdAt,
                 updatedAt: user.updatedAt,
                 // Profile data
@@ -131,7 +126,7 @@ export default defineEventHandler(async (event) => {
             let mentorStatus = 'pending'
             if (m.isAvailable === false) {
                 mentorStatus = 'suspended'
-            } else if (m.emailVerified && m.hasCompletedOnboarding) {
+            } else if (m.isAdminVerified) {
                 mentorStatus = 'verified'
             }
 

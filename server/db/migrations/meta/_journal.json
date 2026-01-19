@@ -85,6 +85,13 @@
       "when": 1768184126144,
       "tag": "0011_daily_zarda",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1768811301980,
+      "tag": "0012_perpetual_beyonder",
+      "breakpoints": true
     }
   ]
 }
