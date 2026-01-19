@@ -817,3 +817,86 @@ export function createPaymentFailedEmail(details: Partial<BookingDetails> & { me
 
   return { subject, htmlContent: getBaseEmailTemplate(content) }
 }
+
+/**
+ * Refund notification email to mentee
+ */
+export function createPaymentRefundedEmail(details: BookingDetails) {
+  const subject = `Refund Processed: ${details.sessionTitle}`
+  
+  const content = `
+    <!-- Header -->
+    <tr>
+      <td style="padding: 40px 40px 20px; text-align: center;">
+        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 16px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+          <span style="font-size: 28px;">💰</span>
+        </div>
+        <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #18181b;">
+          Refund Processed
+        </h1>
+      </td>
+    </tr>
+    
+    <!-- Content -->
+    <tr>
+      <td style="padding: 20px 40px;">
+        <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6; color: #3f3f46;">
+          Hi ${details.menteeName},
+        </p>
+        <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6; color: #3f3f46;">
+          We've processed a refund for your mentoring session <strong>${details.sessionTitle}</strong> with <strong>${details.mentorName}</strong>.
+        </p>
+        
+        <!-- Refund Details -->
+        <div style="background-color: #f4f4f5; border-radius: 8px; padding: 20px; margin: 20px 0;">
+          <h3 style="margin: 0 0 15px; font-size: 16px; font-weight: 600; color: #18181b;">Refund Summary</h3>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 8px 0; color: #71717a; font-size: 14px;">Booking ID:</td>
+              <td style="padding: 8px 0; color: #18181b; font-size: 14px; text-align: right; font-weight: 500;">${details.bookingId.substring(0, 8).toUpperCase()}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #71717a; font-size: 14px;">Refund Date:</td>
+              <td style="padding: 8px 0; color: #18181b; font-size: 14px; text-align: right; font-weight: 500;">${formatDate(new Date())}</td>
+            </tr>
+            <tr>
+              <td colspan="2" style="padding: 15px 0 8px; border-top: 1px solid #e4e4e7;"></td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #71717a; font-size: 14px;">Session:</td>
+              <td style="padding: 8px 0; color: #18181b; font-size: 14px; text-align: right; font-weight: 500;">${details.sessionTitle}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #71717a; font-size: 14px;">Mentor:</td>
+              <td style="padding: 8px 0; color: #18181b; font-size: 14px; text-align: right; font-weight: 500;">${details.mentorName}</td>
+            </tr>
+            <tr>
+              <td colspan="2" style="padding: 15px 0 8px; border-top: 1px solid #e4e4e7;"></td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #18181b; font-size: 16px; font-weight: 600;">Refund Amount:</td>
+              <td style="padding: 8px 0; color: #10b981; font-size: 16px; text-align: right; font-weight: 700;">$${details.price}</td>
+            </tr>
+          </table>
+        </div>
+        
+        <p style="margin: 20px 0 0; font-size: 14px; line-height: 1.6; color: #71717a;">
+          The funds should appear in your account within 5-10 business days, depending on your bank's processing times.
+        </p>
+        
+        <!-- Button -->
+        <table role="presentation" style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td align="center" style="padding: 20px 0;">
+              <a href="${process.env.NUXT_PUBLIC_APP_URL || 'http://localhost:3000'}/mentors" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px; border-radius: 8px;">
+                Browse Other Mentors
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  `
+
+  return { subject, htmlContent: getBaseEmailTemplate(content) }
+}

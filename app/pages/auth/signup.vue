@@ -80,6 +80,15 @@ const selectRole = (role: UserRole) => {
     query.redirect = route.query.redirect
   }
   
+  // Mentees go to the discovery flow first
+  if (role === 'mentee') {
+    navigateTo({
+      path: '/discover',
+      query
+    })
+    return
+  }
+  
   navigateTo({
     path: '/auth/register',
     query

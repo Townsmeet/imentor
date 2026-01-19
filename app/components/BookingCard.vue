@@ -94,12 +94,16 @@
         <!-- Pending session actions -->
         <template v-else-if="booking.status === 'pending'">
           <div class="text-center">
-            <Icon name="heroicons:clock" class="w-5 h-5 text-yellow-500 mx-auto mb-1" />
+            <Icon 
+              :name="isUpcoming ? 'heroicons:clock' : 'heroicons:x-circle'" 
+              :class="['w-5 h-5 mx-auto mb-1', isUpcoming ? 'text-yellow-500' : 'text-gray-400']" 
+            />
             <p class="text-xs text-gray-600 dark:text-gray-400">
-              Awaiting confirmation
+              {{ isUpcoming ? 'Awaiting confirmation' : 'Expired' }}
             </p>
           </div>
           <UButton
+            v-if="isUpcoming"
             @click="$emit('cancel', booking)"
             variant="ghost"
             size="sm"
@@ -253,7 +257,7 @@ const canJoin = computed(() => {
 const statusLabel = computed(() => {
   switch (props.booking.status) {
     case 'pending':
-      return 'Pending'
+      return isUpcoming.value ? 'Pending' : 'Expired'
     case 'confirmed':
       return 'Confirmed'
     case 'completed':
@@ -270,7 +274,7 @@ const statusLabel = computed(() => {
 const statusColor = computed(() => {
   switch (props.booking.status) {
     case 'pending':
-      return 'warning'
+      return isUpcoming.value ? 'warning' : 'neutral'
     case 'confirmed':
       return 'success'
     case 'completed':

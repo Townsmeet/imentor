@@ -327,7 +327,8 @@ useSeoMeta({
   description: 'Answer a few questions and we\'ll match you with the perfect mentor for your goals.',
 })
 
-const { user } = useAuth()
+const { user, refreshSession, isAuthenticated } = useAuth()
+const toast = useToast()
 
 const {
   currentStep,
@@ -523,9 +524,41 @@ const selectBudget = (budget: string) => {
   setBudget(budget)
 }
 
-const handleContinue = () => {
+const handleContinue = async () => {
   if (currentStep.value === totalSteps) {
     isNavigating.value = true
+    
+    // If user is logged in, mark onboarding as complete
+    if (isAuthenticated.value && user.value) {
+      try {
+        await $fetch('/api/onboarding/complete', {
+          method: 'POST',
+          body: {
+            profile: {
+              firstName: user.value.firstName || '',
+              lastName: user.value.lastName || '',
+              bio: '',
+            },
+            roleData: {
+              goals: [responses.value.goal],
+              interests: responses.value.categories,
+            },
+            preferences: {
+              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+              languages: ['English'],
+              emailNotifications: true,
+              weeklyDigest: true,
+              marketingEmails: false,
+            }
+          }
+        })
+        await refreshSession()
+      } catch (e) {
+        console.error('Failed to complete onboarding:', e)
+        // Continue anyway to the filtered mentors page
+      }
+    }
+    
     navigateTo(getMentorsUrl())
   } else {
     nextStep()

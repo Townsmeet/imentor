@@ -17,6 +17,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // Redirect to onboarding if not completed
   if (!hasCompletedOnboarding.value) {
+    // Mentees use the discovery flow for onboarding
+    if (user.value?.role === 'mentee') {
+      return navigateTo('/discover')
+    }
     return navigateTo('/onboarding')
   }
 })

@@ -15,6 +15,7 @@ export {
   createBookingCancelledMenteeEmail,
   createPaymentSuccessEmail,
   createPaymentFailedEmail,
+  createPaymentRefundedEmail,
 } from './booking'
 
 // Review email template

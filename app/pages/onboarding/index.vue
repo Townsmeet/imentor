@@ -791,9 +791,9 @@ onMounted(async () => {
     profileForm.lastName = parts.slice(1).join(' ') || ''
   }
 
-  // Redirect mentees away from onboarding
+  // Redirect mentees to discovery flow
   if (userRole.value === 'mentee') {
-    await navigateTo('/dashboard')
+    await navigateTo('/discover')
   }
 })
 </script>
