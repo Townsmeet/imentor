@@ -27,7 +27,7 @@
             class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
             active-class="text-blue-600 dark:text-blue-400"
           >
-            Find Mentors
+            Find Mentors & Coaches
           </NuxtLink>
           <NuxtLink 
             to="/bookings" 
@@ -113,7 +113,7 @@
             active-class="text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
             @click="isMobileMenuOpen = false"
           >
-            Find Mentors
+            Find Mentors & Coaches
           </NuxtLink>
           <NuxtLink 
             to="/bookings" 

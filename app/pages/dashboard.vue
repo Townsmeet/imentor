@@ -133,7 +133,7 @@
                 <div class="flex items-center space-x-4">
                   <UAvatar
                     :src="session.mentor?.image || undefined"
-                    :alt="session.mentor?.name || 'Mentor'"
+                    :alt="session.mentor?.name || 'Mentor/Coach'"
                     size="md"
                   />
                   <div>
@@ -141,7 +141,7 @@
                       {{ session.title }}
                     </p>
                     <p class="text-sm text-gray-600 dark:text-gray-400">
-                      with {{ session.mentor?.name || 'Mentor' }}
+                      with {{ session.mentor?.name || 'Mentor/Coach' }}
                     </p>
                     <p class="text-sm text-blue-600 dark:text-blue-400">
                       {{ formatDate(session.scheduledDate) }} at {{ formatTime(session.scheduledDate) }}
@@ -331,7 +331,7 @@
             </div>
             <div>
               <h4 class="font-medium text-gray-900 dark:text-white mb-2">
-                {{ (currentUser && currentUser.role === 'mentor') ? 'Mentor Tip' : 'Learning Tip' }}
+                {{ (currentUser && currentUser.role === 'mentor') ? 'Mentor/Coach Tip' : 'Learning Tip' }}
               </h4>
               <p class="text-sm text-gray-600 dark:text-gray-400">
                 {{ (currentUser && currentUser.role === 'mentor') 

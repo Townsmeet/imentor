@@ -53,10 +53,10 @@
           No upcoming sessions
         </h3>
         <p class="text-gray-600 dark:text-gray-400 mb-6">
-          {{ user?.role === 'mentor' ? 'Your upcoming sessions with mentees will appear here' : 'Book a session with a mentor to get started' }}
+          {{ user?.role === 'mentor' ? 'Your upcoming sessions with mentees will appear here' : 'Book a session with a mentor or coach to get started' }}
         </p>
         <UButton v-if="user?.role === 'mentee'" to="/mentors" icon="heroicons:plus">
-          Browse Mentors
+          Browse Mentors & Coaches
         </UButton>
       </div>
       

@@ -217,7 +217,7 @@
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow">
         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <h3 class="text-lg font-medium text-gray-900 dark:text-white">
-            Top Mentors
+            Top Mentors & Coaches
           </h3>
         </div>
         <div class="p-6">
@@ -268,7 +268,7 @@
             size="sm"
             trailing-icon="heroicons:arrow-right"
           >
-            View all mentors
+            View all mentors & coaches
           </UButton>
         </div>
       </div>
@@ -356,7 +356,7 @@ const stats = computed(() => {
       color: 'blue'
     },
     {
-      name: 'Active Mentors',
+      name: 'Active Mentors & Coaches',
       value: adminStats.value.stats.activeMentors.value.toLocaleString(),
       change: adminStats.value.stats.activeMentors.change,
       icon: 'heroicons:academic-cap',
@@ -403,7 +403,7 @@ const formatTime = (timestamp: Date) => {
 
 // SEO
 useSeoMeta({
-  title: 'Admin Dashboard - iMentor',
+  title: 'Admin Dashboard - iMentorsPro',
   description: 'Admin dashboard for managing the iMentor platform'
 })
 

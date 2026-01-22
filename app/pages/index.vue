@@ -14,7 +14,7 @@
           <div class="hidden md:flex items-center space-x-8">
             <a href="#how-it-works" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition">How it works</a>
             <a href="#categories" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition">Categories</a>
-            <NuxtLink to="/mentors" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition">Browse Mentors</NuxtLink>
+            <NuxtLink to="/mentors" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition">Browse Mentors & Coaches</NuxtLink>
           </div>
           
           <div class="flex items-center space-x-4">
@@ -38,7 +38,7 @@
             
             <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
               Unlock Your Potential with 
-              <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Expert Mentors</span>
+              <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Expert Mentors & Coaches</span>
             </h1>
             
             <p class="text-xl text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
@@ -49,13 +49,13 @@
               <NuxtLink to="/discover">
                 <UButton size="xl" class="w-full sm:w-auto">
                   <Icon name="heroicons:rocket-launch" class="w-5 h-5 mr-2" />
-                  Find a Mentor
+                  Find a Mentor or Coach
                 </UButton>
               </NuxtLink>
               <NuxtLink to="/auth/register?role=mentor">
                 <UButton size="xl" variant="outline" class="w-full sm:w-auto">
                   <Icon name="heroicons:academic-cap" class="w-5 h-5 mr-2" />
-                  Become a Mentor
+                  Become a Mentor/Coach
                 </UButton>
               </NuxtLink>
             </div>
@@ -126,7 +126,7 @@
         <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div class="text-center">
             <p class="text-4xl font-bold text-gray-900 dark:text-white mb-2">500+</p>
-            <p class="text-gray-600 dark:text-gray-400">Expert Mentors</p>
+            <p class="text-gray-600 dark:text-gray-400">Expert Mentors & Coaches</p>
           </div>
           <div class="text-center">
             <p class="text-4xl font-bold text-gray-900 dark:text-white mb-2">10k+</p>
@@ -180,10 +180,10 @@
                 2
               </div>
               <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">
-                Find Your Perfect Mentor
+                Find Your Perfect Mentor or Coach
               </h3>
               <p class="text-gray-600 dark:text-gray-300">
-                Browse our curated list of mentors, filter by expertise, and find someone who aligns with your goals.
+                Browse our curated list of mentors and coaches, filter by expertise, and find someone who aligns with your goals.
               </p>
             </div>
             <div class="hidden md:block absolute top-1/2 right-0 transform translate-x-1/2 -translate-y-1/2">
@@ -216,7 +216,7 @@
             Explore Categories
           </h2>
           <p class="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Find mentors across a wide range of industries and expertise areas
+            Find mentors and coaches across a wide range of industries and expertise areas
           </p>
         </div>
 
@@ -233,7 +233,7 @@
             <h3 class="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
               {{ category.name }}
             </h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ category.count }}+ mentors</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ category.count }}+ mentors & coaches</p>
           </NuxtLink>
         </div>
 
@@ -269,7 +269,7 @@
               Verified Experts
             </h3>
             <p class="text-gray-600 dark:text-gray-300">
-              All mentors are vetted professionals with proven track records in their fields.
+              All mentors and coaches are vetted professionals with proven track records in their fields.
             </p>
           </div>
 
@@ -305,7 +305,7 @@
               Direct Messaging
             </h3>
             <p class="text-gray-600 dark:text-gray-300">
-              Stay connected with your mentor through our secure messaging system.
+              Stay connected with your mentor or coach through our secure messaging system.
             </p>
           </div>
 
@@ -329,7 +329,7 @@
               AI Matching
             </h3>
             <p class="text-gray-600 dark:text-gray-300">
-              Our smart algorithm helps you find the perfect mentor based on your goals.
+              Our smart algorithm helps you find the perfect mentor or coach based on your goals.
             </p>
           </div>
         </div>
@@ -354,7 +354,7 @@
               <Icon v-for="i in 5" :key="i" name="heroicons:star-solid" class="w-5 h-5 text-yellow-400" />
             </div>
             <p class="text-white mb-6">
-              "Found an amazing mentor who helped me transition from engineering to product management. Best investment in my career!"
+              "Found an amazing mentor/coach who helped me transition from engineering to product management. Best investment in my career!"
             </p>
             <div class="flex items-center space-x-3">
               <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white font-semibold">SK</div>
@@ -370,7 +370,7 @@
               <Icon v-for="i in 5" :key="i" name="heroicons:star-solid" class="w-5 h-5 text-yellow-400" />
             </div>
             <p class="text-white mb-6">
-              "As a mentor, I love how easy the platform makes it to manage bookings and connect with ambitious professionals."
+              "As a mentor/coach, I love how easy the platform makes it to manage bookings and connect with ambitious professionals."
             </p>
             <div class="flex items-center space-x-3">
               <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white font-semibold">DR</div>
@@ -386,7 +386,7 @@
               <Icon v-for="i in 5" :key="i" name="heroicons:star-solid" class="w-5 h-5 text-yellow-400" />
             </div>
             <p class="text-white mb-6">
-              "The AI matching feature connected me with a mentor who understood exactly what I needed. Doubled my freelance rates in 3 months!"
+              "The AI matching feature connected me with a mentor/coach who understood exactly what I needed. Doubled my freelance rates in 3 months!"
             </p>
             <div class="flex items-center space-x-3">
               <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white font-semibold">AL</div>
@@ -420,7 +420,7 @@
           </NuxtLink>
           <NuxtLink to="/mentors">
             <UButton size="xl" variant="outline">
-              Browse Mentors
+              Browse Mentors & Coaches
             </UButton>
           </NuxtLink>
         </div>
@@ -439,15 +439,15 @@
               <span class="text-xl font-bold">iMentorsPro</span>
             </div>
             <p class="text-gray-400 text-sm">
-              Connecting ambitious professionals with world-class mentors.
+              Connecting ambitious professionals with world-class mentors and coaches.
             </p>
           </div>
           
           <div>
             <h4 class="font-semibold mb-4">Platform</h4>
             <ul class="space-y-2 text-gray-400 text-sm">
-              <li><NuxtLink to="/mentors" class="hover:text-white transition">Browse Mentors</NuxtLink></li>
-              <li><NuxtLink to="/auth/signup?role=mentor" class="hover:text-white transition">Become a Mentor</NuxtLink></li>
+              <li><NuxtLink to="/mentors" class="hover:text-white transition">Browse Mentors & Coaches</NuxtLink></li>
+              <li><NuxtLink to="/auth/signup?role=mentor" class="hover:text-white transition">Become a Mentor/Coach</NuxtLink></li>
               <li><a href="#how-it-works" class="hover:text-white transition">How It Works</a></li>
             </ul>
           </div>
@@ -498,10 +498,10 @@ definePageMeta({
 })
 
 useSeoMeta({
-  title: 'iMentorsPro - Connect with Expert Mentors',
-  description: 'Accelerate your career growth with world-class mentors. Join iMentorsPro to find the perfect mentor or share your expertise.',
+  title: 'iMentorsPro - Connect with Expert Mentors & Coaches',
+  description: 'Accelerate your career growth with world-class mentors and coaches. Join iMentorsPro to find the perfect mentor or coach or share your expertise.',
   ogTitle: 'iMentorsPro - Professional Mentorship Platform',
-  ogDescription: 'Connect with expert mentors and accelerate your career growth.',
+  ogDescription: 'Connect with expert mentors and coaches and accelerate your career growth.',
   twitterCard: 'summary_large_image',
 })
 

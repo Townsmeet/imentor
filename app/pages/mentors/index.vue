@@ -28,7 +28,7 @@
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Find Your Perfect Mentor
+            Find Your Perfect Mentor or Coach
           </h1>
           <p class="text-gray-600 dark:text-gray-400">
             Connect with industry experts who can accelerate your career growth
@@ -58,7 +58,7 @@
         <div class="lg:col-span-2">
           <UInput
             v-model="searchQuery"
-            placeholder="Search mentors by name, skills, or expertise..."
+            placeholder="Search mentors and coaches by name, skills, or expertise..."
             icon="heroicons:magnifying-glass"
             size="lg"
           />
@@ -148,7 +148,7 @@
     <div v-else-if="aiMatches.length === 0 && filteredMentors.length === 0" class="text-center py-12">
       <Icon name="heroicons:magnifying-glass" class="w-16 h-16 text-gray-400 mx-auto mb-4" />
       <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
-        No mentors found
+        No mentors or coaches found
       </h3>
       <p class="text-gray-600 dark:text-gray-400 mb-4">
         Try adjusting your search criteria or filters
@@ -162,7 +162,7 @@
       <!-- Results Count -->
       <div class="flex items-center justify-between mb-6">
         <p class="text-gray-600 dark:text-gray-400">
-          {{ filteredMentors.length }} mentor{{ filteredMentors.length !== 1 ? 's' : '' }} found
+          {{ filteredMentors.length }} mentor{{ filteredMentors.length !== 1 ? 's' : '' }} & coach{{ filteredMentors.length !== 1 ? 'es' : '' }} found
         </p>
         
         <USelectMenu
@@ -413,8 +413,8 @@ onMounted(async () => {
 
 // SEO
 useSeoMeta({
-  title: 'Find Mentors - iMentorsPro',
-  description: 'Browse and connect with expert mentors to accelerate your career growth.'
+  title: 'Find Mentors & Coaches - iMentorsPro',
+  description: 'Browse and connect with expert mentors and coaches to accelerate your career growth.'
 })
 </script>
 

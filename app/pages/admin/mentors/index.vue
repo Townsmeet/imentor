@@ -9,7 +9,7 @@
             <Icon name="heroicons:academic-cap" class="h-8 w-8 text-blue-600" />
           </div>
           <div class="ml-4">
-            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Mentors</p>
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Mentors & Coaches</p>
             <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ totalMentors }}</p>
           </div>
         </div>
@@ -59,7 +59,7 @@
           <div>
             <UInput
               v-model="searchQuery"
-              placeholder="Search mentors..."
+              placeholder="Search mentors and coaches..."
               icon="heroicons:magnifying-glass"
               size="md"
               class="w-full"
@@ -125,7 +125,7 @@
     <div v-if="isLoading" class="bg-white dark:bg-gray-800 rounded-lg shadow p-8">
       <div class="flex items-center justify-center">
         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-        <span class="ml-2 text-gray-600 dark:text-gray-400">Loading mentors...</span>
+        <span class="ml-2 text-gray-600 dark:text-gray-400">Loading mentors and coaches...</span>
       </div>
     </div>
 
@@ -134,7 +134,7 @@
       <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
         <div class="flex items-center justify-between">
           <h3 class="text-lg font-medium text-gray-900 dark:text-white">
-            Mentors ({{ mentors.length }})
+            Mentors & Coaches ({{ mentors.length }})
           </h3>
           <div class="flex space-x-2">
             <UButton
@@ -152,9 +152,9 @@
       <!-- Empty State -->
       <div v-if="mentors.length === 0" class="p-8 text-center">
         <Icon name="heroicons:academic-cap" class="h-12 w-12 text-gray-300 mx-auto mb-4" />
-        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No mentors found</h3>
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No mentors or coaches found</h3>
         <p class="text-gray-500 dark:text-gray-400">
-          {{ searchQuery || selectedStatus !== 'all' || selectedCategory !== 'all' ? 'Try adjusting your filters' : 'No mentors have registered yet' }}
+          {{ searchQuery || selectedStatus !== 'all' || selectedCategory !== 'all' ? 'Try adjusting your filters' : 'No mentors or coaches have registered yet' }}
         </p>
       </div>
 
@@ -163,7 +163,7 @@
           <thead class="bg-gray-50 dark:bg-gray-700">
             <tr>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Mentor
+                Mentor/Coach
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Category
@@ -260,7 +260,7 @@
       <div v-if="mentors.length > 0" class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
         <div class="flex items-center justify-between">
           <div class="text-sm text-gray-700 dark:text-gray-300">
-            Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, totalMentors) }} of {{ totalMentors }} mentors
+            Showing {{ (currentPage - 1) * pageSize + 1 }} to {{ Math.min(currentPage * pageSize, totalMentors) }} of {{ totalMentors }} mentors & coaches
           </div>
           <div class="flex space-x-2">
             <UButton
@@ -287,7 +287,7 @@
     </div>
 
     <!-- Status Confirmation Modal -->
-    <UModal v-model:open="showStatusConfirmModal" :title="pendingStatus === 'verified' ? 'Verify Mentor' : 'Suspend Mentor'">
+    <UModal v-model:open="showStatusConfirmModal" :title="pendingStatus === 'verified' ? 'Verify Mentor/Coach' : 'Suspend Mentor/Coach'">
       <template #body>
         <p class="text-sm text-gray-600 dark:text-gray-400">
           Are you sure you want to {{ pendingStatus === 'verified' ? 'verify' : 'suspend' }} <strong>{{ selectedMentor?.name }}</strong>?
@@ -309,7 +309,7 @@
     </UModal>
 
     <!-- Delete Confirmation Modal -->
-    <UModal v-model:open="showDeleteConfirmModal" title="Delete Mentor">
+    <UModal v-model:open="showDeleteConfirmModal" title="Delete Mentor/Coach">
       <template #body>
         <p class="text-sm text-gray-600 dark:text-gray-400">
           Are you sure you want to delete <strong>{{ selectedMentor?.name }}</strong>? This action cannot be undone and will remove all associated data.
@@ -323,7 +323,7 @@
             @click="handleDeleteMentor"
             :loading="isDeleting"
           >
-            Delete Mentor
+            Delete Mentor/Coach
           </UButton>
         </div>
       </template>
@@ -338,8 +338,8 @@ definePageMeta({
 })
 
 useSeoMeta({
-  title: 'Mentor Management - Admin Dashboard',
-  description: 'Manage mentor profiles, verification status, and performance metrics'
+  title: 'Mentor/Coach Management - Admin Dashboard',
+  description: 'Manage mentor and coach profiles, verification status, and performance metrics'
 })
 
 const toast = useToast()
