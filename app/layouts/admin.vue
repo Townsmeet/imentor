@@ -3,9 +3,9 @@
     <!-- Admin Sidebar -->
     <div class="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-lg">
       <!-- Logo -->
-      <div class="flex items-center justify-center h-16 px-4 border-b border-gray-200 dark:border-gray-700">
+      <NuxtLink to="/" class="flex items-center justify-center h-16 px-4 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
         <h1 class="text-xl font-bold text-gray-900 dark:text-white">iMentor Admin</h1>
-      </div>
+      </NuxtLink>
 
       <!-- Navigation -->
       <nav class="mt-8 px-4">

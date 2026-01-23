@@ -5,9 +5,9 @@
       <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <div class="absolute inset-0 bg-gradient-to-br from-blue-600 to-purple-700 pointer-events-none"></div>
         <div class="relative z-10 flex flex-col justify-center items-center p-12 text-white">
-          <div class="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-8">
+          <NuxtLink to="/" class="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-8 hover:bg-white/30 transition-colors">
             <Icon name="heroicons:academic-cap" class="w-10 h-10 text-white" />
-          </div>
+          </NuxtLink>
           
           <h1 class="text-4xl font-bold mb-4 text-center">
             Welcome to iMentorsPro

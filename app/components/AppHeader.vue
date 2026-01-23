@@ -3,7 +3,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
         <!-- Logo -->
-        <NuxtLink to="/dashboard" class="flex items-center space-x-3">
+        <NuxtLink to="/" class="flex items-center space-x-3">
           <div class="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
             <Icon name="heroicons:academic-cap" class="w-5 h-5 text-white" />
           </div>
