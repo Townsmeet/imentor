@@ -51,7 +51,7 @@ export const useBookings = () => {
 
       return {
         booking: newBooking,
-        payment: data.payment
+        payment: data.payment as { clientSecret: string; paymentIntentId: string }
       }
     } catch (error) {
       console.error('Error creating booking:', error)
@@ -77,9 +77,9 @@ export const useBookings = () => {
         bookings.value[index] = {
           ...bookings.value[index],
           status: 'confirmed',
-          meetingLink: data.booking.meetingLink,
+          meetingLink: data.booking.meetingLink || undefined,
           paymentStatus: 'succeeded',
-        }
+        } as Booking
       }
 
       return data.booking
@@ -104,7 +104,7 @@ export const useBookings = () => {
         bookings.value[index] = {
           ...bookings.value[index],
           status: 'cancelled',
-        }
+        } as Booking
       }
     } catch (error) {
       console.error('Error cancelling booking:', error)
@@ -127,7 +127,7 @@ export const useBookings = () => {
         bookings.value[index] = {
           ...bookings.value[index],
           status: 'completed',
-        }
+        } as Booking
       }
     } catch (error) {
       console.error('Error completing booking:', error)
@@ -158,7 +158,7 @@ export const useBookings = () => {
     return bookings.value
       .filter(booking =>
         booking.scheduledDate > now &&
-        (booking.status === 'confirmed' || booking.status === 'pending')
+        booking.status === 'confirmed'
       )
       .sort((a, b) => a.scheduledDate.getTime() - b.scheduledDate.getTime())
   })
@@ -167,14 +167,18 @@ export const useBookings = () => {
     const now = new Date()
     return bookings.value
       .filter(booking =>
-        booking.scheduledDate <= now ||
+        (booking.scheduledDate <= now && booking.status === 'confirmed') ||
         booking.status === 'completed'
       )
       .sort((a, b) => b.scheduledDate.getTime() - a.scheduledDate.getTime())
   })
 
   const getPendingBookings = computed(() => {
-    return bookings.value.filter(booking => booking.status === 'pending')
+    const now = new Date()
+    return bookings.value.filter(booking =>
+      booking.status === 'pending' &&
+      booking.scheduledDate > now
+    )
   })
 
   const getConfirmedBookings = computed(() => {

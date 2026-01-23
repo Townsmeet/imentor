@@ -93,19 +93,19 @@
         
         <!-- Pending session actions -->
         <template v-else-if="booking.status === 'pending'">
-          <div class="text-center">
-            <Icon 
-              :name="isUpcoming ? 'heroicons:clock' : 'heroicons:x-circle'" 
-              :class="['w-5 h-5 mx-auto mb-1', isUpcoming ? 'text-yellow-500' : 'text-gray-400']" 
-            />
-            <p class="text-xs text-gray-600 dark:text-gray-400">
-              {{ isUpcoming ? 'Awaiting confirmation' : 'Expired' }}
-            </p>
-          </div>
+          <UButton
+            v-if="isUpcoming && isMentee"
+            @click="$emit('pay', booking)"
+            size="sm"
+            color="primary"
+            icon="heroicons:credit-card"
+          >
+            Pay Now
+          </UButton>
           <UButton
             v-if="isUpcoming"
             @click="$emit('cancel', booking)"
-            variant="ghost"
+            variant="outline"
             size="sm"
             color="error"
             icon="heroicons:x-mark"
@@ -208,6 +208,7 @@ interface Emits {
   (e: 'review', booking: Booking): void
   (e: 'book-again', booking: Booking): void
   (e: 'chat', booking: Booking): void
+  (e: 'pay', booking: Booking): void
 }
 
 const props = defineProps<Props>()

@@ -91,6 +91,7 @@
           :key="booking.id"
           :booking="booking"
           @cancel="handleCancel"
+          @pay="handlePay"
         />
       </div>
     </div>
@@ -224,6 +225,14 @@
         />
       </template>
     </UModal>
+
+    <!-- Payment Modal -->
+    <PaymentModal
+      v-if="bookingToPay"
+      v-model:open="showPaymentModal"
+      :booking="bookingToPay"
+      @payment-success="fetchBookings"
+    />
   </div>
 </template>
 
@@ -254,8 +263,10 @@ const activeTab = ref('upcoming')
 const showRescheduleModal = ref(false)
 const showReviewModal = ref(false)
 const showCancelModal = ref(false)
+const showPaymentModal = ref(false)
 const selectedBooking = ref<Booking | null>(null)
 const bookingToCancel = ref<Booking | null>(null)
+const bookingToPay = ref<Booking | null>(null)
 const isRescheduling = ref(false)
 const isSubmittingReview = ref(false)
 const isCancelling = ref(false)
@@ -361,6 +372,11 @@ const handleCancel = (booking: Booking) => {
   
   bookingToCancel.value = booking
   showCancelModal.value = true
+}
+
+const handlePay = (booking: Booking) => {
+  bookingToPay.value = booking
+  showPaymentModal.value = true
 }
 
 const confirmCancel = async () => {
