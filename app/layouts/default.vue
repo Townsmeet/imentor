@@ -4,6 +4,7 @@
     <main :class="{ 'pt-16': !isAuthPage }">
       <slot />
     </main>
+    <AppFooter v-if="!isAuthPage" />
 
     <!-- Notifications Modal (global) -->
     <UModal v-model:open="notificationsOpen" title="Notifications">

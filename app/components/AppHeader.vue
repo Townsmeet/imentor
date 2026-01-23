@@ -13,7 +13,7 @@
         </NuxtLink>
 
         <!-- Navigation -->
-        <nav class="hidden md:flex items-center space-x-8">
+        <nav v-if="user" class="hidden md:flex items-center space-x-8">
           <NuxtLink 
             to="/dashboard" 
             class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors"
@@ -46,42 +46,60 @@
             <span v-if="unreadCount > 0" class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
           </NuxtLink>
         </nav>
+        <nav v-else class="hidden md:flex items-center space-x-8">
+          <NuxtLink to="/mentors" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">
+            Browse Mentors & Coaches
+          </NuxtLink>
+          <a href="/#how-it-works" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">
+            How It Works
+          </a>
+        </nav>
 
         <!-- User Menu -->
         <div class="flex items-center space-x-4">
-          <!-- Notifications -->
-          <UButton
-            icon="heroicons:bell"
-            variant="ghost"
-            color="neutral"
-            size="sm"
-            class="relative"
-            @click="notificationsOpen = true"
-          >
-            <span v-if="unreadCount > 0" class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </UButton>
-
-          <!-- User Menu (Dropdown) -->
-          <UDropdownMenu
-            :items="userMenuItems"
-            :popper="{ placement: 'bottom-end' }"
-          >
+          <template v-if="user">
+            <!-- Notifications -->
             <UButton
+              icon="heroicons:bell"
               variant="ghost"
               color="neutral"
-              class="flex items-center space-x-2"
+              size="sm"
+              class="relative"
+              @click="notificationsOpen = true"
             >
-              <UAvatar
-                :src="user?.avatar"
-                :alt="`${user?.firstName} ${user?.lastName}`"
-                size="sm"
-              />
-              <span class="hidden sm:block text-sm font-medium">
-                {{ user?.firstName }}
-              </span>
-              <Icon name="heroicons:chevron-down" class="w-4 h-4" />
+              <span v-if="unreadCount > 0" class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             </UButton>
-          </UDropdownMenu>
+
+            <!-- User Menu (Dropdown) -->
+            <UDropdownMenu
+              :items="userMenuItems"
+              :popper="{ placement: 'bottom-end' }"
+            >
+              <UButton
+                variant="ghost"
+                color="neutral"
+                class="flex items-center space-x-2"
+              >
+                <UAvatar
+                  :src="user?.avatar"
+                  :alt="`${user?.firstName} ${user?.lastName}`"
+                  size="sm"
+                />
+                <span class="hidden sm:block text-sm font-medium">
+                  {{ user?.firstName }}
+                </span>
+                <Icon name="heroicons:chevron-down" class="w-4 h-4" />
+              </UButton>
+            </UDropdownMenu>
+          </template>
+          <template v-else>
+            <NuxtLink to="/auth/login">
+              <UButton variant="ghost" color="neutral">Log in</UButton>
+            </NuxtLink>
+            <NuxtLink to="/auth/signup">
+              <UButton color="primary">Sign up</UButton>
+            </NuxtLink>
+          </template>
 
           <!-- Mobile Menu Button -->
           <UButton
