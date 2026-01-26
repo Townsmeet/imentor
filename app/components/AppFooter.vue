@@ -17,7 +17,7 @@
         <div>
           <h4 class="font-semibold mb-4">Platform</h4>
           <ul class="space-y-2 text-gray-600 text-sm">
-            <li><NuxtLink to="/mentors" class="hover:text-blue-600 transition">Browse Mentors & Coaches</NuxtLink></li>
+            <li><NuxtLink :to="isAuthenticated ? '/mentors' : '/discover'" class="hover:text-blue-600 transition">Browse Mentors & Coaches</NuxtLink></li>
             <li><NuxtLink to="/auth/register?role=mentor" class="hover:text-blue-600 transition">Become a Mentor/Coach</NuxtLink></li>
             <li><NuxtLink to="/#how-it-works" class="hover:text-blue-600 transition">How It Works</NuxtLink></li>
           </ul>
@@ -61,3 +61,7 @@
     </div>
   </footer>
 </template>
+
+<script setup lang="ts">
+const { isAuthenticated } = useAuth()
+</script>

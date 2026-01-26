@@ -14,12 +14,15 @@
           <div class="hidden md:flex items-center space-x-8">
             <a href="#how-it-works" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition">How it works</a>
             <a href="#categories" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition">Categories</a>
-            <NuxtLink to="/mentors" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition">Browse Mentors & Coaches</NuxtLink>
+            <NuxtLink :to="isAuthenticated ? '/mentors' : '/discover'" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition">Browse Mentors & Coaches</NuxtLink>
           </div>
           
           <div class="flex items-center space-x-4">
-            <NuxtLink to="/auth/login">
+            <NuxtLink v-if="!isAuthenticated" to="/auth/login">
               <UButton variant="ghost" color="neutral">Log in</UButton>
+            </NuxtLink>
+            <NuxtLink v-else to="/dashboard">
+              <UButton variant="ghost" color="neutral">Dashboard</UButton>
             </NuxtLink>
           </div>
         </div>
@@ -224,7 +227,7 @@
           <NuxtLink 
             v-for="category in featuredCategories" 
             :key="category.name"
-            :to="`/mentors?category=${encodeURIComponent(category.name)}`"
+            :to="isAuthenticated ? `/mentors?category=${encodeURIComponent(category.name)}` : '/discover'"
             class="group p-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-lg transition-all duration-200"
           >
             <div :class="['w-12 h-12 rounded-xl flex items-center justify-center mb-4', category.bgColor]">
@@ -238,7 +241,7 @@
         </div>
 
         <div class="text-center mt-10">
-          <NuxtLink to="/mentors">
+          <NuxtLink :to="isAuthenticated ? '/mentors' : '/discover'">
             <UButton variant="outline" size="lg">
               View All Categories
               <Icon name="heroicons:arrow-right" class="w-4 h-4 ml-2" />
@@ -418,7 +421,7 @@
               Get Started for Free
             </UButton>
           </NuxtLink>
-          <NuxtLink to="/mentors">
+          <NuxtLink :to="isAuthenticated ? '/mentors' : '/discover'">
             <UButton size="xl" variant="outline">
               Browse Mentors & Coaches
             </UButton>
@@ -433,6 +436,8 @@
 </template>
 
 <script setup lang="ts">
+const { isAuthenticated } = useAuth()
+
 definePageMeta({
   layout: false,
 })

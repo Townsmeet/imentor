@@ -20,7 +20,7 @@
       <div class="mt-16 p-8 bg-blue-50 dark:bg-blue-900/20 rounded-2xl text-center">
         <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Still have questions?</h2>
         <p class="text-gray-600 dark:text-gray-300 mb-6">We're here to help. Contact our support team anytime.</p>
-        <UButton size="lg">Contact Support</UButton>
+        <UButton size="lg" to="/contact">Contact Support</UButton>
       </div>
     </div>
   </div>
@@ -38,37 +38,109 @@ const faqs = [
     questions: [
       {
         q: 'What is iMentorsPro?',
-        a: 'iMentorsPro is a platform that connects professionals with expert mentors and coaches for personalized guidance and career growth.'
+        a: 'iMentorsPro is an AI-powered platform that connects experienced mentors and coaches (“Expert Guides”) with founders and professionals who need clear, practical guidance. Our AI helps match you with the right people, streamline sessions, and track real progress.'
       },
       {
-        q: 'How do I get started?',
-        a: 'Simply sign up, complete your profile, and start browsing our directory of mentors and coaches.'
+        q: 'Who is iMentorsPro for?',
+        a: 'iMentorsPro is built for experienced mentors, coaches, operators, and professionals who want to share their expertise, support others’ growth, and earn from their knowledge—without spending time chasing clients.'
+      },
+      {
+        q: 'Why should I join as an Expert Guide?',
+        a: 'iMentorsPro helps you: Get matched with the right clients using AI, monetise your expertise on your own terms, manage sessions, availability, and payments in one place, and focus on impact, not admin.'
       }
     ]
   },
   {
-    name: 'For Mentees',
+    name: 'Becoming an Expert Guide',
     questions: [
       {
-        q: 'How do I find the right mentor?',
-        a: 'You can use our search filters to find mentors by expertise, industry, or price. Our AI matching tool can also suggest mentors based on your goals.'
+        q: 'How do I apply to become an Expert Guide?',
+        a: 'Complete the application at www.imentorspro.com/providers. Share your background, areas of expertise, and experience. Our team reviews all applications to maintain quality across the platform.'
       },
       {
-        q: 'How do I book a session?',
-        a: 'Once you find a mentor you like, click on their profile and select an available time slot from their calendar.'
+        q: 'What qualifications do I need?',
+        a: 'There are no strict academic requirements. We look for: Proven professional or leadership experience, coaching or mentoring background (formal or informal), and a strong track record of helping others grow or make better decisions.'
+      },
+      {
+        q: 'How long does the review process take?',
+        a: 'Most applications are reviewed within 5–7 business days. You’ll receive an email once a decision has been made.'
       }
     ]
   },
   {
-    name: 'For Mentors',
+    name: 'AI & Platform Features',
     questions: [
       {
-        q: 'How do I become a mentor?',
-        a: 'Click on "Become a Mentor" in the footer or header, and follow the registration process. We vet all mentors to ensure high-quality guidance.'
+        q: 'How does AI work on iMentorsPro?',
+        a: 'Our AI helps: Match you with founders and professionals aligned to your expertise, surface insights about client goals and challenges, and track progress and outcomes across sessions. AI supports your work—it doesn’t replace your judgment or experience.'
       },
       {
-        q: 'How do I get paid?',
-        a: 'Payments are processed securely through the platform and transferred to your linked bank account after each successful session.'
+        q: 'What tools are available to Expert Guides?',
+        a: 'You’ll have access to: Smart scheduling and booking, session management tools, AI-assisted insights and summaries, progress tracking and analytics, and client feedback and performance metrics.'
+      },
+      {
+        q: 'Can I control my availability and offerings?',
+        a: 'Yes. You set your availability, session types, pricing, and whether you offer 1:1 or group sessions.'
+      }
+    ]
+  },
+  {
+    name: 'Earnings & Payments',
+    questions: [
+      {
+        q: 'How do I earn on iMentorsPro?',
+        a: 'You earn per session or through structured packages you offer. All payments are handled securely through the platform.'
+      },
+      {
+        q: 'When do I get paid?',
+        a: 'Payouts are made weekly or monthly, depending on your selected preference.'
+      },
+      {
+        q: 'Does iMentorsPro charge a fee?',
+        a: 'Yes. We take a small commission per session to cover platform operations, AI infrastructure, and support. Full details are shared during onboarding.'
+      }
+    ]
+  },
+  {
+    name: 'Growth & Support',
+    questions: [
+      {
+        q: 'Will iMentorsPro help me grow my practice?',
+        a: 'Yes. iMentorsPro connects you with a global pool of founders and professionals, helping you grow your reach without marketing or sales overhead.'
+      },
+      {
+        q: 'What support is available to Expert Guides?',
+        a: 'We offer: Platform onboarding, a detailed knowledge base, and dedicated support for technical or account issues.'
+      },
+      {
+        q: 'Can I run group sessions or programmes?',
+        a: 'Yes. You can offer both 1:1 guidance and group sessions, depending on your expertise and preferences.'
+      }
+    ]
+  },
+  {
+    name: 'Security & Privacy',
+    questions: [
+      {
+        q: 'How secure is my data?',
+        a: 'iMentorsPro uses industry-standard encryption and secure systems to protect your data and communications.'
+      },
+      {
+        q: 'Are my sessions confidential?',
+        a: 'Yes. All sessions are private and protected under our confidentiality and privacy policies.'
+      }
+    ]
+  },
+  {
+    name: 'Feedback & Quality',
+    questions: [
+      {
+        q: 'How can I improve my visibility and rating?',
+        a: 'Provide high-quality guidance, communicate clearly, and support measurable progress. Positive feedback improves your visibility on the platform.'
+      },
+      {
+        q: 'Can I share feedback about iMentorsPro?',
+        a: 'Absolutely. We actively welcome feedback to improve the platform for Expert Guides and clients alike.'
       }
     ]
   }

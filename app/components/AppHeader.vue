@@ -47,7 +47,7 @@
           </NuxtLink>
         </nav>
         <nav v-else class="hidden md:flex items-center space-x-8">
-          <NuxtLink to="/mentors" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">
+          <NuxtLink to="/discover" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">
             Browse Mentors & Coaches
           </NuxtLink>
           <a href="/#how-it-works" class="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">
