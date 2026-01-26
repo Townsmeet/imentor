@@ -20,3 +20,6 @@ export {
 
 // Review email template
 export { createReviewReceivedEmail } from './review'
+
+// Contact email template
+export { createContactUsEmail } from './contact'
