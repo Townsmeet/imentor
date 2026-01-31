@@ -28,7 +28,7 @@
               <Icon name="heroicons:hand-raised" class="w-10 h-10 text-white" />
             </div>
             <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Welcome to iMentorsPro, {{ parsedName.firstName || 'there' }}!
+              Welcome to iMentorsPro — Mentor & Coach Onboarding, {{ parsedName.firstName || 'there' }}!
             </h2>
             <p class="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               Let's set up your profile so you can get the most out of your mentoring journey.
@@ -64,7 +64,7 @@
         <!-- Step 2: Basic Profile Info -->
         <div v-else-if="currentStep === 2" class="p-8">
           <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-            Tell us about yourself
+            Tell us about your experience
           </h2>
           
           <UForm :state="profileForm" class="space-y-6">
@@ -144,7 +144,7 @@
         <!-- Step 3: Mentor Expertise -->
         <div v-else-if="currentStep === 3" class="p-8">
           <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-            Your Expertise
+            Your Expertise & Credentials
           </h2>
           
           <div class="space-y-6">
@@ -282,10 +282,82 @@
           </div>
         </div>
 
-        <!-- Step 4: Preferences -->
+        <!-- Step 4: Who do you help most? -->
         <div v-else-if="currentStep === 4" class="p-8">
           <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-            Preferences & Settings
+            Who do you help most?
+          </h2>
+          <p class="text-gray-600 dark:text-gray-400 mb-8">
+            Select the groups that align best with your expertise and experience. <br />
+            <span class="font-medium text-blue-600 dark:text-blue-400">Select up to 2.</span>
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              v-for="option in targetAudienceOptions"
+              :key="option.value"
+              @click="toggleTargetAudience(option.value)"
+              :disabled="!mentorForm.targetAudience.includes(option.value) && mentorForm.targetAudience.length >= 2"
+              :class="[
+                'p-6 rounded-2xl border-2 text-left transition-all duration-200 h-full flex flex-col',
+                mentorForm.targetAudience.includes(option.value)
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                  : mentorForm.targetAudience.length >= 2
+                    ? 'border-gray-100 dark:border-gray-800 opacity-50 cursor-not-allowed'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-500'
+              ]"
+            >
+              <span class="font-bold text-gray-900 dark:text-white block mb-2">{{ option.label }}</span>
+              <Icon 
+                v-if="mentorForm.targetAudience.includes(option.value)"
+                name="heroicons:check-circle-solid" 
+                class="w-6 h-6 text-blue-500 mt-auto self-end" 
+              />
+            </button>
+          </div>
+          <p v-if="mentorForm.targetAudience.length > 0" class="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
+            {{ mentorForm.targetAudience.length }}/2 selected
+          </p>
+        </div>
+
+        <!-- Step 5: Support Type -->
+        <div v-else-if="currentStep === 5" class="p-8">
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+            What type of support do you mainly offer?
+          </h2>
+          <p class="text-gray-600 dark:text-gray-400 mb-8">
+            This helps us match you with mentees seeking your specific style of guidance.
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              v-for="option in supportTypeOptions"
+              :key="option.value"
+              @click="toggleSupportType(option.value)"
+              :class="[
+                'p-6 rounded-2xl border-2 text-left transition-all duration-200 h-full flex flex-col',
+                mentorForm.supportTypes.includes(option.value)
+                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-500'
+              ]"
+            >
+              <span class="font-bold text-gray-900 dark:text-white block mb-2">{{ option.label }}</span>
+              <Icon 
+                v-if="mentorForm.supportTypes.includes(option.value)"
+                name="heroicons:check-circle-solid" 
+                class="w-6 h-6 text-purple-500 mt-auto self-end" 
+              />
+            </button>
+          </div>
+          <p v-if="mentorForm.supportTypes.length > 0" class="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
+            {{ mentorForm.supportTypes.length }} selected
+          </p>
+        </div>
+
+        <!-- Step 6: Preferences -->
+        <div v-else-if="currentStep === 6" class="p-8">
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+            Mentor Availability & Preferences
           </h2>
           
           <div class="space-y-6">
@@ -333,14 +405,14 @@
           </div>
         </div>
 
-        <!-- Step 5: Complete -->
-        <div v-else-if="currentStep === 5" class="p-8 text-center">
+        <!-- Step 7: Complete -->
+        <div v-else-if="currentStep === 7" class="p-8 text-center">
           <div class="w-20 h-20 bg-green-100 dark:bg-green-900/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <Icon name="heroicons:check-circle" class="w-10 h-10 text-green-600 dark:text-green-400" />
           </div>
           
           <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-            You're all set!
+           Your mentor profile is now live!
           </h2>
           
           <p class="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
@@ -409,7 +481,7 @@ const { categoryOptions, fetchCategories } = useCategories()
 const toast = useToast()
 
 const currentStep = ref(1)
-const totalSteps = 5
+const totalSteps = 7
 const isCompleting = ref(false)
 const isUploading = ref(false)
 const isUploadingImage = ref(false)
@@ -441,7 +513,9 @@ const mentorForm = reactive({
   categories: [] as string[],
   dateOfBirth: '',
   expertiseDocument: '',
-  idDocument: ''
+  idDocument: '',
+  targetAudience: [] as string[],
+  supportTypes: [] as string[]
 })
 
 const menteeForm = reactive({
@@ -468,6 +542,20 @@ const experienceOptions = [
   { label: 'Mid Level (3-5 years)', value: '3-5 years' },
   { label: 'Senior Level (6-10 years)', value: '6-10 years' },
   { label: 'Expert Level (10+ years)', value: '10+ years' }
+]
+
+const targetAudienceOptions = [
+  { value: 'early', label: 'Early-stage professionals & first-time founders' },
+  { value: 'growing', label: 'Growing professionals & startup builders' },
+  { value: 'scaling', label: 'Leaders, executives & scaling founders' },
+  { value: 'reinvention', label: 'Career transitions & reinvention' },
+]
+
+const supportTypeOptions = [
+  { value: 'strategic', label: 'Strategic guidance' },
+  { value: 'execution', label: 'Skills & execution' },
+  { value: 'clarity', label: 'Accountability & clarity' },
+  { value: 'leadership', label: 'Leadership & decision-making' },
 ]
 
 
@@ -556,14 +644,16 @@ const canProceed = computed(() => {
   switch (currentStep.value) {
     case 1:
       return true
-    case 2:
-      return profileForm.firstName && profileForm.lastName && profileForm.bio
     case 3:
       return mentorForm.experience && mentorForm.hourlyRate && 
              mentorForm.skills.length > 0 && mentorForm.categories.length > 0 &&
              mentorForm.dateOfBirth && isOldEnough.value && 
              mentorForm.expertiseDocument && mentorForm.idDocument
     case 4:
+      return mentorForm.targetAudience.length > 0
+    case 5:
+      return mentorForm.supportTypes.length > 0
+    case 6:
       return preferencesForm.timezone && preferencesForm.languages.length > 0
     default:
       return true
@@ -697,6 +787,24 @@ const addGoal = () => {
   }
 }
 
+const toggleTargetAudience = (value: string) => {
+  const index = mentorForm.targetAudience.indexOf(value)
+  if (index > -1) {
+    mentorForm.targetAudience.splice(index, 1)
+  } else if (mentorForm.targetAudience.length < 2) {
+    mentorForm.targetAudience.push(value)
+  }
+}
+
+const toggleSupportType = (value: string) => {
+  const index = mentorForm.supportTypes.indexOf(value)
+  if (index > -1) {
+    mentorForm.supportTypes.splice(index, 1)
+  } else {
+    mentorForm.supportTypes.push(value)
+  }
+}
+
 const removeGoal = (goal: string) => {
   const index = menteeForm.goals.indexOf(goal)
   if (index > -1) {
@@ -726,6 +834,8 @@ const completeOnboardingFlow = async () => {
           dateOfBirth: mentorForm.dateOfBirth,
           expertiseDocument: mentorForm.expertiseDocument,
           idDocument: mentorForm.idDocument,
+          targetAudience: mentorForm.targetAudience,
+          supportTypes: mentorForm.supportTypes,
         },
         preferences: {
           timezone: preferencesForm.timezone,

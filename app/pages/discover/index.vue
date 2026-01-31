@@ -56,41 +56,47 @@
                 What brings you here?
               </h1>
               <p class="text-gray-600 dark:text-gray-400">
-                Understanding your goals helps us find the right mentor for you
+                Understanding your goals helps us find the right mentor for you. <br />
+                <span class="font-medium text-blue-600 dark:text-blue-400">Select up to 2.</span>
               </p>
             </div>
 
-            <div class="space-y-3">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <button
                 v-for="option in goalOptions"
                 :key="option.value"
-                @click="selectGoal(option.value)"
+                @click="toggleGoal(option.value)"
+                :disabled="!responses.goals.includes(option.value) && responses.goals.length >= 2"
                 :class="[
                   'w-full p-4 rounded-xl border-2 text-left transition-all duration-200 flex items-center space-x-4',
-                  responses.goal === option.value
+                  responses.goals.includes(option.value)
                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                    : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                    : responses.goals.length >= 2
+                      ? 'border-gray-100 dark:border-gray-800 opacity-50 cursor-not-allowed'
+                      : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-gray-50 dark:hover:bg-gray-700/50'
                 ]"
               >
                 <div :class="[
-                  'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0',
-                  responses.goal === option.value 
+                  'w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0',
+                  responses.goals.includes(option.value) 
                     ? 'bg-blue-500 text-white' 
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                 ]">
-                  <Icon :name="option.icon" class="w-6 h-6" />
+                  <Icon :name="option.icon" class="w-5 h-5" />
                 </div>
-                <div>
-                  <h3 class="font-semibold text-gray-900 dark:text-white">{{ option.label }}</h3>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">{{ option.description }}</p>
+                <div class="flex-1 min-w-0">
+                  <h3 class="font-semibold text-gray-900 dark:text-white truncate text-sm">{{ option.label }}</h3>
                 </div>
                 <Icon 
-                  v-if="responses.goal === option.value"
+                  v-if="responses.goals.includes(option.value)"
                   name="heroicons:check-circle-solid" 
-                  class="w-6 h-6 text-blue-500 ml-auto flex-shrink-0" 
+                  class="w-5 h-5 text-blue-500 ml-auto flex-shrink-0" 
                 />
               </button>
             </div>
+            <p v-if="responses.goals.length > 0" class="text-center text-sm text-gray-500 dark:text-gray-400 mt-4">
+              {{ responses.goals.length }}/2 selected
+            </p>
           </div>
 
           <!-- Step 2: Categories -->
@@ -142,11 +148,11 @@
             </p>
           </div>
 
-          <!-- Step 3: Experience Level -->
+          <!-- Step 3: Journey Stage -->
           <div v-else-if="currentStep === 3" key="step3" class="p-8">
             <div class="text-center mb-8">
               <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Icon name="heroicons:chart-bar" class="w-8 h-8 text-white" />
+                <Icon name="heroicons:map" class="w-8 h-8 text-white" />
               </div>
               <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-3">
                 Where are you in your journey?
@@ -158,30 +164,31 @@
 
             <div class="space-y-3">
               <button
-                v-for="option in experienceOptions"
+                v-for="option in journeyOptions"
                 :key="option.value"
-                @click="selectExperience(option.value)"
+                @click="selectJourney(option.value)"
                 :class="[
                   'w-full p-4 rounded-xl border-2 text-left transition-all duration-200 flex items-center space-x-4',
-                  responses.experienceLevel === option.value
+                  responses.journeyStage === option.value
                     ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
                     : 'border-gray-200 dark:border-gray-600 hover:border-green-300 dark:hover:border-green-500 hover:bg-gray-50 dark:hover:bg-gray-700/50'
                 ]"
               >
                 <div :class="[
                   'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-lg font-bold',
-                  responses.experienceLevel === option.value 
+                  responses.journeyStage === option.value 
                     ? 'bg-green-500 text-white' 
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                 ]">
                   {{ option.emoji }}
                 </div>
                 <div>
-                  <h3 class="font-semibold text-gray-900 dark:text-white">{{ option.label }}</h3>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">{{ option.description }}</p>
+                  <h3 class="font-semibold text-gray-900 dark:text-white text-sm md:text-base">{{ option.label }}</h3>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ option.description }}</p>
+                  <p class="text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mt-2 font-medium">Examples: {{ option.examples.join(' • ') }}</p>
                 </div>
                 <Icon 
-                  v-if="responses.experienceLevel === option.value"
+                  v-if="responses.journeyStage === option.value"
                   name="heroicons:check-circle-solid" 
                   class="w-6 h-6 text-green-500 ml-auto flex-shrink-0" 
                 />
@@ -235,19 +242,20 @@
               </button>
             </div>
           </div>
-
-          <!-- Step 5: Budget -->
           <div v-else-if="currentStep === 5" key="step5" class="p-8">
             <div class="text-center mb-8">
-              <div class="w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Icon name="heroicons:currency-dollar" class="w-8 h-8 text-white" />
-              </div>
+              <p class="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-2">Step 5 of 5 — almost there</p>
               <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-3">
-                What's your budget?
+                Choose your mentor experience level
               </h1>
               <p class="text-gray-600 dark:text-gray-400">
-                This helps us show mentors within your range
+                We’ll match you with proven operators aligned to your ambition.
               </p>
+              
+              <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl inline-flex items-center text-sm text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-800">
+                <Icon name="heroicons:shield-check" class="w-4 h-4 mr-2 text-blue-500" />
+                Vetted for experience, integrity, and real-world impact.
+              </div>
             </div>
 
             <div class="space-y-3">
@@ -256,30 +264,37 @@
                 :key="option.value"
                 @click="selectBudget(option.value)"
                 :class="[
-                  'w-full p-4 rounded-xl border-2 text-left transition-all duration-200 flex items-center justify-between',
+                  'w-full p-5 rounded-xl border-2 text-left transition-all duration-200 flex items-start space-x-4',
                   responses.budget === option.value
-                    ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20'
-                    : 'border-gray-200 dark:border-gray-600 hover:border-cyan-300 dark:hover:border-cyan-500 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                    : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-gray-50 dark:hover:bg-gray-700/50'
                 ]"
               >
-                <div class="flex items-center space-x-4">
-                  <div :class="[
-                    'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 font-bold',
-                    responses.budget === option.value 
-                      ? 'bg-cyan-500 text-white' 
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                  ]">
-                    {{ option.emoji }}
+                <div :class="[
+                  'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-xl',
+                  responses.budget === option.value 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                ]">
+                  {{ option.emoji }}
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center justify-between mb-1">
+                    <h3 class="font-bold text-gray-900 dark:text-white flex items-center">
+                      {{ option.label }}
+                      <span v-if="option.subtitle" class="ml-2 text-[10px] bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full uppercase tracking-tighter">{{ option.subtitle }}</span>
+                    </h3>
+                    <span class="text-sm font-semibold text-blue-600 dark:text-blue-400">{{ option.price }}</span>
                   </div>
-                  <div>
-                    <h3 class="font-semibold text-gray-900 dark:text-white">{{ option.label }}</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ option.description }}</p>
-                  </div>
+                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-1 leading-snug">{{ option.description }}</p>
+                  <p v-if="option.outcomes" class="text-xs text-gray-500 dark:text-gray-500 font-medium italic border-t border-gray-100 dark:border-gray-700 pt-1 mt-1">
+                    {{ option.outcomes }}
+                  </p>
                 </div>
                 <Icon 
                   v-if="responses.budget === option.value"
                   name="heroicons:check-circle-solid" 
-                  class="w-6 h-6 text-cyan-500 flex-shrink-0" 
+                  class="w-6 h-6 text-blue-500 flex-shrink-0 mt-1" 
                 />
               </button>
             </div>
@@ -338,9 +353,9 @@ const {
   canProceed,
   nextStep,
   previousStep,
-  setGoal,
+  setGoals,
   setCategories,
-  setExperienceLevel,
+  setJourneyStage,
   setSessionType,
   setBudget,
   getMentorsUrl,
@@ -380,59 +395,83 @@ const goalOptions = [
   { 
     value: 'career-advancement', 
     label: 'Career Advancement', 
-    description: 'Get promoted or level up in my current role',
     icon: 'heroicons:arrow-trending-up'
   },
   { 
     value: 'skill-development', 
     label: 'Skill Development', 
-    description: 'Learn new skills or improve existing ones',
     icon: 'heroicons:academic-cap'
   },
   { 
     value: 'leadership', 
     label: 'Leadership Guidance', 
-    description: 'Become a better leader or manager',
     icon: 'heroicons:user-group'
   },
   { 
     value: 'career-transition', 
     label: 'Career Transition', 
-    description: 'Switch roles, industries, or career paths',
     icon: 'heroicons:arrows-right-left'
   },
   { 
     value: 'entrepreneurship', 
     label: 'Business & Entrepreneurship', 
-    description: 'Start or grow my own business',
     icon: 'heroicons:building-office'
+  },
+  { 
+    value: 'scaling-growth', 
+    label: 'Scaling & Growth', 
+    icon: 'heroicons:chart-bar'
+  },
+  { 
+    value: 'confidence-clarity', 
+    label: 'Confidence & Clarity', 
+    icon: 'heroicons:sparkles'
+  },
+  { 
+    value: 'burnout-balance', 
+    label: 'Burnout & Balance', 
+    icon: 'heroicons:scale'
+  },
+  { 
+    value: 'accountability-focus', 
+    label: 'Accountability & Focus', 
+    icon: 'heroicons:flag'
+  },
+  { 
+    value: 'not-sure', 
+    label: 'Not sure yet', 
+    icon: 'heroicons:question-mark-circle'
   },
 ]
 
-const experienceOptions = [
+const journeyOptions = [
   { 
-    value: 'beginner', 
-    label: 'Just Starting Out', 
-    description: '0-2 years of experience',
-    emoji: '🌱'
+    value: 'exploring', 
+    label: 'Exploring & Starting', 
+    description: 'I’m just getting started or figuring things out',
+    emoji: '🔍',
+    examples: ['Early career', 'First-time founder', 'Career switcher']
   },
   { 
-    value: 'growing', 
-    label: 'Growing Professional', 
-    description: '3-5 years of experience',
-    emoji: '🌿'
+    value: 'building', 
+    label: 'Building & Growing', 
+    description: 'I’m actively building skills, confidence, or a business',
+    emoji: '🏗️',
+    examples: ['Growing professional', 'Startup founder (0–3 yrs)', 'New manager']
   },
   { 
-    value: 'experienced', 
-    label: 'Experienced Professional', 
-    description: '6-10 years of experience',
-    emoji: '🌳'
+    value: 'scaling', 
+    label: 'Scaling & Leading', 
+    description: 'I’m leading teams, scaling impact, or making big decisions',
+    emoji: '🚀',
+    examples: ['Business owner', 'Senior professional', 'Scale-up founder']
   },
   { 
-    value: 'senior', 
-    label: 'Senior Professional', 
-    description: '10+ years of experience',
-    emoji: '🏔️'
+    value: 'reinventing', 
+    label: 'Transitioning or Reinventing', 
+    description: 'I’m navigating change or redefining my next chapter',
+    emoji: '🔄',
+    examples: ['Exit / pivot', 'Burnout recovery', 'New industry move']
   },
 ]
 
@@ -466,39 +505,56 @@ const sessionOptions = [
 const budgetOptions = [
   { 
     value: 'under-50', 
-    label: 'Under $50/hour', 
-    description: 'Budget-friendly options',
-    emoji: '$'
+    label: '🌱 Foundation Level', 
+    price: 'Under $50 / hour',
+    description: 'For early-stage founders, professionals, and creators seeking clarity and direction.',
+    outcomes: 'Best for validation, positioning, confidence-building, and first momentum.',
+    emoji: '🌱'
   },
   { 
     value: '50-100', 
-    label: '$50 - $100/hour', 
-    description: 'Mid-range mentors',
-    emoji: '$$'
+    label: '🚀 Growth Level', 
+    price: '$50 – $100 / hour',
+    subtitle: '(Most chosen)',
+    description: 'Experienced mentors who’ve helped others navigate growth decisions and execution.',
+    outcomes: 'Ideal for traction, strategy, prioritisation, and building repeatable progress.',
+    emoji: '🚀'
   },
   { 
     value: '100-200', 
-    label: '$100 - $200/hour', 
-    description: 'Experienced professionals',
-    emoji: '$$$'
+    label: '📊 Scale Level', 
+    price: '$100 – $200 / hour',
+    description: 'Senior operators and leaders with hands-on scaling experience.',
+    outcomes: 'Best for hiring, systems, revenue growth, and leadership challenges.',
+    emoji: '📊'
   },
   { 
     value: '200-plus', 
-    label: '$200+/hour', 
-    description: 'Top industry experts',
-    emoji: '$$$$'
+    label: '🧠 Elite Level', 
+    price: '$200+ / hour',
+    description: 'Top-tier founders, executives, and industry experts.',
+    outcomes: 'Designed for high-stakes decisions, rapid scale, and complex strategic challenges.',
+    emoji: '🧠'
   },
   { 
     value: 'flexible', 
-    label: 'Flexible', 
-    description: 'Show me all options',
+    label: '✨ Help me decide', 
+    price: 'Let iMentorsPro recommend the best matches',
+    description: 'We’ll suggest mentors based on your goals, stage, urgency, and preferences.',
     emoji: '✨'
   },
 ]
 
 // Handlers
-const selectGoal = (goal: string) => {
-  setGoal(goal)
+const toggleGoal = (goal: string) => {
+  const current = [...responses.value.goals]
+  const index = current.indexOf(goal)
+  if (index > -1) {
+    current.splice(index, 1)
+  } else if (current.length < 2) {
+    current.push(goal)
+  }
+  setGoals(current)
 }
 
 const toggleCategory = (category: string) => {
@@ -512,8 +568,8 @@ const toggleCategory = (category: string) => {
   setCategories(current)
 }
 
-const selectExperience = (level: string) => {
-  setExperienceLevel(level)
+const selectJourney = (stage: string) => {
+  setJourneyStage(stage)
 }
 
 const selectSessionType = (type: string) => {
@@ -540,8 +596,9 @@ const handleContinue = async () => {
               bio: '',
             },
             roleData: {
-              goals: [responses.value.goal],
+              goals: responses.value.goals,
               interests: responses.value.categories,
+              journeyStage: responses.value.journeyStage,
             },
             preferences: {
               timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,

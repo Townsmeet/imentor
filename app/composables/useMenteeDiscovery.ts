@@ -4,9 +4,9 @@
  */
 
 interface DiscoveryResponses {
-    goal: string
+    goals: string[]
     categories: string[]
-    experienceLevel: string
+    journeyStage: string
     sessionType: string
     budget: string
 }
@@ -20,9 +20,9 @@ interface DiscoveryState {
 const STORAGE_KEY = 'mentee-discovery-state'
 
 const defaultResponses: DiscoveryResponses = {
-    goal: '',
+    goals: [],
     categories: [],
-    experienceLevel: '',
+    journeyStage: '',
     sessionType: '',
     budget: ''
 }
@@ -67,11 +67,11 @@ export const useMenteeDiscovery = () => {
         const r = state.value.responses
         switch (state.value.currentStep) {
             case 1:
-                return !!r.goal
+                return r.goals.length > 0
             case 2:
                 return r.categories.length > 0
             case 3:
-                return !!r.experienceLevel
+                return !!r.journeyStage
             case 4:
                 return !!r.sessionType
             case 5:
@@ -103,16 +103,16 @@ export const useMenteeDiscovery = () => {
     }
 
     // Update responses
-    const setGoal = (goal: string) => {
-        state.value.responses.goal = goal
+    const setGoals = (goals: string[]) => {
+        state.value.responses.goals = goals.slice(0, 2) // Max 2
     }
 
     const setCategories = (categories: string[]) => {
         state.value.responses.categories = categories.slice(0, 3) // Max 3
     }
 
-    const setExperienceLevel = (level: string) => {
-        state.value.responses.experienceLevel = level
+    const setJourneyStage = (stage: string) => {
+        state.value.responses.journeyStage = stage
     }
 
     const setSessionType = (type: string) => {
@@ -191,9 +191,9 @@ export const useMenteeDiscovery = () => {
         goToStep,
 
         // Setters
-        setGoal,
+        setGoals,
         setCategories,
-        setExperienceLevel,
+        setJourneyStage,
         setSessionType,
         setBudget,
 
