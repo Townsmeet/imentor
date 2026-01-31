@@ -14,7 +14,7 @@
           <div class="hidden md:flex items-center space-x-8">
             <a href="#how-it-works" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition">How it works</a>
             <a href="#categories" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition">Categories</a>
-            <NuxtLink :to="isAuthenticated ? '/mentors' : '/discover'" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition">Browse Mentors & Coaches</NuxtLink>
+            <NuxtLink :to="isAuthenticated ? '/mentors' : '/discover'" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition">Explore Mentors</NuxtLink>
           </div>
           
           <div class="flex items-center space-x-4">
@@ -31,95 +31,101 @@
 
     <!-- Hero Section -->
     <section class="relative pt-32 pb-20 overflow-hidden">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid lg:grid-cols-2 gap-12 items-center">
-          <div>
-            <div class="inline-flex items-center px-4 py-2 bg-blue-100 dark:bg-blue-900/30 rounded-full text-blue-700 dark:text-blue-300 text-sm font-medium mb-6">
-              <Icon name="heroicons:sparkles" class="w-4 h-4 mr-2" />
-              Trusted by 10,000+ professionals
-            </div>
-            
-            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
-              Unlock Your Potential with 
-              <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Expert Mentors & Coaches</span>
-            </h1>
-            
-            <p class="text-xl text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
-              Connect with industry leaders who've been where you want to go. Get personalized guidance, actionable advice, and accelerate your career growth.
-            </p>
-            
-            <div class="flex flex-col sm:flex-row gap-4 mb-8">
-              <NuxtLink to="/discover">
-                <UButton size="xl" class="w-full sm:w-auto">
-                  <Icon name="heroicons:rocket-launch" class="w-5 h-5 mr-2" />
-                  Find a Mentor or Coach
-                </UButton>
-              </NuxtLink>
-              <NuxtLink to="/auth/register?role=mentor">
-                <UButton size="xl" variant="outline" class="w-full sm:w-auto">
-                  <Icon name="heroicons:academic-cap" class="w-5 h-5 mr-2" />
-                  Become a Mentor/Coach
-                </UButton>
-              </NuxtLink>
-            </div>
-            
-            <div class="flex items-center space-x-6 text-sm text-gray-500 dark:text-gray-400">
-              <div class="flex items-center">
-                <Icon name="heroicons:check-circle" class="w-5 h-5 text-green-500 mr-2" />
-                Free to browse
-              </div>
-              <div class="flex items-center">
-                <Icon name="heroicons:check-circle" class="w-5 h-5 text-green-500 mr-2" />
-                Cancel anytime
-              </div>
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+        <!-- Flanking Mentor Cards -->
+        <div class="absolute left-0 top-[15%] -rotate-3 hidden xl:block w-72 bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700 z-0">
+          <div class="flex items-center space-x-4 mb-4">
+            <div class="w-14 h-14 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white font-bold text-lg">JD</div>
+            <div class="text-left">
+              <h4 class="font-semibold text-gray-900 dark:text-white">Jane Doe</h4>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Founder, exited SaaS</p>
             </div>
           </div>
-          
-          <div class="relative hidden lg:block">
-            <div class="relative z-10">
-              <!-- Mentor Cards Stack -->
-              <div class="absolute top-0 right-0 w-72 bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 transform rotate-3 border border-gray-100 dark:border-gray-700">
-                <div class="flex items-center space-x-4 mb-4">
-                  <div class="w-14 h-14 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white font-bold text-lg">JD</div>
-                  <div>
-                    <h4 class="font-semibold text-gray-900 dark:text-white">Jane Doe</h4>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Product Lead @ Google</p>
-                  </div>
-                </div>
-                <div class="flex items-center space-x-1 mb-3">
-                  <Icon v-for="i in 5" :key="i" name="heroicons:star-solid" class="w-4 h-4 text-yellow-400" />
-                  <span class="text-sm text-gray-500 ml-2">5.0 (128 reviews)</span>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                  <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs">Product Strategy</span>
-                  <span class="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-xs">Leadership</span>
-                </div>
-              </div>
-              
-              <div class="absolute top-32 left-0 w-72 bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 transform -rotate-2 border border-gray-100 dark:border-gray-700">
-                <div class="flex items-center space-x-4 mb-4">
-                  <div class="w-14 h-14 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center text-white font-bold text-lg">MS</div>
-                  <div>
-                    <h4 class="font-semibold text-gray-900 dark:text-white">Michael Smith</h4>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">Senior Engineer @ Meta</p>
-                  </div>
-                </div>
-                <div class="flex items-center space-x-1 mb-3">
-                  <Icon v-for="i in 5" :key="i" name="heroicons:star-solid" class="w-4 h-4 text-yellow-400" />
-                  <span class="text-sm text-gray-500 ml-2">4.9 (96 reviews)</span>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                  <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-xs">System Design</span>
-                  <span class="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-full text-xs">Career Growth</span>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Decorative elements -->
-            <div class="absolute -top-10 -right-10 w-40 h-40 bg-blue-200 dark:bg-blue-800 rounded-full opacity-20 blur-3xl"></div>
-            <div class="absolute bottom-0 -left-10 w-40 h-40 bg-purple-200 dark:bg-purple-800 rounded-full opacity-20 blur-3xl"></div>
+          <div class="flex items-center space-x-1 mb-3">
+            <Icon v-for="i in 5" :key="i" name="heroicons:star-solid" class="w-4 h-4 text-yellow-400" />
+            <span class="text-sm text-gray-500 ml-2">5.0 (128 reviews)</span>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs">Product Strategy</span>
+            <span class="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-xs">Leadership</span>
           </div>
         </div>
+
+        <div class="absolute right-0 bottom-[10%] rotate-3 hidden xl:block w-72 bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700 z-0">
+          <div class="flex items-center space-x-4 mb-4">
+            <div class="w-14 h-14 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full flex items-center justify-center text-white font-bold text-lg">MS</div>
+            <div class="text-left">
+              <h4 class="font-semibold text-gray-900 dark:text-white">Michael Smith</h4>
+              <p class="text-sm text-gray-500 dark:text-gray-400">VP Operations, scaled to $50M ARR</p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-1 mb-3">
+            <Icon v-for="i in 5" :key="i" name="heroicons:star-solid" class="w-4 h-4 text-yellow-400" />
+            <span class="text-sm text-gray-500 ml-2">4.9 (96 reviews)</span>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <span class="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-xs">System Design</span>
+            <span class="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-full text-xs">Career Growth</span>
+          </div>
+        </div>
+
+        <!-- Centered Content -->
+        <div class="max-w-3xl mx-auto text-center relative z-10">
+          <div class="inline-flex items-center px-4 py-2 bg-blue-100 dark:bg-blue-900/30 rounded-full text-blue-700 dark:text-blue-300 text-sm font-medium mb-6">
+            <Icon name="heroicons:sparkles" class="w-4 h-4 mr-2" />
+            Trusted by founders, leaders & professionals worldwide
+          </div>
+          
+          <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
+            Access Experienced Mentors & Coaches <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Who’ve Built, Led, and Scaled</span>
+          </h1>
+          
+          <p class="text-xl text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
+            Get direct, 1-to-1 guidance from proven operators, leaders, and experts — not theory.
+          </p>
+
+          <p class="text-lg text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">
+            Whether you’re building a company, leading a team, or navigating your next career move, connect with mentors who’ve been where you’re going — and know the shortcuts.
+          </p>
+          
+          <div class="flex flex-col sm:flex-row gap-4 justify-center mb-4">
+            <NuxtLink to="/discover">
+              <UButton size="xl" class="w-full sm:w-auto">
+                <Icon name="heroicons:rocket-launch" class="w-5 h-5 mr-2" />
+                Find a Mentor or Coach →
+              </UButton>
+            </NuxtLink>
+            <NuxtLink to="/auth/register?role=mentor">
+              <UButton size="xl" variant="outline" class="w-full sm:w-auto">
+                <Icon name="heroicons:academic-cap" class="w-5 h-5 mr-2" />
+                Become a Mentor or Coach →
+              </UButton>
+            </NuxtLink>
+          </div>
+
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-8 font-medium italic">
+            All mentors are vetted for real-world experience and impact.
+          </p>
+          
+          <div class="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500 dark:text-gray-400">
+            <div class="flex items-center">
+              <Icon name="heroicons:check-circle" class="w-5 h-5 text-green-500 mr-2" />
+              Free to browse
+            </div>
+            <div class="flex items-center">
+              <Icon name="heroicons:check-circle" class="w-5 h-5 text-green-500 mr-2" />
+              Cancel anytime
+            </div>
+            <div class="flex items-center">
+              <Icon name="heroicons:check-circle" class="w-5 h-5 text-green-500 mr-2" />
+              Vetted mentors only
+            </div>
+          </div>
+        </div>
+        
+        <!-- Decorative elements -->
+        <div class="absolute -top-10 -right-10 w-40 h-40 bg-blue-200 dark:bg-blue-800 rounded-full opacity-20 blur-3xl"></div>
+        <div class="absolute bottom-0 -left-10 w-40 h-40 bg-purple-200 dark:bg-purple-800 rounded-full opacity-20 blur-3xl"></div>
       </div>
     </section>
 
