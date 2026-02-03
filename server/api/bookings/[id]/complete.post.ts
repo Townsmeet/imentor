@@ -1,9 +1,10 @@
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { db } from '../../../utils/drizzle'
 import { booking, mentorProfile, user, mentorEarning } from '../../../db/schema'
 import { auth } from '../../../utils/auth'
 import { notifyUser } from '../../../utils/notifications'
 import { createSessionCompletedMentorEmail, createSessionCompletedMenteeEmail } from '../../../email-templates'
+import { calculateEarnings } from '../../../utils/stripe'
 
 export default defineEventHandler(async (event) => {
     const session = await auth.api.getSession({ headers: event.headers })
@@ -28,11 +29,11 @@ export default defineEventHandler(async (event) => {
             throw createError({ statusCode: 404, message: 'Booking not found' })
         }
 
-        // Only the mentor can mark a session as complete
-        if (existingBooking.mentorId !== session.user.id) {
+        // Either the mentor or the mentee can mark a session as complete
+        if (existingBooking.mentorId !== session.user.id && existingBooking.menteeId !== session.user.id) {
             throw createError({
                 statusCode: 403,
-                message: 'Only the mentor can mark a session as complete'
+                message: 'Only the participants of this session can mark it as complete'
             })
         }
 
@@ -43,6 +44,9 @@ export default defineEventHandler(async (event) => {
                 message: 'Can only complete confirmed bookings'
             })
         }
+
+        // Determine who is completing the session
+        const isMentor = existingBooking.mentorId === session.user.id
 
         // Update booking to completed
         const [updatedBooking] = await db
@@ -59,20 +63,41 @@ export default defineEventHandler(async (event) => {
         await db
             .update(mentorProfile)
             .set({
-                totalSessions: db.sql`${mentorProfile.totalSessions} + 1`,
+                totalSessions: sql`COALESCE(${mentorProfile.totalSessions}, 0) + 1`,
                 updatedAt: new Date(),
             })
             .where(eq(mentorProfile.userId, existingBooking.mentorId))
 
-        // Update earning status to 'available' for payout
-        await db
-            .update(mentorEarning)
-            .set({
+        // Check if earning record exists (created by webhook) or create one
+        const existingEarning = await db.query.mentorEarning.findFirst({
+            where: eq(mentorEarning.bookingId, bookingId)
+        })
+
+        if (existingEarning) {
+            // Update existing earning status to 'available' for payout
+            await db
+                .update(mentorEarning)
+                .set({
+                    status: 'available',
+                    availableAt: new Date(),
+                    updatedAt: new Date(),
+                })
+                .where(eq(mentorEarning.bookingId, bookingId))
+        } else {
+            // Create earning record if it doesn't exist (e.g., mock payments, webhook missed)
+            const bookingPrice = parseFloat(existingBooking.price || '0')
+            const earnings = calculateEarnings(bookingPrice)
+            
+            await db.insert(mentorEarning).values({
+                mentorId: existingBooking.mentorId,
+                bookingId: bookingId,
+                grossAmount: earnings.grossAmount.toFixed(2),
+                platformFee: earnings.platformFee.toFixed(2),
+                netAmount: earnings.netAmount.toFixed(2),
                 status: 'available',
                 availableAt: new Date(),
-                updatedAt: new Date(),
             })
-            .where(eq(mentorEarning.bookingId, bookingId))
+        }
 
         // Get mentor and mentee details for notifications
         const mentorUser = await db.query.user.findFirst({
@@ -107,7 +132,9 @@ export default defineEventHandler(async (event) => {
                     userId: existingBooking.mentorId,
                     type: 'info',
                     title: 'Session Completed',
-                    message: `You marked "${existingBooking.title}" as completed. Great work!`,
+                    message: isMentor 
+                        ? `You marked "${existingBooking.title}" as completed. Great work!`
+                        : `${menteeUser?.name || 'The mentee'} marked "${existingBooking.title}" as completed.`,
                     actionUrl: `/bookings?id=${bookingId}`
                 },
                 email: mentorEmail
@@ -117,7 +144,9 @@ export default defineEventHandler(async (event) => {
                     userId: existingBooking.menteeId,
                     type: 'info',
                     title: 'Session Completed',
-                    message: `Your session "${existingBooking.title}" is complete. Please leave a review!`,
+                    message: isMentor
+                        ? `Your session "${existingBooking.title}" is complete. Please leave a review!`
+                        : `You marked "${existingBooking.title}" as complete. Please leave a review!`,
                     actionUrl: `/bookings?id=${bookingId}`
                 },
                 email: menteeEmail

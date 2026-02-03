@@ -69,6 +69,7 @@
           @cancel="handleCancel"
           @join="handleJoin"
           @chat="handleChat"
+          @complete="handleComplete"
         />
       </div>
     </div>
@@ -114,6 +115,7 @@
           :booking="booking"
           @review="handleReview"
           @book-again="handleBookAgain"
+          @complete="handleComplete"
         />
       </div>
     </div>
@@ -182,6 +184,7 @@
               v-model="reviewForm.comment"
               placeholder="Share your experience with this session..."
               :rows="4"
+              class="w-full"
             />
           </UFormField>
         </div>
@@ -242,6 +245,7 @@ const {
 
   cancelBooking,
   rescheduleBooking,
+  completeBooking,
   isLoading
 } = useBookings()
 
@@ -259,6 +263,7 @@ const bookingToCancel = ref<Booking | null>(null)
 const isRescheduling = ref(false)
 const isSubmittingReview = ref(false)
 const isCancelling = ref(false)
+const isCompleting = ref(false)
 
 const rescheduleSelection = ref<{
   date: Date | null
@@ -396,6 +401,27 @@ const handleJoin = (booking: Booking) => {
       description: 'The meeting link will be provided closer to the session time.',
       color: 'warning'
     })
+  }
+}
+
+const handleComplete = async (booking: Booking) => {
+  isCompleting.value = true
+  try {
+    await completeBooking(booking.id)
+    toast.add({
+      title: 'Session Completed',
+      description: 'The session has been marked as completed successfully.',
+      color: 'success'
+    })
+    await fetchBookings()
+  } catch (error: any) {
+    toast.add({
+      title: 'Completion Failed',
+      description: error.data?.message || 'Unable to complete session. Please try again.',
+      color: 'error'
+    })
+  } finally {
+    isCompleting.value = false
   }
 }
 

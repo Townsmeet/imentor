@@ -1,6 +1,6 @@
 import { eq, and, sql } from 'drizzle-orm'
 import { db } from '../../utils/drizzle'
-import { user, mentorProfile } from '../../db/schema'
+import { user, mentorProfile, booking } from '../../db/schema'
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
@@ -13,6 +13,20 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
+    // Subquery to count completed and confirmed sessions for this mentor
+    const sessionCountSubquery = db
+      .select({
+        count: sql<number>`count(*)`.as('count'),
+      })
+      .from(booking)
+      .where(
+        and(
+          eq(booking.mentorId, id),
+          sql`${booking.status} IN ('completed', 'confirmed')`
+        )
+      )
+      .as('session_counts')
+
     // Get mentor with profile
     const result = await db
       .select({
@@ -28,7 +42,7 @@ export default defineEventHandler(async (event) => {
         languages: mentorProfile.languages,
         timezone: mentorProfile.timezone,
         rating: mentorProfile.rating,
-        totalSessions: mentorProfile.totalSessions,
+        totalSessions: sql<number>`(SELECT count FROM ${sessionCountSubquery})`,
         isAvailable: mentorProfile.isAvailable,
         createdAt: user.createdAt,
       })
@@ -84,7 +98,7 @@ export default defineEventHandler(async (event) => {
       languages: parseJsonArray(mentor.languages),
       timezone: mentor.timezone,
       rating: mentor.rating ? parseFloat(mentor.rating) : 0,
-      totalSessions: mentor.totalSessions ?? 0,
+      totalSessions: mentor.totalSessions ? Number(mentor.totalSessions) : 0,
       isAvailable: mentor.isAvailable ?? true,
       createdAt: mentor.createdAt,
     }

@@ -156,20 +156,20 @@ export const useBookings = () => {
   const getUpcomingBookings = computed(() => {
     const now = new Date()
     return bookings.value
-      .filter(booking =>
-        booking.scheduledDate > now &&
-        booking.status === 'confirmed'
-      )
+      .filter(booking => {
+        const endTime = new Date(booking.scheduledDate.getTime() + booking.duration * 60000)
+        return endTime > now && booking.status === 'confirmed'
+      })
       .sort((a, b) => a.scheduledDate.getTime() - b.scheduledDate.getTime())
   })
 
   const getPastBookings = computed(() => {
     const now = new Date()
     return bookings.value
-      .filter(booking =>
-        (booking.scheduledDate <= now && booking.status === 'confirmed') ||
-        booking.status === 'completed'
-      )
+      .filter(booking => {
+        const endTime = new Date(booking.scheduledDate.getTime() + booking.duration * 60000)
+        return (endTime <= now && booking.status === 'confirmed') || booking.status === 'completed'
+      })
       .sort((a, b) => b.scheduledDate.getTime() - a.scheduledDate.getTime())
   })
 

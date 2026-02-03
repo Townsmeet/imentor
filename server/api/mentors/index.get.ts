@@ -1,6 +1,6 @@
-import { eq, and } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
 import { db } from '../../utils/drizzle'
-import { user, mentorProfile } from '../../db/schema'
+import { user, mentorProfile, booking } from '../../db/schema'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
@@ -16,17 +16,18 @@ export default defineEventHandler(async (event) => {
   const offset = (page - 1) * limit
 
   try {
-    // Build base query - join user and mentor_profile
-    // Only get verified users who completed onboarding and are mentors
-    const baseConditions = and(
-      eq(user.role, 'mentor'),
-      eq(user.emailVerified, true),
-      eq(user.hasCompletedOnboarding, true),
-      eq(user.suspended, false),
-      eq(user.isAdminVerified, true)
-    )
+    // Subquery to count completed and confirmed sessions for each mentor
+    const sessionCountSubquery = db
+      .select({
+        mentorId: booking.mentorId,
+        count: sql<number>`count(*)`.as('count'),
+      })
+      .from(booking)
+      .where(sql`${booking.status} IN ('completed', 'confirmed')`)
+      .groupBy(booking.mentorId)
+      .as('session_counts')
 
-    // Get mentors with their profiles
+    // Build base query - join user, mentor_profile, and session counts
     const mentorsQuery = db
       .select({
         id: user.id,
@@ -40,12 +41,21 @@ export default defineEventHandler(async (event) => {
         languages: mentorProfile.languages,
         timezone: mentorProfile.timezone,
         rating: mentorProfile.rating,
-        totalSessions: mentorProfile.totalSessions,
+        totalSessions: sql<number>`COALESCE(${sessionCountSubquery.count}, 0)`,
         isAvailable: mentorProfile.isAvailable,
       })
       .from(user)
       .innerJoin(mentorProfile, eq(user.id, mentorProfile.userId))
-      .where(baseConditions)
+      .leftJoin(sessionCountSubquery, eq(user.id, sessionCountSubquery.mentorId))
+      .where(
+        and(
+          eq(user.role, 'mentor'),
+          eq(user.emailVerified, true),
+          eq(user.hasCompletedOnboarding, true),
+          eq(user.suspended, false),
+          eq(user.isAdminVerified, true)
+        )
+      )
 
     // Execute query
     const rawMentors = await mentorsQuery
@@ -55,7 +65,7 @@ export default defineEventHandler(async (event) => {
       ...m,
       hourlyRate: m.hourlyRate ? parseFloat(m.hourlyRate) : null,
       rating: m.rating ? parseFloat(m.rating) : 0,
-      totalSessions: m.totalSessions ?? 0,
+      totalSessions: m.totalSessions ? Number(m.totalSessions) : 0,
       isAvailable: m.isAvailable ?? true,
       skills: parseJsonArray(m.skills),
       categories: parseJsonArray(m.categories),

@@ -54,8 +54,8 @@
       
       <!-- Actions -->
       <div class="flex flex-col space-y-2 ml-4">
-        <!-- Upcoming session actions -->
-        <template v-if="booking.status === 'confirmed' && isUpcoming">
+        <!-- Confirmed session actions -->
+        <template v-if="booking.status === 'confirmed'">
           <UButton
             v-if="canJoin"
             @click="$emit('join', booking)"
@@ -64,6 +64,17 @@
           >
             Join Session
           </UButton>
+          
+          <UButton
+            v-if="isPast"
+            @click="$emit('complete', booking)"
+            size="sm"
+            color="primary"
+            icon="heroicons:check-circle"
+          >
+            Mark as Complete
+          </UButton>
+
           <UButton
             @click="$emit('chat', booking)"
             variant="outline"
@@ -73,6 +84,7 @@
             Chat
           </UButton>
           <UButton
+            v-if="isUpcoming"
             @click="$emit('reschedule', booking)"
             variant="outline"
             size="sm"
@@ -81,6 +93,7 @@
             Reschedule
           </UButton>
           <UButton
+            v-if="isUpcoming"
             @click="$emit('cancel', booking)"
             variant="outline"
             size="sm"
@@ -114,9 +127,9 @@
           </UButton>
         </template>
         
-        <!-- Past session actions -->
         <template v-else-if="booking.status === 'completed'">
           <UButton
+            v-if="isMentee"
             @click="$emit('review', booking)"
             variant="outline"
             size="sm"
@@ -209,6 +222,7 @@ interface Emits {
   (e: 'book-again', booking: Booking): void
   (e: 'chat', booking: Booking): void
   (e: 'pay', booking: Booking): void
+  (e: 'complete', booking: Booking): void
 }
 
 const props = defineProps<Props>()
@@ -216,7 +230,8 @@ defineEmits<Emits>()
 
 const { user } = useAuth()
 
-const isMentee = computed(() => user.value?.role === 'mentee')
+const isMentee = computed(() => user.value?.id === props.booking.menteeId)
+const isMentor = computed(() => user.value?.id === props.booking.mentorId)
 
 const mentorName = computed(() => {
   if (!props.booking.mentor) return 'Unknown Mentor'
@@ -241,8 +256,11 @@ const formatTime = computed(() => {
 })
 
 const isUpcoming = computed(() => {
-  return props.booking.scheduledDate > new Date()
+  const endTime = new Date(props.booking.scheduledDate.getTime() + props.booking.duration * 60000)
+  return endTime > new Date()
 })
+
+const isPast = computed(() => !isUpcoming.value)
 
 const canJoin = computed(() => {
   if (!isUpcoming.value || props.booking.status !== 'confirmed') return false
