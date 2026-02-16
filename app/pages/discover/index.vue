@@ -505,7 +505,7 @@ const sessionOptions = [
 const budgetOptions = [
   { 
     value: 'under-50', 
-    label: '🌱 Foundation Level', 
+    label: 'Foundation Level', 
     price: 'Under $50 / hour',
     description: 'For early-stage founders, professionals, and creators seeking clarity and direction.',
     outcomes: 'Best for validation, positioning, confidence-building, and first momentum.',
@@ -513,7 +513,7 @@ const budgetOptions = [
   },
   { 
     value: '50-100', 
-    label: '🚀 Growth Level', 
+    label: 'Growth Level', 
     price: '$50 – $100 / hour',
     subtitle: '(Most chosen)',
     description: 'Experienced mentors who’ve helped others navigate growth decisions and execution.',
@@ -522,7 +522,7 @@ const budgetOptions = [
   },
   { 
     value: '100-200', 
-    label: '📊 Scale Level', 
+    label: 'Scale Level', 
     price: '$100 – $200 / hour',
     description: 'Senior operators and leaders with hands-on scaling experience.',
     outcomes: 'Best for hiring, systems, revenue growth, and leadership challenges.',
@@ -530,7 +530,7 @@ const budgetOptions = [
   },
   { 
     value: '200-plus', 
-    label: '🧠 Elite Level', 
+    label: 'Elite Level', 
     price: '$200+ / hour',
     description: 'Top-tier founders, executives, and industry experts.',
     outcomes: 'Designed for high-stakes decisions, rapid scale, and complex strategic challenges.',
@@ -538,7 +538,7 @@ const budgetOptions = [
   },
   { 
     value: 'flexible', 
-    label: '✨ Help me decide', 
+    label: 'Help me decide', 
     price: 'Let iMentorsPro recommend the best matches',
     description: 'We’ll suggest mentors based on your goals, stage, urgency, and preferences.',
     emoji: '✨'

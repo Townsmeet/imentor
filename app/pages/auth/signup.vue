@@ -43,7 +43,7 @@
             <Icon name="heroicons:academic-cap" class="w-6 h-6 text-purple-600 group-hover:text-white" />
           </div>
           <div>
-            <p class="font-bold text-lg text-gray-900 dark:text-white">Become a Mentor/Coach</p>
+            <p class="font-bold text-lg text-gray-900 dark:text-white">Become a Mentor or Coach</p>
             <p class="text-sm text-gray-500 dark:text-gray-400">Share your expertise and guide the next generation</p>
           </div>
           <Icon name="heroicons:chevron-right" class="w-5 h-5 text-gray-400 ml-auto group-hover:text-purple-600" />

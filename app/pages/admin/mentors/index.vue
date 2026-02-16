@@ -163,7 +163,7 @@
           <thead class="bg-gray-50 dark:bg-gray-700">
             <tr>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                Mentor/Coach
+                Mentor or Coach
               </th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Category
@@ -287,7 +287,7 @@
     </div>
 
     <!-- Status Confirmation Modal -->
-    <UModal v-model:open="showStatusConfirmModal" :title="pendingStatus === 'verified' ? 'Verify Mentor/Coach' : 'Suspend Mentor/Coach'">
+    <UModal v-model:open="showStatusConfirmModal" :title="pendingStatus === 'verified' ? 'Verify Mentor or Coach' : 'Suspend Mentor or Coach'">
       <template #body>
         <p class="text-sm text-gray-600 dark:text-gray-400">
           Are you sure you want to {{ pendingStatus === 'verified' ? 'verify' : 'suspend' }} <strong>{{ selectedMentor?.name }}</strong>?
@@ -309,7 +309,7 @@
     </UModal>
 
     <!-- Delete Confirmation Modal -->
-    <UModal v-model:open="showDeleteConfirmModal" title="Delete Mentor/Coach">
+    <UModal v-model:open="showDeleteConfirmModal" title="Delete Mentor or Coach">
       <template #body>
         <p class="text-sm text-gray-600 dark:text-gray-400">
           Are you sure you want to delete <strong>{{ selectedMentor?.name }}</strong>? This action cannot be undone and will remove all associated data.
@@ -323,7 +323,7 @@
             @click="handleDeleteMentor"
             :loading="isDeleting"
           >
-            Delete Mentor/Coach
+            Delete Mentor or Coach
           </UButton>
         </div>
       </template>
@@ -338,7 +338,7 @@ definePageMeta({
 })
 
 useSeoMeta({
-  title: 'Mentor/Coach Management - Admin Dashboard',
+  title: 'Mentor or Coach Management - Admin Dashboard',
   description: 'Manage mentor and coach profiles, verification status, and performance metrics'
 })
 

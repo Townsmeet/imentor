@@ -18,7 +18,7 @@
           <h4 class="font-semibold mb-4">Platform</h4>
           <ul class="space-y-2 text-gray-600 text-sm">
             <li><NuxtLink :to="isAuthenticated ? '/mentors' : '/discover'" class="hover:text-blue-600 transition">Explore Mentors</NuxtLink></li>
-            <li><NuxtLink to="/auth/register?role=mentor" class="hover:text-blue-600 transition">Become a Mentor/Coach</NuxtLink></li>
+            <li><NuxtLink to="/auth/register?role=mentor" class="hover:text-blue-600 transition">Become a Mentor or Coach</NuxtLink></li>
             <li><NuxtLink to="/#how-it-works" class="hover:text-blue-600 transition">How It Works</NuxtLink></li>
           </ul>
         </div>
@@ -55,6 +55,9 @@
           </a>
           <a href="#" class="text-gray-600 hover:text-blue-600 transition">
             <Icon name="simple-icons:github" class="w-5 h-5" />
+          </a>
+          <a href="#" class="text-gray-600 hover:text-blue-600 transition">
+            <Icon name="simple-icons:youtube" class="w-5 h-5" />
           </a>
         </div>
       </div>

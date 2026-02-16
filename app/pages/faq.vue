@@ -55,7 +55,7 @@ const faqs = [
     questions: [
       {
         q: 'How do I apply to become an Expert Guide?',
-        a: 'Complete the application at www.imentorspro.com/providers. Share your background, areas of expertise, and experience. Our team reviews all applications to maintain quality across the platform.'
+        a: 'Complete the application at https://www.imentorspro.com/auth/signup. Share your background, areas of expertise, and experience. Our team reviews all applications to maintain quality across the platform.'
       },
       {
         q: 'What qualifications do I need?',

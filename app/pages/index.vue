@@ -185,7 +185,7 @@
 
           <div class="relative">
             <div class="text-center p-8 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 h-full">
-              <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 text-white text-2xl font-bold">
+              <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 text-white text-2xl font-bold">
                 2
               </div>
               <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">
@@ -202,7 +202,7 @@
 
           <div>
             <div class="text-center p-8 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 h-full">
-              <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6 text-white text-2xl font-bold">
+              <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 text-white text-2xl font-bold">
                 3
               </div>
               <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">
@@ -283,8 +283,8 @@
           </div>
 
           <div class="p-6 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center mb-4">
-              <Icon name="heroicons:calendar-days" class="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mb-4">
+              <Icon name="heroicons:calendar-days" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
               Flexible Scheduling
@@ -295,8 +295,8 @@
           </div>
 
           <div class="p-6 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center mb-4">
-              <Icon name="heroicons:video-camera" class="w-6 h-6 text-green-600 dark:text-green-400" />
+            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mb-4">
+              <Icon name="heroicons:video-camera" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
               HD Video Calls
@@ -307,8 +307,8 @@
           </div>
 
           <div class="p-6 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-xl flex items-center justify-center mb-4">
-              <Icon name="heroicons:chat-bubble-left-right" class="w-6 h-6 text-orange-600 dark:text-orange-400" />
+            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mb-4">
+              <Icon name="heroicons:chat-bubble-left-right" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
               Direct Messaging
@@ -319,8 +319,8 @@
           </div>
 
           <div class="p-6 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div class="w-12 h-12 bg-pink-100 dark:bg-pink-900/30 rounded-xl flex items-center justify-center mb-4">
-              <Icon name="heroicons:credit-card" class="w-6 h-6 text-pink-600 dark:text-pink-400" />
+            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mb-4">
+              <Icon name="heroicons:credit-card" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
               Secure Payments
@@ -331,8 +331,8 @@
           </div>
 
           <div class="p-6 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700">
-            <div class="w-12 h-12 bg-cyan-100 dark:bg-cyan-900/30 rounded-xl flex items-center justify-center mb-4">
-              <Icon name="heroicons:sparkles" class="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
+            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mb-4">
+              <Icon name="heroicons:sparkles" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
               AI Matching
@@ -363,7 +363,7 @@
               <Icon v-for="i in 5" :key="i" name="heroicons:star-solid" class="w-5 h-5 text-yellow-400" />
             </div>
             <p class="text-white mb-6">
-              "Found an amazing mentor/coach who helped me transition from engineering to product management. Best investment in my career!"
+              "Found an amazing mentor or coach who helped me transition from engineering to product management. Best investment in my career!"
             </p>
             <div class="flex items-center space-x-3">
               <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white font-semibold">SK</div>
@@ -379,7 +379,7 @@
               <Icon v-for="i in 5" :key="i" name="heroicons:star-solid" class="w-5 h-5 text-yellow-400" />
             </div>
             <p class="text-white mb-6">
-              "As a mentor/coach, I love how easy the platform makes it to manage bookings and connect with ambitious professionals."
+              "As a mentor or coach, I love how easy the platform makes it to manage bookings and connect with ambitious professionals."
             </p>
             <div class="flex items-center space-x-3">
               <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white font-semibold">DR</div>
@@ -395,7 +395,7 @@
               <Icon v-for="i in 5" :key="i" name="heroicons:star-solid" class="w-5 h-5 text-yellow-400" />
             </div>
             <p class="text-white mb-6">
-              "The AI matching feature connected me with a mentor/coach who understood exactly what I needed. Doubled my freelance rates in 3 months!"
+              "The AI matching feature connected me with a mentor or coach who understood exactly what I needed. Doubled my freelance rates in 3 months!"
             </p>
             <div class="flex items-center space-x-3">
               <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white font-semibold">AL</div>
@@ -458,12 +458,12 @@ useSeoMeta({
 
 const featuredCategories = [
   { name: 'Software Engineering', icon: 'heroicons:code-bracket', bgColor: 'bg-blue-100 dark:bg-blue-900/30', iconColor: 'text-blue-600 dark:text-blue-400', count: 120 },
-  { name: 'Product Management', icon: 'heroicons:cube', bgColor: 'bg-purple-100 dark:bg-purple-900/30', iconColor: 'text-purple-600 dark:text-purple-400', count: 85 },
-  { name: 'Data Science', icon: 'heroicons:chart-bar', bgColor: 'bg-green-100 dark:bg-green-900/30', iconColor: 'text-green-600 dark:text-green-400', count: 65 },
-  { name: 'UX Design', icon: 'heroicons:paint-brush', bgColor: 'bg-pink-100 dark:bg-pink-900/30', iconColor: 'text-pink-600 dark:text-pink-400', count: 70 },
-  { name: 'Marketing', icon: 'heroicons:megaphone', bgColor: 'bg-orange-100 dark:bg-orange-900/30', iconColor: 'text-orange-600 dark:text-orange-400', count: 55 },
-  { name: 'Leadership', icon: 'heroicons:user-group', bgColor: 'bg-cyan-100 dark:bg-cyan-900/30', iconColor: 'text-cyan-600 dark:text-cyan-400', count: 90 },
-  { name: 'Entrepreneurship', icon: 'heroicons:rocket-launch', bgColor: 'bg-red-100 dark:bg-red-900/30', iconColor: 'text-red-600 dark:text-red-400', count: 45 },
-  { name: 'Finance', icon: 'heroicons:banknotes', bgColor: 'bg-emerald-100 dark:bg-emerald-900/30', iconColor: 'text-emerald-600 dark:text-emerald-400', count: 40 },
+  { name: 'Product Management', icon: 'heroicons:cube', bgColor: 'bg-blue-100 dark:bg-blue-900/30', iconColor: 'text-blue-600 dark:text-blue-400', count: 85 },
+  { name: 'Data Science', icon: 'heroicons:chart-bar', bgColor: 'bg-blue-100 dark:bg-blue-900/30', iconColor: 'text-blue-600 dark:text-blue-400', count: 65 },
+  { name: 'UX Design', icon: 'heroicons:paint-brush', bgColor: 'bg-blue-100 dark:bg-blue-900/30', iconColor: 'text-blue-600 dark:text-blue-400', count: 70 },
+  { name: 'Marketing', icon: 'heroicons:megaphone', bgColor: 'bg-blue-100 dark:bg-blue-900/30', iconColor: 'text-blue-600 dark:text-blue-400', count: 55 },
+  { name: 'Leadership', icon: 'heroicons:user-group', bgColor: 'bg-blue-100 dark:bg-blue-900/30', iconColor: 'text-blue-600 dark:text-blue-400', count: 90 },
+  { name: 'Entrepreneurship', icon: 'heroicons:rocket-launch', bgColor: 'bg-blue-100 dark:bg-blue-900/30', iconColor: 'text-blue-600 dark:text-blue-400', count: 45 },
+  { name: 'Finance', icon: 'heroicons:banknotes', bgColor: 'bg-blue-100 dark:bg-blue-900/30', iconColor: 'text-blue-600 dark:text-blue-400', count: 40 },
 ]
 </script>

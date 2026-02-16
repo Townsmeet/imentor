@@ -170,7 +170,7 @@
       <div v-if="mentorSlots.length === 0" class="text-center py-8">
         <Icon name="heroicons:calendar" class="w-12 h-12 text-gray-400 mx-auto mb-3" />
         <p class="text-gray-500 dark:text-gray-400">
-          This mentor/coach hasn't set their availability yet.
+          This mentor or coach hasn't set their availability yet.
         </p>
       </div>
 
@@ -371,7 +371,7 @@
   <div v-else class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="text-center">
       <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-        Mentor/Coach Not Found
+        Mentor or Coach Not Found
       </h1>
       <p class="text-gray-600 dark:text-gray-400 mb-6">
         The mentor or coach you're looking for doesn't exist or has been removed.
@@ -514,7 +514,7 @@ const formatDate = (date: Date | string) => {
 
 // SEO
 useSeoMeta({
-  title: () => mentor.value ? `${mentor.value.firstName} ${mentor.value.lastName} - Mentor/Coach Profile` : 'Mentor/Coach Profile',
+  title: () => mentor.value ? `${mentor.value.firstName} ${mentor.value.lastName} - Mentor or Coach Profile` : 'Mentor or Coach Profile',
   description: () => mentor.value ? mentor.value.bio : 'View mentor profile and book sessions'
 })
 </script>
