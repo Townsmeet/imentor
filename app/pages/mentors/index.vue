@@ -2,7 +2,7 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Personalized Banner (from Discovery Flow) -->
     <div v-if="isFromDiscovery" class="mb-6">
-      <div class="bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl p-4 flex items-center justify-between">
+      <div class="bg-gradient-to-r from-blue-500 to-blue-500 rounded-xl p-4 flex items-center justify-between">
         <div class="flex items-center space-x-3">
           <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
             <Icon name="heroicons:sparkles" class="w-5 h-5 text-white" />

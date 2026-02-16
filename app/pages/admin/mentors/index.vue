@@ -42,7 +42,7 @@
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <div class="flex items-center">
           <div class="flex-shrink-0">
-            <Icon name="heroicons:star" class="h-8 w-8 text-purple-600" />
+            <Icon name="heroicons:star" class="h-8 w-8 text-blue-600" />
           </div>
           <div class="ml-4">
             <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Avg Rating</p>

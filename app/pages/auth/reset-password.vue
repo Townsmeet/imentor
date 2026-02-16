@@ -2,7 +2,7 @@
   <div>
     <!-- Logo for mobile -->
     <div class="lg:hidden flex justify-center mb-8">
-      <div class="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center">
+      <div class="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-600 rounded-2xl flex items-center justify-center">
         <Icon name="heroicons:academic-cap" class="w-8 h-8 text-white" />
       </div>
     </div>

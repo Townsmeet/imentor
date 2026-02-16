@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <!-- Progress Bar -->
       <div class="mb-8">
@@ -13,7 +13,7 @@
         </div>
         <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
           <div 
-            class="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all duration-300"
+            class="bg-gradient-to-r from-blue-600 to-blue-600 h-2 rounded-full transition-all duration-300"
             :style="{ width: `${(currentStep / totalSteps) * 100}%` }"
           ></div>
         </div>
@@ -24,7 +24,7 @@
         <!-- Step 1: Welcome & Role Confirmation -->
         <div v-if="currentStep === 1" class="p-8">
           <div class="text-center mb-8">
-            <div class="w-20 h-20 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <div class="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
               <Icon name="heroicons:hand-raised" class="w-10 h-10 text-white" />
             </div>
             <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">
@@ -38,10 +38,10 @@
           <div class="max-w-md mx-auto">
             <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6 mb-6">
               <div class="flex items-center space-x-4">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-purple-100 dark:bg-purple-900/20">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-100 dark:bg-blue-900/20">
                   <Icon 
                     name="heroicons:academic-cap"
-                    class="w-6 h-6 text-purple-600 dark:text-purple-400"
+                    class="w-6 h-6 text-blue-600 dark:text-blue-400"
                   />
                 </div>
                 <div>
@@ -337,15 +337,15 @@
               :class="[
                 'p-6 rounded-2xl border-2 text-left transition-all duration-200 h-full flex flex-col',
                 mentorForm.supportTypes.includes(option.value)
-                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-500'
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-500'
               ]"
             >
               <span class="font-bold text-gray-900 dark:text-white block mb-2">{{ option.label }}</span>
               <Icon 
                 v-if="mentorForm.supportTypes.includes(option.value)"
                 name="heroicons:check-circle-solid" 
-                class="w-6 h-6 text-purple-500 mt-auto self-end" 
+                class="w-6 h-6 text-blue-500 mt-auto self-end" 
               />
             </button>
           </div>

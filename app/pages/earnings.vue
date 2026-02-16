@@ -114,8 +114,8 @@
                   {{ formatCurrency(summary.paidOutTotal) }}
                 </p>
               </div>
-              <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
-                <Icon name="heroicons:arrow-trending-up" class="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+                <Icon name="heroicons:arrow-trending-up" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">

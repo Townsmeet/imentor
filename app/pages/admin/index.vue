@@ -27,7 +27,7 @@
                 stat.color === 'blue' ? 'text-blue-500' :
                 stat.color === 'green' ? 'text-green-500' :
                 stat.color === 'yellow' ? 'text-yellow-500' :
-                'text-purple-500'
+                'text-blue-500'
               ]"
             />
           </div>
@@ -107,7 +107,7 @@
                 'flex-shrink-0 w-2 h-2 rounded-full mt-2',
                 activity.type === 'booking' ? 'bg-blue-500' :
                 activity.type === 'payment' ? 'bg-green-500' :
-                activity.type === 'user' ? 'bg-purple-500' :
+                activity.type === 'user' ? 'bg-blue-500' :
                 'bg-yellow-500'
               ]"
             />
@@ -374,7 +374,7 @@ const stats = computed(() => {
       value: `$${adminStats.value.stats.platformRevenue.value.toLocaleString()}`,
       change: adminStats.value.stats.platformRevenue.change,
       icon: 'heroicons:currency-dollar',
-      color: 'purple'
+      color: 'blue'
     }
   ]
 })

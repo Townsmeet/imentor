@@ -236,7 +236,7 @@
                   'flex-shrink-0 w-2 h-2 rounded-full mt-2',
                   activity.type === 'booking' ? 'bg-blue-500' :
                   activity.type === 'payment' ? 'bg-green-500' :
-                  activity.type === 'user' ? 'bg-purple-500' :
+                  activity.type === 'user' ? 'bg-blue-500' :
                   'bg-yellow-500'
                 ]"
               />

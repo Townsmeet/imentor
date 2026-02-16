@@ -82,7 +82,7 @@ onMounted(async () => {
 
 <template>
   <div class="flex flex-col items-center justify-center min-h-[60vh]">
-    <div class="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mb-6 animate-pulse">
+    <div class="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-600 rounded-2xl flex items-center justify-center mb-6 animate-pulse">
       <Icon name="heroicons:academic-cap" class="w-8 h-8 text-white" />
     </div>
     
@@ -96,7 +96,7 @@ onMounted(async () => {
 
     <div class="mt-8 flex space-x-2">
       <div class="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
-      <div class="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+      <div class="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
       <div class="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
     </div>
   </div>

@@ -329,7 +329,7 @@
       <template #content>
         <div class="p-6">
           <div class="text-center mb-6">
-            <div class="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <div class="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Icon name="heroicons:user-circle" class="w-8 h-8 text-white" />
             </div>
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">

@@ -1,11 +1,11 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
     <!-- Navigation -->
     <nav class="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
           <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+            <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-600 rounded-xl flex items-center justify-center">
               <Icon name="heroicons:academic-cap" class="w-5 h-5 text-white" />
             </div>
             <span class="text-xl font-bold text-gray-900 dark:text-white">iMentorsPro</span>
@@ -35,7 +35,7 @@
         <!-- Flanking Mentor Cards -->
         <div class="absolute left-0 top-[15%] -rotate-3 hidden xl:block w-72 bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700 z-0">
           <div class="flex items-center space-x-4 mb-4">
-            <div class="w-14 h-14 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white font-bold text-lg">JD</div>
+            <div class="w-14 h-14 bg-gradient-to-br from-blue-400 to-pink-400 rounded-full flex items-center justify-center text-white font-bold text-lg">JD</div>
             <div class="text-left">
               <h4 class="font-semibold text-gray-900 dark:text-white">Jane Doe</h4>
               <p class="text-sm text-gray-500 dark:text-gray-400">Founder, exited SaaS</p>
@@ -47,7 +47,7 @@
           </div>
           <div class="flex flex-wrap gap-2">
             <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs">Product Strategy</span>
-            <span class="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-xs">Leadership</span>
+            <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs">Leadership</span>
           </div>
         </div>
 
@@ -77,7 +77,7 @@
           </div>
           
           <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
-            Access Experienced Mentors & Coaches <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Who’ve Built, Led, and Scaled</span>
+            Access Experienced Mentors & Coaches <span class="bg-gradient-to-r from-blue-600 to-blue-600 bg-clip-text text-transparent">Who’ve Built, Led, and Scaled</span>
           </h1>
           
           <p class="text-xl text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
@@ -125,7 +125,7 @@
         
         <!-- Decorative elements -->
         <div class="absolute -top-10 -right-10 w-40 h-40 bg-blue-200 dark:bg-blue-800 rounded-full opacity-20 blur-3xl"></div>
-        <div class="absolute bottom-0 -left-10 w-40 h-40 bg-purple-200 dark:bg-purple-800 rounded-full opacity-20 blur-3xl"></div>
+        <div class="absolute bottom-0 -left-10 w-40 h-40 bg-blue-200 dark:bg-blue-800 rounded-full opacity-20 blur-3xl"></div>
       </div>
     </section>
 
@@ -346,7 +346,7 @@
     </section>
 
     <!-- Testimonials -->
-    <section class="py-20 bg-gradient-to-br from-blue-600 to-purple-600">
+    <section class="py-20 bg-gradient-to-br from-blue-600 to-blue-600">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
           <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">

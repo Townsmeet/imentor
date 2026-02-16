@@ -94,8 +94,8 @@
               </div>
               
               <div class="flex items-start space-x-4">
-                <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Icon name="heroicons:map-pin" class="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Icon name="heroicons:map-pin" class="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
                   <h4 class="font-medium text-gray-900 dark:text-white">Office</h4>
@@ -108,7 +108,7 @@
             </div>
           </div>
 
-          <div class="p-6 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl text-white">
+          <div class="p-6 bg-gradient-to-br from-blue-600 to-blue-600 rounded-2xl text-white">
             <h4 class="font-bold mb-2">Are you a Mentor or Mentee?</h4>
             <p class="text-blue-50 text-sm mb-4">
               Check out our Help Center for answers to popular questions.

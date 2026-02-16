@@ -177,7 +177,7 @@ export const useAdminPayments = () => {
             name: 'Platform Fees',
             value: `$${summary.value.platformFees.toLocaleString()}`,
             icon: 'heroicons:receipt-percent',
-            color: 'purple'
+            color: 'blue'
         },
         {
             name: 'Pending Payouts',

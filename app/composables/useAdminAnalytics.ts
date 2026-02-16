@@ -135,7 +135,7 @@ export const useAdminAnalytics = () => {
                 value: keyMetrics.value.completedSessions.toLocaleString(),
                 change: 15,
                 icon: 'heroicons:calendar-days',
-                color: 'purple'
+                color: 'blue'
             },
             {
                 name: 'Avg Session Rating',

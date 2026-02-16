@@ -39,7 +39,7 @@
             ✅ Mentor content is visible
           </div>
           
-          <div v-if="currentUser?.role === 'admin'" class="p-3 bg-purple-50 dark:bg-purple-900/20 rounded border-l-4 border-purple-400">
+          <div v-if="currentUser?.role === 'admin'" class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded border-l-4 border-blue-400">
             ✅ Admin content is visible
           </div>
         </div>

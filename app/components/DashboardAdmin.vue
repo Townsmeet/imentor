@@ -70,8 +70,8 @@
 
       <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
         <div class="flex items-center">
-          <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
-            <Icon name="heroicons:calendar-days" class="w-6 h-6 text-purple-600 dark:text-purple-400" />
+          <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+            <Icon name="heroicons:calendar-days" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
           </div>
           <div class="ml-4">
             <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ adminStats?.stats?.sessionsThisMonth?.value ?? 0 }}</p>
@@ -452,7 +452,7 @@ const getActivityColor = (type: string) => {
     case 'user': return 'bg-blue-500'
     case 'session': return 'bg-green-500'
     case 'payment': return 'bg-yellow-500'
-    case 'system': return 'bg-purple-500'
+    case 'system': return 'bg-blue-500'
     default: return 'bg-gray-500'
   }
 }

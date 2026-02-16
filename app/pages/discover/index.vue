@@ -1,11 +1,11 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
     <!-- Header -->
     <nav class="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
           <NuxtLink to="/" class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+            <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-600 rounded-xl flex items-center justify-center">
               <Icon name="heroicons:academic-cap" class="w-5 h-5 text-white" />
             </div>
             <span class="text-xl font-bold text-gray-900 dark:text-white">iMentorsPro</span>
@@ -36,7 +36,7 @@
         </div>
         <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
           <div 
-            class="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all duration-500 ease-out"
+            class="bg-gradient-to-r from-blue-600 to-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
             :style="{ width: `${progress}%` }"
           ></div>
         </div>
@@ -49,7 +49,7 @@
         <Transition name="slide" mode="out-in">
           <div v-if="currentStep === 1" key="step1" class="p-8">
             <div class="text-center mb-8">
-              <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Icon name="heroicons:rocket-launch" class="w-8 h-8 text-white" />
               </div>
               <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-3">
@@ -102,7 +102,7 @@
           <!-- Step 2: Categories -->
           <div v-else-if="currentStep === 2" key="step2" class="p-8">
             <div class="text-center mb-8">
-              <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Icon name="heroicons:squares-2x2" class="w-8 h-8 text-white" />
               </div>
               <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-3">
@@ -126,10 +126,10 @@
                 :class="[
                   'p-4 rounded-xl border-2 text-left transition-all duration-200',
                   responses.categories.includes(category)
-                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                     : responses.categories.length >= 3
                       ? 'border-gray-200 dark:border-gray-700 opacity-50 cursor-not-allowed'
-                      : 'border-gray-200 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-500'
+                      : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500'
                 ]"
               >
                 <div class="flex items-center justify-between">
@@ -137,7 +137,7 @@
                   <Icon 
                     v-if="responses.categories.includes(category)"
                     name="heroicons:check-circle-solid" 
-                    class="w-5 h-5 text-purple-500 flex-shrink-0" 
+                    class="w-5 h-5 text-blue-500 flex-shrink-0" 
                   />
                 </div>
               </button>

@@ -74,8 +74,8 @@
 
       <div class="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
         <div class="flex items-center">
-          <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
-            <Icon name="heroicons:chat-bubble-left-right" class="w-6 h-6 text-purple-600 dark:text-purple-400" />
+          <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+            <Icon name="heroicons:chat-bubble-left-right" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
           </div>
           <div class="ml-4">
             <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ dashboardStats?.stats?.unreadMessages ?? 0 }}</p>
@@ -204,7 +204,7 @@
                   'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
                   activity.type === 'session' ? 'bg-blue-100 dark:bg-blue-900/20' : 
                   activity.type === 'message' ? 'bg-green-100 dark:bg-green-900/20' : 
-                  'bg-purple-100 dark:bg-purple-900/20'
+                  'bg-blue-100 dark:bg-blue-900/20'
                 ]">
                   <Icon
                     :name="activity.icon"
@@ -212,7 +212,7 @@
                       'w-4 h-4',
                       activity.type === 'session' ? 'text-blue-600 dark:text-blue-400' :
                       activity.type === 'message' ? 'text-green-600 dark:text-green-400' :
-                      'text-purple-600 dark:text-purple-400'
+                      'text-blue-600 dark:text-blue-400'
                     ]"
                   />
                 </div>
@@ -324,7 +324,7 @@
         </div>
 
         <!-- Tips Card -->
-        <div class="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-6">
+        <div class="bg-gradient-to-br from-blue-50 to-blue-50 dark:from-blue-900/20 dark:to-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-6">
           <div class="flex items-start space-x-3">
             <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
               <Icon name="heroicons:light-bulb" class="w-4 h-4 text-blue-600 dark:text-blue-400" />

@@ -4,7 +4,7 @@
       <div class="grid md:grid-cols-4 gap-8 mb-12">
         <div>
           <div class="flex items-center space-x-3 mb-4">
-            <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+            <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-600 rounded-xl flex items-center justify-center">
               <Icon name="heroicons:academic-cap" class="w-5 h-5 text-white" />
             </div>
             <span class="text-xl font-bold">iMentorsPro</span>
