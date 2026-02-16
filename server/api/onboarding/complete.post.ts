@@ -19,6 +19,7 @@ interface OnboardingData {
     dateOfBirth?: string
     expertiseDocument?: string
     idDocument?: string
+    roleTitle?: string
     // Mentee fields
     interests?: string[]
     goals?: string[]
@@ -109,6 +110,7 @@ export default defineEventHandler(async (event) => {
           dateOfBirth: body.roleData.dateOfBirth ? new Date(body.roleData.dateOfBirth) : null,
           expertiseDocument: body.roleData.expertiseDocument,
           idDocument: body.roleData.idDocument,
+          roleTitle: body.roleData.roleTitle || 'mentor',
         })
         .onConflictDoUpdate({
           target: mentorProfile.userId,
@@ -124,6 +126,7 @@ export default defineEventHandler(async (event) => {
             dateOfBirth: body.roleData.dateOfBirth ? new Date(body.roleData.dateOfBirth) : null,
             expertiseDocument: body.roleData.expertiseDocument,
             idDocument: body.roleData.idDocument,
+            roleTitle: body.roleData.roleTitle || 'mentor',
             updatedAt: new Date(),
           },
         })

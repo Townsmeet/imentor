@@ -36,28 +36,27 @@
           </div>
 
           <div class="max-w-md mx-auto">
-            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6 mb-6">
-              <div class="flex items-center space-x-4">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-blue-100 dark:bg-blue-900/20">
-                  <Icon 
-                    name="heroicons:academic-cap"
-                    class="w-6 h-6 text-blue-600 dark:text-blue-400"
-                  />
-                </div>
-                <div>
-                  <p class="font-semibold text-gray-900 dark:text-white capitalize">
-                    Mentor
-                  </p>
-                  <p class="text-sm text-gray-600 dark:text-gray-400">
-                    Share your expertise and guide others
-                  </p>
-                </div>
+
+            <div v-if="userRole === 'mentor'" class="mb-8">
+              <p class="font-semibold text-gray-900 dark:text-white mb-4 text-center">
+                Are you a mentor or a coach?
+              </p>
+              <div class="grid grid-cols-2 gap-4">
+                <button
+                  v-for="role in ['mentor', 'coach']"
+                  :key="role"
+                  @click="mentorForm.roleTitle = role"
+                  :class="[
+                    'px-4 py-3 rounded-xl border-2 transition-all duration-200 capitalize font-medium',
+                    mentorForm.roleTitle === role
+                      ? 'border-blue-600 bg-blue-50 text-blue-600 dark:bg-blue-900/20'
+                      : 'border-gray-200 hover:border-blue-300 dark:border-gray-700 dark:hover:border-blue-500 text-gray-600 dark:text-gray-400'
+                  ]"
+                >
+                  {{ role }}
+                </button>
               </div>
             </div>
-            
-            <p class="text-sm text-gray-600 dark:text-gray-400 text-center mb-6">
-              This will take about 3-5 minutes to complete.
-            </p>
           </div>
         </div>
 
@@ -149,11 +148,11 @@
           
           <div class="space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <UFormField label="Years of Experience" name="experience" required>
+              <UFormField label="Who do you help most?" name="experience" required>
                 <USelect
                   v-model="mentorForm.experience"
                   :items="experienceOptions"
-                  placeholder="Select your experience level"
+                  placeholder="Select who you help most"
                   size="lg"
                   class="w-full"
                 />
@@ -507,7 +506,7 @@ const profileForm = reactive({
 })
 
 const mentorForm = reactive({
-  experience: 'Entry Level (0-2 years)',
+  experience: 'Early-stage professionals & first-time founders',
   hourlyRate: 75,
   skills: [] as string[],
   categories: [] as string[],
@@ -515,7 +514,8 @@ const mentorForm = reactive({
   expertiseDocument: '',
   idDocument: '',
   targetAudience: [] as string[],
-  supportTypes: [] as string[]
+  supportTypes: [] as string[],
+  roleTitle: 'mentor'
 })
 
 const menteeForm = reactive({
@@ -538,10 +538,10 @@ const goalInput = ref('')
 
 // Options
 const experienceOptions = [
-  { label: 'Entry Level (0-2 years)', value: '0-2 years' },
-  { label: 'Mid Level (3-5 years)', value: '3-5 years' },
-  { label: 'Senior Level (6-10 years)', value: '6-10 years' },
-  { label: 'Expert Level (10+ years)', value: '10+ years' }
+  { label: 'Early-stage professionals & first-time founders', value: 'Early-stage professionals & first-time founders' },
+  { label: 'Growing professionals & startup builders', value: 'Growing professionals & startup builders' },
+  { label: 'Leaders, executives & scaling founders', value: 'Leaders, executives & scaling founders' },
+  { label: 'Career transitions & reinvention', value: 'Career transitions & reinvention' }
 ]
 
 const targetAudienceOptions = [
@@ -643,7 +643,7 @@ const isOldEnough = computed(() => {
 const canProceed = computed(() => {
   switch (currentStep.value) {
     case 1:
-      return true
+      return userRole.value === 'mentor' ? !!mentorForm.roleTitle : true
     case 3:
       return mentorForm.experience && mentorForm.hourlyRate && 
              mentorForm.skills.length > 0 && mentorForm.categories.length > 0 &&
@@ -690,7 +690,7 @@ const handleFileUpload = async (event: Event) => {
     mentorForm.expertiseDocument = response.url
     toast.add({
       title: 'Success',
-      description: 'Document uploaded successfully',
+      description: 'Document uploaded successfully. It will be reviewed by the admin.',
       color: 'success'
     })
   } catch (error: any) {
@@ -752,7 +752,7 @@ const handleIdDocumentUpload = async (event: Event) => {
     mentorForm.idDocument = response.url
     toast.add({
       title: 'Success',
-      description: 'ID document uploaded successfully',
+      description: 'ID document uploaded successfully. It will be reviewed by the admin.',
       color: 'success'
     })
   } catch (error: any) {
@@ -836,6 +836,7 @@ const completeOnboardingFlow = async () => {
           idDocument: mentorForm.idDocument,
           targetAudience: mentorForm.targetAudience,
           supportTypes: mentorForm.supportTypes,
+          roleTitle: mentorForm.roleTitle,
         },
         preferences: {
           timezone: preferencesForm.timezone,

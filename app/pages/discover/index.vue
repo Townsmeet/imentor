@@ -367,6 +367,9 @@ const isLoadingCategories = ref(true)
 const availableCategories = ref<string[]>([])
 
 onMounted(async () => {
+  // Reset the flow to ensure fresh start on page load/refresh
+  reset()
+
   try {
     const response = await $fetch<{ categories: string[], skills: string[] }>('/api/mentors/filters')
     availableCategories.value = response.categories

@@ -92,6 +92,7 @@ export const mentorProfile = pgTable('mentor_profile', {
   dateOfBirth: timestamp('date_of_birth'),
   expertiseDocument: text('expertise_document'),
   idDocument: text('id_document'), // Passport, National ID, Driver's License, etc.
+  roleTitle: text('role_title').notNull().default('mentor'), // 'mentor' or 'coach'
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
