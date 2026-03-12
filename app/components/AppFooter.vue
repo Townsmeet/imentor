@@ -47,17 +47,17 @@
           © {{ new Date().getFullYear() }} iMentorsPro. All rights reserved.
         </p>
         <div class="flex space-x-6 mt-4 md:mt-0">
-          <a href="#" class="text-gray-600 hover:text-blue-600 transition">
+          <a href="https://x.com/iMentorsPro" target="_blank" rel="noopener noreferrer" class="text-gray-600 hover:text-blue-600 transition">
             <Icon name="simple-icons:twitter" class="w-5 h-5" />
           </a>
-          <a href="#" class="text-gray-600 hover:text-blue-600 transition">
+          <a href="https://www.linkedin.com/company/imentorspro/" target="_blank" rel="noopener noreferrer" class="text-gray-600 hover:text-blue-600 transition">
             <Icon name="simple-icons:linkedin" class="w-5 h-5" />
           </a>
-          <a href="#" class="text-gray-600 hover:text-blue-600 transition">
-            <Icon name="simple-icons:github" class="w-5 h-5" />
+          <a href="https://www.instagram.com/imentorspro?igsh=MWlyYjB2bHpiem9rZg==" target="_blank" rel="noopener noreferrer" class="text-gray-600 hover:text-blue-600 transition">
+            <Icon name="simple-icons:instagram" class="w-5 h-5" />
           </a>
-          <a href="#" class="text-gray-600 hover:text-blue-600 transition">
-            <Icon name="simple-icons:youtube" class="w-5 h-5" />
+          <a href="https://www.facebook.com/share/1APB3xEGtR/" target="_blank" rel="noopener noreferrer" class="text-gray-600 hover:text-blue-600 transition">
+            <Icon name="simple-icons:facebook" class="w-5 h-5" />
           </a>
         </div>
       </div>
